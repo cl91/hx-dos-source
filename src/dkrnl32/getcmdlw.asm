@@ -54,4 +54,3 @@ done:
 GetCommandLineW endp
 
         end
-

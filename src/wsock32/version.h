@@ -1,1 +1,1 @@
-#define WSVERSION "1.6"
+#define WSVERSION "1.7"

@@ -1,24 +1,34 @@
 
-        .386
+;--- SetThreadLocale
+
+	.386
 if ?FLAT
-        .MODEL FLAT, stdcall
+	.MODEL FLAT, stdcall
 else
-        .MODEL SMALL, stdcall
+	.MODEL SMALL, stdcall
 endif
-		option casemap:none
-        option proc:private
+	option casemap:none
+	option proc:private
 
-        include winbase.inc
-		include macros.inc
+	.nolist
+	.nocref
+	include winbase.inc
+	include macros.inc
+	.cref
+	.list
 
-        .CODE
+	.CODE
 
 SetThreadLocale proc public lcid:DWORD
 
-        xor     eax,eax
-		@strace	<"SetThreadLocale(",lcid, ")=", eax, " *** unsupp ***">
-        ret
+	mov ecx, lcid
+	xor eax,eax
+	.if ( ecx == 0 || ecx == LOCALE_SYSTEM_DEFAULT || ecx == LOCALE_USER_DEFAULT )
+		inc eax
+	.endif
+	@strace <"SetThreadLocale(",lcid, ")=", eax, " *** part supp ***">
+	ret
+
 SetThreadLocale endp
 
-        end
-
+	end

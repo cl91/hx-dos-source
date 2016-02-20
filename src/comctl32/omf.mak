@@ -42,36 +42,36 @@ OBJMODS = $(OBJNAMES:.\=OMF\)
 MASM=0
 !endif
 
-ASMOPT= -c -nologo -Sg $(AOPTD) -I$(INC32DIR)
+ASMOPT= -c -nologo -Sg $(AOPTD) -I$(INC32DIR) -D?FLAT=1 -Fl$* -Fo$*
 !if $(MASM)
-ASM=@ml.exe $(ASMOPT) -D?FLAT=0 -Fl$* -Fo$*
+ASM=@ml.exe $(ASMOPT)
 !else
-ASM=@jwasm.exe $(ASMOPT) -D?FLAT=0 -Fl$* -Fo$*
+ASM=@jwasm.exe $(ASMOPT)
 !endif
 
 .SUFFIXES: .asm .obj
 
 .asm{$(OUTDIR)}.obj:
-    $(ASM) $<
+	$(ASM) $<
 
 ALL: $(OUTDIR) $(OUTDIR)\$(NAME).LIB
 
 $(OUTDIR):
-	mkdir $(OUTDIR)
+	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).LIB: $(OBJMODS) $(OUTDIR)\comctl32.obj
 	@cd $(OUTDIR)
     @if exist $(NAME).lib del $(NAME).lib
-    wlib -n -q $(NAME).LIB @<<
+    @$(LIB16BIN) $(NAME).LIB @<<
 $(OBJNAMES:.\=+)
 <<
 	@cd ..
 !if $(DEBUG)==0
-#	copy $*.LIB $(LIBOMF)\*.*
+#	@copy $*.LIB $(LIBOMF)\*.* >NUL
 !endif    
 
 clean:
-    @del $(OUTDIR)\*.obj
-    @del $(OUTDIR)\*.lib
-    @del $(OUTDIR)\*.map
-    @del $(OUTDIR)\*.lst
+	@del $(OUTDIR)\*.obj
+	@del $(OUTDIR)\*.lib
+	@del $(OUTDIR)\*.map
+	@del $(OUTDIR)\*.lst

@@ -1,3 +1,25 @@
+
+SHELLEXECUTEINFOA struct 
+cbSize			DWORD	?
+fMask			DWORD	?
+hwnd			HWND	?
+lpVerb			LPSTR	?
+lpFile			LPSTR	?
+lpParameters	LPSTR	?
+lpDirectory		LPSTR	?
+nShow			DWORD	?
+hInstApp		HINSTANCE	?
+lpIDList		LPVOID	?
+lpClass			LPSTR	?
+hkeyClass		HKEY	?
+dwHotKey		DWORD	?
+union DUMMYUNIONNAME
+hIcon			HANDLE	?
+hMonitor		HANDLE	?
+ends
+hProcess		HANDLE	?
+SHELLEXECUTEINFOA ends
+
 FILEOP_FLAGS  typedef WORD
 
 FO_MOVE		EQU	0001h

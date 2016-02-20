@@ -1,18 +1,18 @@
 
-		.386
+	.386
 if ?FLAT
-		.MODEL FLAT, stdcall
+	.MODEL FLAT, stdcall
 else
-		.MODEL SMALL, stdcall
+	.MODEL SMALL, stdcall
 endif
-		option proc:private
-        option casemap:none
-        
-		include winbase.inc
-		include dkrnl32.inc
-		include macros.inc
+	option proc:private
+	option casemap:none
 
-		.data
+	include winbase.inc
+	include dkrnl32.inc
+	include macros.inc
+
+	.data
 
 ;--- g_hCurThread is public, because GetCurrentThread() in Win32
 ;--- does return a constant value, not the real thread handle.
@@ -23,7 +23,7 @@ if ?GBLCURRENT
 g_hCurThread	dd 0
 endif
 
-		.code
+	.code
 
 ;--- GetCurrentThread is not quite compatible with Win32
 ;--- because in Win32 it returns a pseudo handle (-2?)
@@ -36,16 +36,16 @@ GetCurrentThread endp
 
 _GetCurrentThread proc public
 if ?GBLCURRENT
-		mov   eax,[g_hCurThread]	 ;does a thread exist?
+	mov   eax,[g_hCurThread]	 ;does a thread exist?
 else
-		mov   eax, fs:[THREAD_INFORMATION_BLOCK.pProcess]
-        mov   eax, [eax].PROCESS.hThread
+	mov   eax, fs:[THREAD_INFORMATION_BLOCK.pProcess]
+	mov   eax, [eax].PROCESS.hThread
 endif
-;		@strace	<"GetCurrentThread()=", eax>
-		ret
-        align 4
+;	@strace	<"GetCurrentThread()=", eax>
+	ret
+	align 4
         
 _GetCurrentThread endp
 
-		end
+	end
         

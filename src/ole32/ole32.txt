@@ -26,6 +26,7 @@
   CoUninitialize           Y
   CreateStreamOnHGlobal    Y
   IIDFromString
+  OleFlushClipboard        Y
   OleInitialize            Y
   ProgIDFromCLSID          Y
   StgOpenStorage           Y
@@ -34,6 +35,11 @@
 
  3. History
 
+ 11/16/2009: V1.9
+ 
+ þ OleFlushClipboard added (dummy).
+ þ CoInitializeSecurity added (dummy).
+ 
  01/20/2009: V1.8
  
  þ source assembled with JWasm.

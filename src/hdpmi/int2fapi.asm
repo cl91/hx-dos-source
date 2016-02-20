@@ -2,10 +2,10 @@
 ;*** implements API translation for Int 2Fh
 
 		.386
-        
+
         include hdpmi.inc
         include external.inc
-        
+
         option proc:private
 
 
@@ -42,157 +42,157 @@ _LTRACE_ = 0
 
 intr2F  proc public
 if _LTRACE_
-        cmp     ah,40h			;???
-        jz      @F
-        cmp     ax,1680h
-        jz      @F
-        cmp     ax,1689h		;don't log the idle calls
-        jz      @F
+        cmp ah,40h			;???
+        jz @F
+        cmp ax,1680h
+        jz @F
+        cmp ax,1689h		;don't log the idle calls
+        jz @F
         @strout <"I2F: ax=%X bx=%X cx=%X dx=%X si=%lX",lf>,ax,bx,cx,dx,esi
 @@:
 endif
-        cmp     ah,15h          ;CD-ROM?
-        jz      int2f15
-        cmp     ah,16h          ;Windows?
-        jz      int2f16
+        cmp ah,15h          ;CD-ROM?
+        jz int2f15
+        cmp ah,16h          ;Windows?
+        jz int2f16
 if ?SUPI2F4300
-        cmp     ax,4300h        ;XMS installed?
-        jz      error			;required by 16bit winsetup.exe
-endif        
+        cmp ax,4300h        ;XMS installed?
+        jz error			;required by 16bit winsetup.exe
+endif
 callok:
         @callrmsint 2Fh
-        
+
 int2f15:
-        cmp     al,0
-        jz      callok
-        cmp     al,6
-        jz      callok
-        cmp     al,7
-        jz      callok
-        cmp     al,0Ah
-        jz      callok
-        cmp     al,0Bh
-        jz      callok
-        cmp     al,0Ch
-        jz      callok
-        cmp     al,0Eh
-        jz      callok
-if ?PRTI2F15        
-		push	2Fh
-        call    unsupp
-endif        
-error:  
+        cmp al,0
+        jz callok
+        cmp al,6
+        jz callok
+        cmp al,7
+        jz callok
+        cmp al,0Ah
+        jz callok
+        cmp al,0Bh
+        jz callok
+        cmp al,0Ch
+        jz callok
+        cmp al,0Eh
+        jz callok
+if ?PRTI2F15
+		push 2Fh
+        call unsupp
+endif
+error:
         stc
-        jmp     iret_with_CF_mod
-        
+        jmp iret_with_CF_mod
+
 int2f16:
-        cmp     al,86h            ;1686? prot mode only
-        jnz     @F
-        xor     ax,ax
+        cmp al,86h            ;1686? prot mode only
+        jnz @F
+        xor ax,ax
         iretd
 @@:
 
 if ?SUPI2F1683
-        cmp     al,83h            ;1683 "get vm id"?
-        jnz     @F
-        mov     bx,1
+        cmp al,83h            ;1683 "get vm id"?
+        jnz @F
+        mov bx,1
         iretd
 @@:
 endif
 
 if ?SUPI2F1684
-        cmp     al,84h            ;1684?
-        jnz     @F
-        call    checkvxd
-        push    eax
+        cmp al,84h            ;1684?
+        jnz @F
+        call checkvxd
+        push eax
         lahf
-        mov     byte ptr [esp+4].IRET32.rFL,ah
-        pop     eax
+        mov byte ptr [esp+4].IRET32.rFL,ah
+        pop eax
         iretd
 @@:
 endif
 
 if ?IDLEFILTER
-        cmp     al,89h            ;1689 - VM idle?
-        jnz     @F
-        dec     byte ptr ss:[i2frefl]
-        test    byte ptr ss:[i2frefl],001Fh
-        jz      @F
+        cmp al,89h            ;1689 - VM idle?
+        jnz @F
+        dec byte ptr ss:[i2frefl]
+        test byte ptr ss:[i2frefl],001Fh
+        jz @F
         iretd
 @@:
 endif
 
 if ?SUPI2F168A
-        cmp     al,8Ah            ;168A - 32 Bit extensions
-        jnz     @F
+        cmp al,8Ah            ;168A - 32 Bit extensions
+        jnz @F
 if ?32BIT
         @strout <"I2F: ax=168a, ds:esi=%ls",lf>,ds,esi
 else
         @strout <"I2F: ax=168a, ds:si=%s",lf>,ds,si
 endif
-        push	es
-        push	cs
-        pop		es
+        push es
+        push cs
+        pop es
         pushad
 if ?INT21API
-        mov		edi, offset szMsdos
-        mov		ecx, 7
+        mov edi, offset szMsdos
+        mov ecx, 7
   ife ?32BIT
-		movzx	esi, si
+		movzx esi, si
   endif
-        repz	cmpsb
-        jz		isMsDos
-endif        
-if ?32BIT        
-if ?32RTMSUPP        
+        repz cmpsb
+        jz isMsDos
+endif
+if ?32BIT
+if ?32RTMSUPP
   if 0
-        mov		esi, [esp].PUSHADS.rESI
-        mov		edi, offset szVirtual
-        mov		ecx, 7+1+7+1			;"VIRTUAL" + " " + "SUPPORT" + 00
-        repz	cmpsb
-        jz		isVirtual
+        mov esi, [esp].PUSHADS.rESI
+        mov edi, offset szVirtual
+        mov ecx, 7+1+7+1			;"VIRTUAL" + " " + "SUPPORT" + 00
+        repz cmpsb
+        jz isVirtual
   else
 		popad
-		pop		es
-		push	esi
-		call	copyz_dssi_2_tlb	;copy ds:esi to tlb, ds=tlb, si=0
+		pop es
+		push esi
+		call copyz_dssi_2_tlb	;copy ds:esi to tlb, ds=tlb, si=0
         @simrmint 2Fh
         pop esi
         iretd
   endif
-endif        
+endif
 endif
         @strout <"I2F: return ax=168a, unsupported",lf>
 		popad
-		pop		es
+		pop es
 		iretd
-if ?INT21API        
+if ?INT21API
 isMsDos:
   if ?32BIT
-        mov     [esp].PUSHADS.rEDI,_I2F168A_
+        mov [esp].PUSHADS.rEDI,_I2F168A_
   else
-        mov     [esp].PUSHADS.rDI,_I2F168A_
+        mov [esp].PUSHADS.rDI,_I2F168A_
   endif
-        mov		word ptr [esp + sizeof PUSHADS],_INTSEL_
-endif        
+        mov word ptr [esp + sizeof PUSHADS],_INTSEL_
+endif
 isVirtual:
         @strout <"I2F: return ax=168a, supported",lf>
 		popad
-		pop		es
-        mov     al,00
+		pop es
+        mov al,00
         iretd
         
 szMsdos	db "MS-DOS",0
 @@:
 endif
 if ?PRTI2F16
-        cmp     al,89h
-        jz      @F
-        cmp     al,80h
-        jz      @F
-        push	2Fh
-        call    unsupp
-        or		byte ptr [esp].IRET32.rFL+1,1	;set trace flag
+        cmp al,89h
+        jz @F
+        cmp al,80h
+        jz @F
+        push 2Fh
+        call unsupp
+        or byte ptr [esp].IRET32.rFL+1,1	;set trace flag
 @@:
 endif
         @callrmsint 2Fh
@@ -214,7 +214,7 @@ if ?LDTROSEL
          mov ax,_SELLDTSAFE_
 else
          mov ax,_SELLDT_
-endif         
+endif
          clc
          ret
 @@:
@@ -231,9 +231,9 @@ endif
 
 unsupp proc public
         @printf <"int %X ">,<word ptr [esp+4]>
-        call    unsuppcallx
-        ret     4
-unsupp endp        
+        call unsuppcallx
+        ret 4
+unsupp endp
 
 unsuppcallx proc public
         @printf <"ax=%X bx=%X cx=%X dx=%X unsupported",lf>,ax,bx,cx,dx

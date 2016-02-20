@@ -2,10 +2,10 @@
 ;--- API translation helpers (mostly for int 21h translation)
 
 		.386
-        
+
 		include hdpmi.inc
 		include external.inc
-        
+
         option proc:private
 
 if ?32BIT
@@ -83,10 +83,10 @@ copy$_dsdx_2_tlb proc public
         xor		edi, edi
 if ?32BIT
 		mov		esi, edx
-else        
+else
 		movzx	esi, dx
 endif
-@@:     
+@@:
         lodsb
         stosb
         cmp		al,'$'
@@ -127,7 +127,7 @@ else
 ;		push	byte ptr _TLBSEL_
 ;		pop 	ds
 ;		mov 	esi,?TLBDTA
-endif        
+endif
 		movzx   ecx, [esp].COPYTLBDTA2DTA.wSize
 		cld
 		rep 	movsb
@@ -142,8 +142,8 @@ copy_tlbdta_2_dta endp
 ;*** used by int 21 ah=4Fh
 
 COPYDTA2TLBDTA struct
-   		dd ?		;es
-   		dd ?		;ds
+		dd ?		;es
+		dd ?		;ds
 		PUSHADS <>
         dd ?		;return
 wSize	dw ?
@@ -165,7 +165,7 @@ else
 ;		push	byte ptr _TLBSEL_
 ;		pop 	es
 ;		mov 	edi,?TLBDTA
-endif  
+endif
 		cld
 		lds 	esi,ss:[dtaadr]
 		movzx	ecx,[esp].COPYDTA2TLBDTA.wSize
@@ -322,7 +322,7 @@ copy_far32_2_flat proc public
 		popad
 		retn 3*4
         align 4
-		
+
 copy_far32_2_flat endp
 
 ;--- copy xx bytes from FAR32 to TLB:xx
@@ -362,7 +362,7 @@ copy_far32_2_tlbxx proc public
 		popad
 		retn 4*4
         align 4
-		
+
 copy_far32_2_tlbxx endp
 
 ;*** copy cx bytes src TLB:0, dst ES:(E)DI
@@ -479,7 +479,7 @@ endif
 		popad
 		retn	3*4
         align 4
-        
+
 copy_flat_2_far32 endp
 
 ;*** copy asciiz, src ds:(e)dx, dst tlb:0000
@@ -871,7 +871,7 @@ _FreeDosMemory proc public
 		@strout <"free dyn tlb at %X, size now %X",lf>,si,[edi-10h+3]
 		pop 	ds
 		ret
-        align 4
+		align 4
 _FreeDosMemory endp
 
 endif
@@ -993,10 +993,10 @@ ife ?32BIT
 
 selector_avail proc public
 		pushad
-        mov eax,ebx
-        xor ebp,ebp		;flag: test for sufficient free selectors
-        jmp selector_resize_1
-        align 4
+		mov eax,ebx
+		xor ebp,ebp		;flag: test for sufficient free selectors
+		jmp selector_resize_1
+		align 4
 selector_avail endp
 
 endif
@@ -1028,12 +1028,12 @@ ife ?32BIT
 		lsl		eax,edx
 		inc 	eax
 		@strout <"selector_resize: old size=%lX, new size=%lX",lf>, eax, esi
-        add		eax,10000h-1		;align old size to 64 kB
-        xor		ax,ax
+		add		eax,10000h-1		;align old size to 64 kB
+		xor		ax,ax
 		lea 	edx,[esi+10000h-1]	;align new size to 64 kB
 		xor 	dx,dx
 		cmp 	eax,edx
-        jz		selectortilex_1
+		jz		selectortilex_1
 		jnc 	smallerblock
 		sub 	edx,eax
 		shr 	edx,16
@@ -1060,29 +1060,29 @@ smallerblock:
 		jc		error
 		@strout <"selector_resize: freeing of selectors was ok",lf>
 selectortilex_1:
-        and		ebp,ebp
-        jz		done
+		and		ebp,ebp
+		jz		done
 endif
 		mov 	ebx,edi
 		mov 	ax,0006
 		@int_31
 		jc		@F
 		push	cx
-        push	dx
-        pop		edi
+		push	dx
+		pop		edi
 		mov 	eax,ebx
 		call	selectortile2
-done:        
+done:
 @@:
 		popad
 		ret
 ife ?32BIT
 error:
 		@strout <"selector_resize: error, not enough free selectors",lf>
-    	popad
-        ret
+		popad
+		ret
 endif
-        align 4
+		align 4
 selector_resize endp
 
 ;--- handle selectors for free memory block
@@ -1108,10 +1108,9 @@ else
 exit:
 endif
 		ret
-        align 4
+		align 4
 selector_free endp
 
 _TEXT32  ends
 
 end
-

@@ -6,7 +6,7 @@
 ;--- best viewed with TABSIZE 4
 
 		.386
-        
+
         include hdpmi.inc
         include external.inc
 
@@ -65,82 +65,82 @@ if ?INT10MAPPING
 intr104E:
 intr104F:
 		popfd
-        cmp     al,00h
-        jz      @F
-        cmp     al,01h
-        jz      @F
-        cmp     al,09h
-        jz      @F
-        cmp     al,0Ah
-        jnz     nomappcall
+        cmp al,00h
+        jz @F
+        cmp al,01h
+        jz @F
+        cmp al,09h
+        jz @F
+        cmp al,0Ah
+        jnz nomappcall
 @@:
-        push    10h
-        call    unsupp
+        push 10h
+        call unsupp
         stc
         ret
         align 4
 
-;--- int 10h, ah=10h        
-        
+;--- int 10h, ah=10h
+
 intr1010:
 		popfd
-        cmp     al,2
-        jz      intr10x_02  ;set palette registers (ES:DX ->regs)
-        cmp     al,9
-        jz      intr10x_09  ;get palette registers (ES:DX ->regs)
-        cmp     al,12h
-        jz      intr10x_12  ;set dac registers (ES:DX -> regs, CX=cnt)
-        cmp     al,17h
-        jz      intr10x_17  ;get dac registers (ES:DX -> regs, CX=cnt)
-        jmp     nomappcall
+        cmp al,2
+        jz intr10x_02  ;set palette registers (ES:DX ->regs)
+        cmp al,9
+        jz intr10x_09  ;get palette registers (ES:DX ->regs)
+        cmp al,12h
+        jz intr10x_12  ;set dac registers (ES:DX -> regs, CX=cnt)
+        cmp al,17h
+        jz intr10x_17  ;get dac registers (ES:DX -> regs, CX=cnt)
+        jmp nomappcall
 
 intr10x_02:                 ;02 set palette registers (17 bytes)
-        push	ecx
-        mov		cx,17
-        jmp		@F
+        push ecx
+        mov cx,17
+        jmp @F
 intr10x_12:                 ;12 set dac registers
-        push	ecx
-        lea     ecx,[ecx+ecx*2] ;je 3 bytes
-@@:        
-        push    ds
-        push    es
-        pop     ds
-        call    copy_dsdx_2_tlb	;copy cx bytes to TLB:0
-        pop     ds
-        pop     ecx
-        call    setesreg2tlb
-        push    edx
-        xor     edx,edx
-        call    nomappcall
-        pop     edx
+        push ecx
+        lea ecx,[ecx+ecx*2] ;je 3 bytes
+@@:
+        push ds
+        push es
+        pop ds
+        call copy_dsdx_2_tlb	;copy cx bytes to TLB:0
+        pop ds
+        pop ecx
+        call setesreg2tlb
+        push edx
+        xor edx,edx
+        call nomappcall
+        pop edx
         ret
         align 4
-        
+
 intr10x_09:                  ;09 get palette registers
-		call	int10x_0917
-		push	ecx
-        mov		cx,17
-        jmp		int10x_0917post
+		call int10x_0917
+		push ecx
+        mov cx,17
+        jmp int10x_0917post
 intr10x_17:                  ;17 get dac registers
-		call	int10x_0917
-        push	ecx
-        lea     ecx,[ecx+ecx*2] ;je 3 bytes
+		call int10x_0917
+        push ecx
+        lea ecx,[ecx+ecx*2] ;je 3 bytes
 int10x_0917post:
-		push	ds
-        push    es
-        pop     ds
-        call    copy_tlb_2_dsdx
-        pop     ds
-        pop     ecx
+		push ds
+        push es
+        pop ds
+        call copy_tlb_2_dsdx
+        pop ds
+        pop ecx
         ret
         align 4
-        
-int10x_0917:        
-        call    setesreg2tlb
-        push    edx
-        xor     edx,edx
-        call    nomappcall
-        pop     edx
+
+int10x_0917:
+        call setesreg2tlb
+        push edx
+        xor edx,edx
+        call nomappcall
+        pop edx
         ret
         align 4
 
@@ -156,18 +156,18 @@ intr15 proc public
 
 		pushfd
 if ?SUPI15C207
-        cmp     ax,0C207h                 ;set pointing device proc?
-        jz      int15c207
+        cmp ax,0C207h                 ;set pointing device proc?
+        jz int15c207
 endif
-		cmp		ah,0C0h
-        jz		int15c0
+		cmp ah,0C0h
+        jz int15c0
         popfd
         @callrmsint 15h
-int15c0:        
+int15c0:
 		popfd
         @simrmint 15h
-        call    es_segm2sel
-        jmp     iret_with_CF_mod
+        call es_segm2sel
+        jmp iret_with_CF_mod
         align 4
 intr15 endp
         
@@ -177,44 +177,44 @@ if ?SUPI15C207
 
 int15c207 proc
 		popfd			;restore EFlags
-		push	ds
-        push	byte ptr _CSALIAS_
-        pop		ds
-        assume	ds:GROUP32
+		push ds
+        push byte ptr _CSALIAS_
+        pop ds
+        assume ds:GROUP32
 if ?32BIT
-        mov     dword ptr [mouse_evntproc+0],ebx
-        mov     word ptr [mouse_evntproc+4],es
-		cmp		word ptr [mouse_evntproc+4],0
+        mov dword ptr [mouse_evntproc+0],ebx
+        mov word ptr [mouse_evntproc+4],es
+		cmp word ptr [mouse_evntproc+4],0
 else
-        mov     word ptr [mouse_evntproc+0],bx
-        mov     word ptr [mouse_evntproc+2],es
-		cmp		word ptr [mouse_evntproc+2],0
+        mov word ptr [mouse_evntproc+0],bx
+        mov word ptr [mouse_evntproc+2],es
+		cmp word ptr [mouse_evntproc+2],0
 endif
-		jnz		install
-        
+		jnz install
+
 ;--- the mouse event proc is reset by the client
 
-		cmp 	[mouse15_rmcb],0	;was a rm callback allocated?
-;		jz		iret_with_CF_mod	;no, done
-        jz		exit				;no, done
+		cmp [mouse15_rmcb],0	;was a rm callback allocated?
+;		jz iret_with_CF_mod	;no, done
+        jz exit				;no, done
         @strout <"deinstall int 15h mouse event proc",lf>
-        mov     ss:[v86iret.rES],0
+        mov ss:[v86iret.rES],0
         @simrmint 15h				;deinstall event proc
         pushad
-        xor		ecx, ecx
-        xchg 	ecx, [mouse15_rmcb]
-        mov		edx, ecx
-        shr		ecx, 16
-        call	freermcb			;free the rm callback in CX:DX
-        popad						;will return with CF on error
-        jmp     exit
-install:        
-        call	installc207handler
+        xor ecx, ecx
+        xchg ecx, [mouse15_rmcb]
+        mov edx, ecx
+        shr ecx, 16
+        call freermcb			;free the rm callback in CX:DX
+        popad					;will return with CF on error
+        jmp exit
+install:
+        call installc207handler
 exit:
-		pop		ds
-        jmp     iret_with_CF_mod
+		pop ds
+        jmp iret_with_CF_mod
         align 4
-        
+
 int15c207 endp
 
 ;--- install a real int 15h mouse event proc
@@ -224,42 +224,42 @@ int15c207 endp
 
 installc207handler proc
 
-		cmp		[mouse15_rmcb],0		;is a rm callback allocated?
-        jnz     done1					;jump if yes
+		cmp [mouse15_rmcb],0		;is a rm callback allocated?
+        jnz done1					;jump if yes
 
         pushad
-		push	ds
-        push    es
-        
-        push    byte ptr _CSR3SEL_
-        pop     ds
-        push    byte ptr _DSR3SEL_
-        pop     es
-if ?32BIT        
-        mov     esi,offset mouse_eventproc
-        mov     edi,offset mouse_rmcs
+		push ds
+        push es
+
+        push byte ptr _CSR3SEL_
+        pop ds
+        push byte ptr _DSR3SEL_
+        pop es
+if ?32BIT
+        mov esi,offset mouse_eventproc
+        mov edi,offset mouse_rmcs
 else
-        mov     si,LOWWORD(offset mouse_eventproc)
-        mov     di,LOWWORD(offset mouse_rmcs)
+        mov si,LOWWORD(offset mouse_eventproc)
+        mov di,LOWWORD(offset mouse_rmcs)
 endif
-        call    allocrmcb		;ds:esi -> pm proc, es:edi -> rmcs
-        pop     es
-        pop		ds
-        jc		@F
-        mov     word ptr [mouse15_rmcb+0],dx
-        mov     word ptr [mouse15_rmcb+2],cx
+        call allocrmcb		;ds:esi -> pm proc, es:edi -> rmcs
+        pop es
+        pop ds
+        jc @F
+        mov word ptr [mouse15_rmcb+0],dx
+        mov word ptr [mouse15_rmcb+2],cx
 @@:     
         popad
-        jc		exit
+        jc exit
 done1:
-		push	ebx
+		push ebx
         @strout <"install int 15h mouse event proc",lf>
-		mov		bx,word ptr [mouse15_rmcb+2]
-        mov     ss:[v86iret.rES],bx
-        mov     bx,word ptr [mouse15_rmcb+0]
+		mov bx,word ptr [mouse15_rmcb+2]
+        mov ss:[v86iret.rES],bx
+        mov bx,word ptr [mouse15_rmcb+0]
         @simrmint 15h					;set the event proc (ax=C207)
-        pop		ebx
-exit:        
+        pop ebx
+exit:
         ret
         align 4
 installc207handler endp
@@ -285,25 +285,25 @@ if ?32BIT
 		@strout <"mouse event (C207) in pm, SS:ESP=%lX:%lX,DS:ESI=%lX:%lX",lf>,ss,esp,ds,esi
 ;--- pop CS:IP from real-mode stack and adjust real mode SP
 		lodsd
-		mov 	es:[edi].RMCS.rCSIP, eax
-		mov 	es:[edi].RMCS.rSP, si
+		mov es:[edi].RMCS.rCSIP, eax
+		mov es:[edi].RMCS.rSP, si
 ;--- transfer 4 WORDs from real-mode to protected mode stack
-		push	dword ptr [esi+4]
-		push	dword ptr [esi+0]
+		push dword ptr [esi+4]
+		push dword ptr [esi+0]
 		@strout <"calling %X:%lX",lf>,<word ptr cs:mouse_evntproc+4>,<dword ptr cs:mouse_evntproc+0>
-		call	cs:[mouse_evntproc]
-		add 	esp,4*2
+		call cs:[mouse_evntproc]
+		add esp,4*2
 else
 		@strout <"mouse event (C207) in pm, SS:SP=%lX:%X,DS:SI=%lX:%X",lf>,ss,sp,ds,si
 		@useext
 		lodsd
-		mov 	es:[di].RMCS.rCSIP, eax
-		mov 	es:[di].RMCS.rSP, si
-		push	dword ptr [si+4]
-		push	dword ptr [si+0]
+		mov es:[di].RMCS.rCSIP, eax
+		mov es:[di].RMCS.rSP, si
+		push dword ptr [si+4]
+		push dword ptr [si+0]
 		@strout <"calling %X:%X",lf>,<word ptr cs:mouse_evntproc+2>,<word ptr cs:mouse_evntproc+0>
-		call	cs:[mouse_evntproc]
-		add 	sp,4*2
+		call cs:[mouse_evntproc]
+		add sp,4*2
 endif
 		@strout <"mouse event (C207), return to rm",lf>
 		@iret
@@ -317,14 +317,14 @@ if ?MOU15RESET
 ;--- inp: eax=previous state of mouse event proc
 
 mouse15_reset proc public
-		cmp		eax, cs:[mouse15_rmcb]	;has the rmcb changed?
-		jz		@F
-		mov		bx,word ptr cs:[mouse15_rmcb+0]
-		mov		ax,word ptr cs:[mouse15_rmcb+2]
-		mov 	ss:[v86iret.rES],ax
-		mov		ax,0C207h
+		cmp eax, cs:[mouse15_rmcb]	;has the rmcb changed?
+		jz @F
+		mov bx,word ptr cs:[mouse15_rmcb+0]
+		mov ax,word ptr cs:[mouse15_rmcb+2]
+		mov ss:[v86iret.rES],ax
+		mov ax,0C207h
 		@simrmint 15h					;set the event proc (ax=C207)
-@@: 	
+@@:
 		ret
 		align 4
 mouse15_reset endp
@@ -365,47 +365,47 @@ EDDSRG ends
 ?SUPP4B81XX	equ 1	;support translation of VDS 03/04 and 07-0A
 
 
-intr4B  proc near public
+intr4B proc near public
 
 ;*** if ah=81h (VDS), just al=0B/0C ok to route to real-mode
 
         @strout <"int4B: AX=%X,ES:DI=%X:%X",lf>,ax,es,di
-        cmp     ah,81h
-        jnz     @F
-        cmp     al,02h	;00 and 01 are NOPs, 02 just register API
-        jbe     @F
+        cmp ah,81h
+        jnz @F
+        cmp al,02h	;00 and 01 are NOPs, 02 just register API
+        jbe @F
 if ?SUPP4B8105        
-        cmp     al,05h	;05 scatter lock will be translated!
-        jz      vds_05
-        cmp     al,06h	;05 scatter unlock is accepted
-        jz      vds_06
-endif        
-        cmp     al,0Bh
-        jb      vds_xx
+        cmp al,05h	;05 scatter lock will be translated!
+        jz vds_05
+        cmp al,06h	;05 scatter unlock is accepted
+        jz vds_06
+endif
+        cmp al,0Bh
+        jb vds_xx
 @@:
         @callrmsint 4Bh
 vds_xx:
 if ?SUPP4B81XX
-		push	ecx
-        mov		cx,sizeof DDS
-        call	copy_esdi_2_tlb
-        pop		ecx
-        push	edi
-        xor		edi,edi
+		push ecx
+        mov cx,sizeof DDS
+        call copy_esdi_2_tlb
+        pop ecx
+        push edi
+        xor edi,edi
         @simrmint 4Bh
-        pop		edi
+        pop edi
         pushfd
-        push	ecx
-        mov		cx,sizeof DDS
-        call	copy_tlb_2_esdi
-        pop		ecx
+        push ecx
+        mov cx,sizeof DDS
+        call copy_tlb_2_esdi
+        pop ecx
         popfd
 else
-        mov 	al,0Fh
+        mov al,0Fh
         stc
-endif        
+endif
         jmp     iret_with_CF_mod
-if ?SUPP4B8105        
+if ?SUPP4B8105
 vds_06:
 vds_05:
         push ds
@@ -418,23 +418,23 @@ vds_05:
 ;        jz error0F
 ife ?32BIT
 		movzx edi,di
-endif        
+endif
 		xor eax, eax
-		mov	es:[edi].EDDS.wNumUsed,ax
-		cmp	eax,es:[edi].EDDS.dwSize	;zero sized region is ok
-		je	done
+		mov es:[edi].EDDS.wNumUsed,ax
+		cmp eax,es:[edi].EDDS.dwSize	;zero sized region is ok
+		je done
 		movzx ebx,es:[edi].EDDS.wSel
         and ebx, ebx
-        jz  @F
+        jz @F
         mov al,6
         @int_31
         jc error07
         push cx
         push dx
         pop eax
-@@:     
+@@:
         mov ebx, edi
-		add	eax,es:[edi].EDDS.dwOfs
+		add eax,es:[edi].EDDS.dwOfs
         mov ebp, eax
         mov esi,es:[edi].EDDS.dwSize
         lea esi, [eax+esi-1]
@@ -456,7 +456,7 @@ endif
         jz done
         cld
 		test byte ptr [esp].PUSHADS.rEDX,40h
-        jnz  storePTEs
+        jnz storePTEs
         shl ebp, 16
         mov bp, si
         and bp, 0FFFh
@@ -472,14 +472,14 @@ nextitem2:
         jz error07
         and ax,0F000h
         cmp eax, edx
-        jz  samereg
+        jz samereg
         inc ebx
         cmp bx, es:[edi].EDDS.wNumAvail
         jnc @F
         mov es:[edi+ebx*8+sizeof EDDS].EDDSRG.dwAddr, eax
         mov es:[edi+ebx*8+sizeof EDDS].EDDSRG.dwSize, 0
-@@:     
-samereg:        
+@@:
+samereg:
         add es:[edi+ebx*8+sizeof EDDS].EDDSRG.dwSize, 1000h
         loop nextitem2
         mov eax, 1000h
@@ -492,24 +492,24 @@ samereg:
         or  es:[edi+sizeof EDDS].EDDSRG.dwAddr, ebp
         sub es:[edi+sizeof EDDS].EDDSRG.dwSize, ebp
         jmp done
-storePTEs:        
+storePTEs:
         mov es:[ebx].EDDS.wNumUsed,cx
         cmp cx, es:[ebx].EDDS.wNumAvail
         ja error09
         mov esi, edi
         lea edi, [ebx+sizeof EDDS]
-nextitem:        
+nextitem:
         lodsd
         test al,01
         jnz @F
         xor eax, eax
-@@:        
+@@:
         and ax,0F001h
         stosd
         loop nextitem
         and bp,0FFFh
         mov [esp].PUSHADS.rBX, bp
-done:        
+done:
 		popad
         pop ds
         jmp iret_with_CF_mod
@@ -524,13 +524,13 @@ error09:
         jmp @F
 error07:
         mov al,07h	;invalid region
-@@:        
+@@:
 		mov byte ptr [esp].PUSHADS.rEAX,al
         stc
         jmp done
-endif        
-        
-intr4B  endp
+endif
+
+intr4B endp
 
 _TEXT32 ends
 

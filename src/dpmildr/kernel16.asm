@@ -15,11 +15,11 @@ else
 endif
 
 ife ?32BIT
-externdef	_hmemset:far
-externdef	lstrcpy:far
-externdef	lstrcat:far
-externdef	lstrlen:far
-externdef	discardmem:near
+externdef pascal _hmemset:far
+externdef pascal lstrcpy:far
+externdef pascal lstrcat:far
+externdef pascal lstrlen:far
+externdef discardmem:near
 endif
 
 WF_PMODE	equ 1
@@ -83,8 +83,8 @@ endif
 _TEXT	segment
 
 if _PROFSTRING_
-	externdef GetPrivateProfileString:far
-	externdef WritePrivateProfileString:far
+	externdef pascal GetPrivateProfileString:far
+	externdef pascal WritePrivateProfileString:far
 endif
 
 GetDOSEnvironment proc far pascal
@@ -971,7 +971,7 @@ if ?32BIT
 else
 		push	ax
 
-;--- hmemset(FAR16 dst, WORD value, DWORD cnt), requires __AHINCR
+;--- _hmemset(FAR16 dst, WORD value, DWORD cnt), requires __AHINCR
 public __AHINCR
 __AHINCR equ 8
 
@@ -1075,7 +1075,7 @@ done:
         popa
         jmp allocok
 failed2:
-		mov ax,502h
+		mov ax,0502h
         int 31h
 failed:
 		mov sp,bp
@@ -1146,7 +1146,7 @@ largefree:
         mov cx,ax
         mov di,es:[0]
         mov si,es:[2]
-        mov ax,502h
+        mov ax,0502h
         int 31h
 @@:     
         mov ax,1

@@ -1,35 +1,32 @@
 
 ;--- implements CreateFileW()
 
-        .386
+	.386
 if ?FLAT
-		.MODEL FLAT, stdcall
+	.MODEL FLAT, stdcall
 else
-        .MODEL SMALL, stdcall
+	.MODEL SMALL, stdcall
 endif
-		option casemap:none
-        option proc:private
+	option casemap:none
+	option proc:private
 
-        include winbase.inc
-		include macros.inc
-        include dkrnl32.inc
+	include winbase.inc
+	include macros.inc
+	include dkrnl32.inc
 
-        .CODE
+	.CODE
 
-CreateFileW proc public	 fname:dword,
-						 access:dword,	   ;  read or write?
-						 sharemode:dword,  ;  share read/write?
-						 pSecurity:dword,  ;  0
-						 fCreation:dword,  ;  CREATE_NEW usw.
-						 attributes:dword,
-						 handle:dword
-		mov		eax,fname
-		call	ConvertWStr
-		invoke	CreateFileA, eax, access, sharemode, pSecurity, fCreation, attributes, handle
-		@strace	<"CreateFileW(", fname, ", ", access, ", ", sharemode, ", ", pSecurity, ", ", fCreation, ", ", attributes, ", ", handle, ")=", eax>
-		ret
-        align 4
+CreateFileW proc public fname:dword, access:dword, sharemode:dword,
+						 pSecurity:dword, fCreation:dword, attributes:dword, handle:dword
+
+	mov eax,fname
+	call ConvertWStr
+	invoke CreateFileA, eax, access, sharemode, pSecurity, fCreation, attributes, handle
+	@strace <"CreateFileW(", fname, ", ", access, ", ", sharemode, ", ", pSecurity, ", ", fCreation, ", ", attributes, ", ", handle, ")=", eax>
+	ret
+	align 4
+
 CreateFileW endp
 
-		end
+	end
 

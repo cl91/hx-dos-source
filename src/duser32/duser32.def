@@ -7,6 +7,7 @@ EXPORTS
  AppendMenuA
  AttachThreadInput
  BeginPaint
+ BroadcastSystemMessage
  BringWindowToTop
  CallNextHookEx
  CallWindowProcA
@@ -64,6 +65,7 @@ EXPORTS
  DialogBoxParamA
  DispatchMessageA
  DispatchMessageW
+ DrawAnimatedRects
  DrawFocusRect
  DrawIcon
  DrawIconEx
@@ -117,6 +119,7 @@ EXPORTS
  GetForegroundWindow
  GetIconInfo
  GetKeyboardLayout
+ GetKeyboardLayoutList
  GetKeyboardLayoutNameA
  GetKeyboardState
  GetKeyboardType
@@ -138,6 +141,7 @@ EXPORTS
  GetOpenClipboardWindow
  GetParent
  GetPriorityClipboardFormat
+ GetProcessWindowStation
  GetPropA
  GetQueueStatus
  GetShellWindow
@@ -146,12 +150,15 @@ EXPORTS
  GetSysColorBrush
  GetSystemMetrics
  GetSystemMenu
+ GetThreadDesktop
  GetTitleBarInfo
  GetTopWindow
  GetUpdateRect
  GetUpdateRgn
+ GetUserObjectInformationW
  GetWindow
  GetWindowDC
+ GetWindowInfo
  GetWindowLongA
  GetWindowLongW
  GetWindowPlacement
@@ -282,6 +289,7 @@ EXPORTS
  ShowCursor
  ShowOwnedPopups
  ShowWindow
+ ShowWindowAsync
  SystemParametersInfoA
  TabbedTextOutA
  ToAscii
@@ -300,6 +308,7 @@ EXPORTS
  ValidateRect
  ValidateRgn
  VkKeyScanA
+ VkKeyScanExA
  WaitForInputIdle
  WaitMessage
  WindowFromDC

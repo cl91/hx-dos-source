@@ -33,11 +33,11 @@ OBJMODS = $(OBJMODS:.\=RELEASE\)
 MASM=0
 !endif
 
-ASMOPT= -c -nologo -Sg $(AOPTD) -I$(INC32DIR)
+ASMOPT= -c -coff -nologo -Sg $(AOPTD) -I$(INC32DIR) -D?FLAT=1 -Fl$* -Fo$* 
 !if $(MASM)
-ASM=@ml.exe -coff $(ASMOPT) -D?FLAT=1 -Fl$* -Fo$* 
+ASM=@ml.exe $(ASMOPT)
 !else
-ASM=@jwasm.exe -coff $(ASMOPT) -D?FLAT=1 -Fl$* -Fo$* 
+ASM=@jwasm.exe $(ASMOPT)
 !endif
 
 LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL /ENTRY:DllMain /LIBPATH:$(LIBCOFF)
@@ -49,7 +49,7 @@ LIBS=dkrnl32.lib duser32.lib
 .SUFFIXES: .asm .obj
 
 .asm{$(OUTDIR)}.obj:
-    $(ASM) $<
+	$(ASM) $<
 
 ALL: $(OUTDIR) $(OUTDIR)\$(NAME).dll
 
@@ -57,31 +57,33 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).dll: $(OUTDIR)\$(LIBNAME).lib $(OUTDIR)\$(NAME).obj $(NAME).def
-    $(LINKBIN) @<<
+	@$(LINKBIN) @<<
 $(OUTDIR)\$(NAME).obj $(OUTDIR)\$(LIBNAME).lib $(LIBS)
 $(LOPTS) $(LOPTD)
 /DEF:$(NAME).def /OUT:$*.DLL
 <<
 !if $(DEBUG)==0
-     copy $*.DLL ..\..\bin\*.* >NUL
+	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR
-     copy $*.DLL $(DLL32DIR)\*.*
+	@copy $*.DLL $(DLL32DIR)\*.* >NUL
 !endif
-#    copy $*.LIB $(LIBCOFF)\*.*
-#   copy $(OUTDIR)\$(LIBNAME).LIB $(LIBCOFF)\*.*
-!endif    
+#	@copy $*.LIB $(LIBCOFF)\*.* >NUL
+#	@copy $(OUTDIR)\$(LIBNAME).LIB $(LIBCOFF)\*.* >NUL
+!endif
+
+WLIBMODS=$(SRCMODS:.\=+)
 
 $(OUTDIR)\$(LIBNAME).lib: $(OBJMODS)
 	@cd $(OUTDIR)
-    $(LIBBIN) /NOLOGO @<<
-$(SRCMODS:.ASM=.OBJ) /OUT:$(LIBNAME).lib
+	@$(LIBBIN) @<<
+$(LIBNAME).lib $(WLIBMODS:.ASM=.OBJ)
 <<
 	@cd ..
 
 clean:
-    @del $(OUTDIR)\*.obj
-    @del $(OUTDIR)\*.dll
-    @del $(OUTDIR)\*.lib
-    @del $(OUTDIR)\*.map
-    @del $(OUTDIR)\*.lst
-    @del $(OUTDIR)\*.exp
+	@del $(OUTDIR)\*.obj
+	@del $(OUTDIR)\*.dll
+	@del $(OUTDIR)\*.lib
+	@del $(OUTDIR)\*.map
+	@del $(OUTDIR)\*.lst
+	@del $(OUTDIR)\*.exp

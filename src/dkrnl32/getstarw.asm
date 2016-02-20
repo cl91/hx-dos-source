@@ -1,27 +1,27 @@
 
-        .386
+	.386
 if ?FLAT
-        .MODEL FLAT, stdcall
+	.MODEL FLAT, stdcall
 else
-        .MODEL SMALL, stdcall
+	.MODEL SMALL, stdcall
 endif
-		option casemap:none
+	option casemap:none
 
-        include winbase.inc
-		include	macros.inc
+	include winbase.inc
+	include	macros.inc
 
-        .CODE
+	.CODE
 
 GetStartupInfoW proc public pInfo:ptr STARTUPINFOW
 
 ;--- nothing to translate, no strings are used
 
-		invoke	GetStartupInfoA, pInfo
-		@strace	<"GetStartupInfoW(", pInfo, ")=void">
-        ret
-        align 4
-        
+	invoke GetStartupInfoA, pInfo
+	@strace <"GetStartupInfoW(", pInfo, ")=void">
+	ret
+	align 4
+
 GetStartupInfoW endp
 
-        end
+	end
 

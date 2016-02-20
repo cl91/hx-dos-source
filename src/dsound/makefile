@@ -51,7 +51,7 @@ LIBS=$(LIBCOFF)\dkrnl32.lib ..\WINMM\RELEASE\winmm.lib
 .SUFFIXES: .asm .obj
 
 .asm{$(OUTDIR)}.obj:
-    $(ASM) $<
+	$(ASM) $<
 
 ALL: $(OUTDIR) $(OUTDIR)\$(NAME).DLL
 
@@ -59,35 +59,37 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).lib $(OUTDIR)\$(NAME).obj $(NAME).def Makefile
-    $(LINKBIN) @<<
+	@$(LINKBIN) @<<
 $(OUTDIR)\$(NAME).obj $(OUTDIR)\$(LIBNAME).lib $(LOPTS) $(LIBS)
 $(LOPTD)
 /DEF:$(NAME).def /OUT:$*.DLL
 <<
 !if $(DEBUG)==0
-   copy $*.DLL ..\..\bin\*.* >NUL
+	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR   
-   copy $*.DLL $(DLL32DIR)\*.*
+	@copy $*.DLL $(DLL32DIR)\*.* >NUL
 !endif   
 # the libs aren't used outside
-#    copy $*.lib $(LIBCOFF)\*.*
-#    copy $(OUTDIR)\$(LIBNAME).lib $(LIBCOFF)\*.*
-!endif    
+#	@copy $*.lib $(LIBCOFF)\*.* >NUL
+#	@copy $(OUTDIR)\$(LIBNAME).lib $(LIBCOFF)\*.* >NUL
+!endif
+
+WLIBMODS= $(SRCMODS:.\=+) 
 
 $(OUTDIR)\$(LIBNAME).lib: $(OBJMODS)
 	@cd $(OUTDIR)
-    $(LIBBIN) @<<
-$(SRCMODS:.ASM=.OBJ) /OUT:$(LIBNAME).lib
+	@$(LIBBIN) @<<
+$(LIBNAME).lib $(WLIBMODS:.ASM=.OBJ) 
 <<
 	@cd ..
 
 $(OBJMODS): ddsound.inc
 
 clean:
-    @del $(OUTDIR)\*.obj
-    @del $(OUTDIR)\*.dll
-    @del $(OUTDIR)\*.lib
-    @del $(OUTDIR)\*.map
-    @del $(OUTDIR)\*.lst
-    @del $(OUTDIR)\*.exp
+	@del $(OUTDIR)\*.obj
+	@del $(OUTDIR)\*.dll
+	@del $(OUTDIR)\*.lib
+	@del $(OUTDIR)\*.map
+	@del $(OUTDIR)\*.lst
+	@del $(OUTDIR)\*.exp
 

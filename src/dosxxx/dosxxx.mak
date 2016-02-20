@@ -5,8 +5,6 @@
 NAME  = DOSXXX
 SNAME  = DOSXXXS
 
-IMPLIBBIN=c:\msvc\bin\implib.exe
-
 !include <..\dirs>
 
 OUTDIR=RELEASE
@@ -16,15 +14,16 @@ ALL: $(OUTDIR)\$(NAME).LIB $(OUTDIR)\$(SNAME).LIB
 AFLAGS= -nologo -c -Sg -I..\..\Include -Fl$* -Fo$*
 
 .asm{$(OUTDIR)}.obj:
-    $(ASM) $(AFLAGS) $<
+	$(ASM) $(AFLAGS) $<
 
 # create the import library DOSXXX.LIB
 
-$(OUTDIR)\$(NAME).LIB: doscalls.def viocalls.def kbdcalls.def nls.def
-	cd $(OUTDIR)
-    $(IMPLIBBIN) /nowep $(NAME).lib ..\doscalls.def ..\viocalls.def ..\kbdcalls.def ..\nls.def
-    cd ..
-    copy $*.LIB ..\..\Lib16\*.*
+$(OUTDIR)\$(NAME).LIB: doscalls.def viocalls.def kbdcalls.def nls.def $(OUTDIR)\$(SNAME).LIB
+	@cd $(OUTDIR)
+#	@$(IMPLIBBIN) /nowep $(NAME).lib ..\doscalls.def ..\viocalls.def ..\kbdcalls.def ..\nls.def
+	@$(LIB16BIN) -io -o$(NAME).lib $(SNAME).lib 
+	@cd ..
+	@copy $*.LIB ..\..\Lib16\*.* >NUL
 
 # create the static library DOSXXXS.LIB
 
@@ -48,15 +47,13 @@ MODS4OBJMODS = $(MODS4OBJNAMES:.\=RELEASE\)
 
 
 $(OUTDIR)\$(SNAME).LIB: DOSXXX.MAK doscalls.mod $(DOSOBJMODS) $(VIOOBJMODS) $(KBDOBJMODS) $(MODS4OBJMODS)
-	cd $(OUTDIR)
-    erase $(SNAME).LIB
-    lib16 @<<
-$(SNAME).LIB $(DOSOBJNAMES:.\=+) $(VIOOBJNAMES:.\=+) $(KBDOBJNAMES:.\=+) $(MODS4OBJNAMES:.\=+),
-$(NAME).LST;
+	@cd $(OUTDIR)
+	@$(LIB16BIN) @<<
+$(SNAME).LIB $(DOSOBJNAMES:.\=+) $(VIOOBJNAMES:.\=+) $(KBDOBJNAMES:.\=+) $(MODS4OBJNAMES:.\=+)
 <<
-    cd ..
-    copy $*.LIB ..\..\Lib16\*.*
+	@cd ..
+	@copy $*.LIB ..\..\Lib16\*.* >NUL
 
 clean: $(DOSOBJMODS) $(VIOOBJMODS) $(KBDOBJMODS) $(MODS4OBJMODS) $(OUTDIR)\$(NAME).LIB $(OUTDIR)\$(SNAME).LIB
-      !del $**
-      
+	@del $**
+

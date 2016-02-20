@@ -57,6 +57,7 @@
  DeleteAce                         Y
  DeleteService                     Y
  DuplicateToken                    Y
+ DuplicateTokenEx                  Y
  EqualSid                          Y
  FreeSid                           Y
  GetAce                            Y
@@ -92,6 +93,7 @@
  OpenServiceA                      Y
  QueryServiceStatus                Y
  RegCloseKey
+ RegConnectRegistryA               Y
  RegCreateKeyA
  RegCreateKeyExA
  RegCreateKeyExW
@@ -133,6 +135,14 @@
 
  3. History
 
+ 2009/11/16:  V2.10
+
+ þ bugfix: RegEnumKey/RegEnumKeyEx didn't work.
+ þ bugfix: RegDeleteKey didn't work.
+ þ RegSetValueEx+RegQueryValueEx support REG_BINARY and REG_DWORD types.
+ þ RegConnectRegistryA added (dummy)
+ þ DuplicateTokenEx added (stub)
+ 
  2009/01/20:  V2.9
  
  þ source assembled with JWasm.

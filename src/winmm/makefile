@@ -42,9 +42,6 @@ ASM=@jwasm.exe $(ASMOPT)
 
 LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL /LIBPATH:$(LIBCOFF)
 
-#LINKBIN=polink.exe
-#LIBBIN=lib.exe /NOLOGO
-
 NAME=WINMM
 LIBNAME=WINMMS
 LIBS=dkrnl32.lib duser32.lib ..\SB16\RELEASE\sb16.lib
@@ -52,7 +49,7 @@ LIBS=dkrnl32.lib duser32.lib ..\SB16\RELEASE\sb16.lib
 .SUFFIXES: .asm .obj
 
 .asm{$(OUTDIR)}.obj:
-    $(ASM) $<
+	$(ASM) $<
 
 ALL: $(OUTDIR) $(OUTDIR)\$(NAME).DLL
 
@@ -60,24 +57,26 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).lib $(OUTDIR)\$(NAME).obj $(NAME).def Makefile
-    $(LINKBIN) @<<
+	@$(LINKBIN) @<<
 $(OUTDIR)\$(NAME).obj $(OUTDIR)\$(LIBNAME).lib $(LIBS)
 $(LOPTS) $(LOPTD)
 /DEF:$(NAME).def /OUT:$*.DLL
 <<
 !if $(DEBUG)==0
-    copy $*.DLL ..\..\bin\*.* >NUL
+	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR
-    copy $*.DLL $(DLL32DIR)\*.*
-!endif    
-#    copy $*.LIB $(LIBCOFF)\*.*
-#   copy $(OUTDIR)\$(LIBNAME).LIB $(LIBCOFF)\*.*
-!endif    
+	@copy $*.DLL $(DLL32DIR)\*.* >NUL
+!endif
+#	@copy $*.LIB $(LIBCOFF)\*.* >NUL
+#	@copy $(OUTDIR)\$(LIBNAME).LIB $(LIBCOFF)\*.* >NUL
+!endif
+
+WLIBMODS=$(SRCMODS:.\=+)
 
 $(OUTDIR)\$(LIBNAME).LIB: $(OBJMODS)
 	@cd $(OUTDIR)
-    $(LIBBIN) @<<
-$(SRCMODS:.ASM=.OBJ) /OUT:$(LIBNAME).LIB
+	@$(LIBBIN) @<<
+$(LIBNAME).LIB $(WLIBMODS:.ASM=.OBJ) 
 <<
 	@cd ..
 

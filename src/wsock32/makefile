@@ -31,6 +31,7 @@ WTLIB=$(WATT32)\lib\wattcpwf.lib
 !endif
 
 CC=wcc386.exe -mf -w6 -3r -zq -bt=dos -bm -bd -ox -I$(WATT32)\inc -fo=$* $(COPTD)
+#CC=wcc386.exe -mf -w6 -3r -zq -bt=nt -bm -bd -ox -I$(WATT32)\inc -fo=$* $(COPTD)
 LINK=wlink.exe
 LIBRARY = library $(WTLIB)
 
@@ -40,29 +41,33 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(NAME).OBJ $(WTLIB) $(NAME).RSP
-	@set PATH=$(OWDIR)\binw;%PATH%
-	@set WATCOM=$(OWDIR)
-    $(LINK) @<<
-system nt_dll
-option quiet, verbose, eliminate, caseexact, nostdcall, map=$(OUTDIR)\$(NAME).map
+#	@set WATCOM=$(OWDIR)
+	@$(LINK) @<<
+format windows nt dll
+libpath %WATCOM%/lib386/nt
+libpath %WATCOM%/lib386
+option quiet, verbose, eliminate, caseexact, map=$(OUTDIR)\$(NAME).map, implib=$(OUTDIR)\$(NAME).lib
+library clib3r.lib
 library ..\..\LibOMF\hxowdll.lib
 library $(LIBCOFF)\dkrnl32.lib
+!if $(DEBUG)
+library $(LIBCOFF)\duser32.lib
+!endif
 file $(OUTDIR)\$(NAME).OBJ
 $(LIBRARY)
 name $(OUTDIR)\$(NAME).DLL
 @$(NAME).rsp
 <<
 !if $(DEBUG)==0
-    @copy $*.DLL ..\..\bin\*.* >NUL
+	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR
-    @copy $*.DLL $(DLL32DIR)\*.*
+	@copy $*.DLL $(DLL32DIR)\*.* >NUL
 !endif    
 !endif
 
 $(OUTDIR)\$(NAME).OBJ: $(NAME).C MAKEFILE VERSION.H
-	@set PATH=$(OWDIR)\binw;%PATH%
 	@set INCLUDE=$(OWDIR)\h\nt;$(OWDIR)\h;
-    $(CC) $(NAME).C
+	@$(CC) $(NAME).C
 
 clean:
 	@del $(OUTDIR)\*.obj

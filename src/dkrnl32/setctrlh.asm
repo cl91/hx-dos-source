@@ -1,20 +1,24 @@
 
-        .386
+	.386
 if ?FLAT
-        .MODEL FLAT, stdcall
+	.MODEL FLAT, stdcall
 else
-        .MODEL SMALL, stdcall
-DGROUP	group _TEXT        
+	.MODEL SMALL, stdcall
+DGROUP	group _TEXT
 endif
-		option casemap:none
-        option proc:private
+	option casemap:none
+	option proc:private
 
-        include winbase.inc
-        include wincon.inc
-		include macros.inc
-		include dkrnl32.inc
+	include winbase.inc
+	include wincon.inc
+	include macros.inc
+	include dkrnl32.inc
 
-		option dotname
+	option dotname
+
+TIBSEG segment use16
+TIBSEG ends
+	assume fs:TIBSEG	;declare FS=TIB a 16 bit segment (saves space)
 
 ?SAVESEGREGS	equ 1	;NT's dosx and DOSEMU require 1
 						;dpmione is better, but still modifies ES register
@@ -30,7 +34,6 @@ pNext   dd ?
 pProc   dd ?
 LENTRY  ends
 
-
 .BASE$IC segment dword public 'DATA'
         dd offset Install
 .BASE$IC ends
@@ -39,11 +42,11 @@ LENTRY  ends
         dd offset Deinstall
 .BASE$XC ends
 
-if ?FLAT eq 0
-DGROUP  group .BASE$IC
+ifdef ?OMF
+DGROUP  group .BASE$IC, .BASE$XC
 endif
 
-        .DATA
+	.DATA
 
 if ?LOWLEVEL_CTRLBRK
 externdef	g_bCtrlBrk:byte
@@ -59,117 +62,117 @@ handler1		LENTRY {0,offset stdctrlhandler}
 g_oldint23		df 0
 g_bIgnCtrlC		db 0
 
-        .CODE
+	.CODE
 
 waitsignal proc lParam:dword
 
-		.while (1)
-			invoke WaitForSingleObject, g_hEvent, INFINITE
-            @strace <"SetConsoleCtrlHandler: signal received">
-    	    call dispatchsignal
-        .endw
-        ret
-        align 4
+	.while (1)
+		invoke WaitForSingleObject, g_hEvent, INFINITE
+		@strace <"SetConsoleCtrlHandler: signal received">
+		call dispatchsignal
+	.endw
+	ret
+	align 4
 waitsignal endp
 
 createsignalthread proc            
-        	invoke CreateEvent, 0, 0, 0, 0
-            and eax, eax
-            jz @F
-            mov g_hEvent, eax
-        	push 0
-        	invoke CreateThread, 0, 0, offset waitsignal, 0, 0, esp
-            pop ecx
-            mov g_hCtrlThread, eax
-            @strace <"SetConsoleCtrlHandler: helper thread=", eax>
-@@:            
-            ret
+	invoke CreateEvent, 0, 0, 0, 0
+	and eax, eax
+	jz @F
+	mov g_hEvent, eax
+	push 0
+	invoke CreateThread, 0, 0, offset waitsignal, 0, 0, esp
+	pop ecx
+	mov g_hCtrlThread, eax
+	@strace <"SetConsoleCtrlHandler: helper thread=", eax>
+@@:
+	ret
 createsignalthread endp            
 
 SetConsoleCtrlHandler proc public pProc:dword,bool:dword
 
-		call	EnterSerialization
-        mov     edx,pProc
-        mov     ecx,bool
-		and		edx, edx
-        jnz		@F
-        mov		g_bIgnCtrlC, cl
-        @mov	eax,1
-        jmp		exit
-@@:        
-        and     ecx,ecx
-        jz		remove
-        .if (!g_hCtrlThread)
-        	call createsignalthread
-            and eax, eax
-            jz exit
-        .endif
-        invoke  KernelHeapAlloc,sizeof LENTRY
-        and     eax,eax
-        jz      exit
-        mov     ecx,pProc
-        mov     [eax].LENTRY.pProc,ecx
-        mov     ecx,eax
-        xchg    ecx,g_pCtrlHandler
-        mov     [eax].LENTRY.pNext,ecx
-        @mov    eax,1
-        jmp     exit
-remove:
-        mov     ecx,offset g_pCtrlHandler
-        mov     eax,[ecx]
+	call EnterSerialization
+	mov edx,pProc
+	mov ecx,bool
+	and edx, edx
+	jnz @F
+	mov g_bIgnCtrlC, cl
+	@mov eax,1
+	jmp exit
 @@:
-        cmp     [eax].LENTRY.pProc,edx
-        jz      found
-        mov     ecx,eax
-        mov     eax,[eax].LENTRY.pNext
-        and     eax,eax
-        jnz     @B
-        jmp     exit
+	and ecx,ecx
+	jz remove
+	.if (!g_hCtrlThread)
+		call createsignalthread
+		and eax, eax
+		jz exit
+	.endif
+	invoke KernelHeapAlloc,sizeof LENTRY
+	and eax,eax
+	jz exit
+	mov ecx,pProc
+	mov [eax].LENTRY.pProc,ecx
+	mov ecx,eax
+	xchg ecx,g_pCtrlHandler
+	mov [eax].LENTRY.pNext,ecx
+	@mov eax,1
+	jmp exit
+remove:
+	mov ecx,offset g_pCtrlHandler
+	mov eax,[ecx]
+@@:
+	cmp [eax].LENTRY.pProc,edx
+	jz found
+	mov ecx,eax
+	mov eax,[eax].LENTRY.pNext
+	and eax,eax
+	jnz @B
+	jmp exit
 found:
-        mov     edx,[eax].LENTRY.pNext
-        mov     [ecx].LENTRY.pNext,edx
-        invoke  KernelHeapFree,eax
+	mov edx,[eax].LENTRY.pNext
+	mov [ecx].LENTRY.pNext,edx
+	invoke KernelHeapFree,eax
 exit:
-		call	LeaveSerialization
-		@strace	<"SetConsoleCtrlHandler(", pProc, ", ", bool, ")=", eax>
-        ret
-        align 4
+	call LeaveSerialization
+	@strace <"SetConsoleCtrlHandler(", pProc, ", ", bool, ")=", eax>
+	ret
+	align 4
 SetConsoleCtrlHandler endp
 
 GenerateConsoleCtrlEvent proc public dwCtrlEvent:DWORD, dwProcessGroupId:DWORD
-		@strace <"GenerateConsoleCtrlEvent(", dwCtrlEvent, ", ", dwProcessGroupId, ") enter">
-		.if (dwCtrlEvent == CTRL_BREAK_EVENT)
-	        or	byte ptr @flat:[_CTRLBREAKVAR],_CTRLBREAKFLAG
-        .endif
-        int 23h
-		@strace <"GenerateConsoleCtrlEvent(", dwCtrlEvent, ", ", dwProcessGroupId, ") exit">
-		ret
+	@strace <"GenerateConsoleCtrlEvent(", dwCtrlEvent, ", ", dwProcessGroupId, ") enter">
+	.if (dwCtrlEvent == CTRL_BREAK_EVENT)
+		or byte ptr @flat:[_CTRLBREAKVAR],_CTRLBREAKFLAG
+	.endif
+	int 23h
+	@strace <"GenerateConsoleCtrlEvent(", dwCtrlEvent, ", ", dwProcessGroupId, ") exit">
+	ret
 GenerateConsoleCtrlEvent endp
 
 stdctrlhandler proc event:dword
 
-		@strace	<"stdctrlhandler(", event, ")">
-if ?FLAT        
-        invoke GetModuleHandle, 0
-        .if (eax)
-        	mov ecx, [eax+3Ch]
-            lea ecx, [ecx+eax]
-            mov ax,[ecx].IMAGE_NT_HEADERS.OptionalHeader.Subsystem
-            cmp ax, IMAGE_SUBSYSTEM_WINDOWS_GUI
-            jz exit
-        .endif
+	@strace <"stdctrlhandler(", event, ")">
+if ?FLAT
+	invoke GetModuleHandle, 0
+	.if (eax)
+		mov ecx, [eax+3Ch]
+		lea ecx, [ecx+eax]
+		mov ax,[ecx].IMAGE_NT_HEADERS.OptionalHeader.Subsystem
+		cmp ax, IMAGE_SUBSYSTEM_WINDOWS_GUI
+		jz exit
+	.endif
 endif
-		.if ((!g_bIgnCtrlC) || (event == CTRL_BREAK_EVENT))
-			@strace	<"stdctrlhandler calls ExitProcess">
-            invoke GetCurrentProcess
-            test [eax].PROCESS.wFlags, PF_TERMINATING
-            jnz @F
-	        invoke  ExitProcess,0
-@@:            
-        .endif
-exit:        
-        ret
-        align 4
+	.if ((!g_bIgnCtrlC) || (event == CTRL_BREAK_EVENT))
+		@strace	<"stdctrlhandler calls ExitProcess">
+		invoke GetCurrentProcess
+		test [eax].PROCESS.wFlags, PF_TERMINATING
+		jnz @F
+		invoke	ExitProcess,0
+@@:
+	.endif
+exit:
+	ret
+	align 4
 stdctrlhandler endp
 
 ;--- all registers have been saved in int23
@@ -177,34 +180,34 @@ stdctrlhandler endp
 
 dispatchsignal proc
 
-		@strace	<"dispatchsignal(break) enter, fs=", fs>
+	@strace <"dispatchsignal(break) enter, fs=", fs>
 if ?LOCKTHREAD
-  		mov		eax, fs:[THREAD_INFORMATION_BLOCK.pProcess]
-        or     [eax].PROCESS.wFlags,PF_LOCKED
+	mov eax, fs:[THREAD_INFORMATION_BLOCK.pProcess]
+	or [eax].PROCESS.wFlags,PF_LOCKED
 endif
-        mov     bl,@flat:[_CTRLBREAKVAR]
-        and		bl,_CTRLBREAKFLAG
-        and		byte ptr @flat:[_CTRLBREAKVAR],not _CTRLBREAKFLAG
-        mov     esi,g_pCtrlHandler
-        .while (esi)
-			mov ebp,esp			;some handlers don't return with 'ret 4'
-        	.if (bl)
-				push CTRL_BREAK_EVENT
-            .else
-				push CTRL_C_EVENT
-            .endif
-			call    [esi].LENTRY.pProc
-            mov esp,ebp
-			.break .if (eax)	;has routine handled this event?
-			mov     esi,[esi].LENTRY.pNext
-		.endw
+	mov bl,@flat:[_CTRLBREAKVAR]
+	and bl,_CTRLBREAKFLAG
+	and byte ptr @flat:[_CTRLBREAKVAR],not _CTRLBREAKFLAG
+	mov esi,g_pCtrlHandler
+	.while (esi)
+		mov ebp,esp			;some handlers don't return with 'ret 4'
+		.if (bl)
+			push CTRL_BREAK_EVENT
+		.else
+			push CTRL_C_EVENT
+		.endif
+		call [esi].LENTRY.pProc
+		mov esp,ebp
+		.break .if (eax)	;has routine handled this event?
+		mov esi,[esi].LENTRY.pNext
+	.endw
 if ?LOCKTHREAD
-		mov	   eax,fs:[THREAD_INFORMATION_BLOCK.pProcess]
-        and	   [eax].PROCESS.wFlags, not PF_LOCKED
-endif        
-		@strace	<"dispatchsignal(break) exit">
-        ret
-        align 4
+	mov eax,fs:[THREAD_INFORMATION_BLOCK.pProcess]
+	and [eax].PROCESS.wFlags, not PF_LOCKED
+endif
+	@strace <"dispatchsignal(break) exit">
+	ret
+	align 4
 dispatchsignal endp
 
 ;--- int 23h may be called from real-mode (then the LPMS is used)
@@ -212,87 +215,87 @@ dispatchsignal endp
 ;--- which intercepts Ctrl-Break and Ctrl-C. In this case the application's
 ;--- standard stack is used (currently)
 
-int23   proc
+int23 proc
 
-		cmp	cs:[g_bIsActive],1
-        jnb	@F
-        @iret
+	cmp cs:[g_bIsActive],1
+	jnb @F
+	@iret
 @@:
-        pushad
-if ?SAVESEGREGS        
-        push   ds
-        push   es	
-        mov	   ds,cs:[g_csalias]
-        push   ds
-        pop    es
-ife ?FLAT
-		push   gs
-        mov	   gs,[g_flatsel]
-endif
-		push   fs
-		mov    eax, [g_hCurThread]
-		mov    fs, [eax].THREAD.dwTibSel
-endif
-		.if (!g_hCtrlThread)
-        	call gethelperstack
-            mov  ecx,ss
-            mov  edx,esp
-            push ds
-            pop ss
-            mov esp,eax
-            push ecx
-            push edx
-        	call createsignalthread
-            lss esp,[esp]
-            and eax, eax
-            jz done
-        .endif
-       	invoke SetEvent, g_hEvent
-done:   
+	pushad
 if ?SAVESEGREGS
-		pop    fs
+	push ds
+	push es
+	mov ds,cs:[g_csalias]
+	push ds
+	pop es
 ife ?FLAT
-		pop    gs
+	push gs
+	mov gs,[g_flatsel]
 endif
-		pop    es
-		pop    ds		
-endif   
-        popad
-        @iret
-        align 4
-int23   endp
+	push fs
+	mov eax, [g_hCurThread]
+	mov fs, [eax].THREAD.dwTibSel
+endif
+	.if (!g_hCtrlThread)
+		call gethelperstack
+		mov ecx,ss
+		mov edx,esp
+		push ds
+		pop ss
+		mov esp,eax
+		push ecx
+		push edx
+		call createsignalthread
+		lss esp,[esp]
+		and eax, eax
+		jz done
+	.endif
+	invoke SetEvent, g_hEvent
+done:
+if ?SAVESEGREGS
+	pop fs
+ife ?FLAT
+	pop gs
+endif
+	pop es
+	pop ds
+endif
+	popad
+	@iret
+	align 4
+int23 endp
 
 Install proc uses ebx
-        mov		ax,204h
-        mov		bl,23h
-        int		31h
+	mov ax,204h
+	mov bl,23h
+	int 31h
 if ?CLEARHIGHEBP
-		movzx	edx,dx
+	movzx edx,dx
 endif
-        mov		dword ptr g_oldint23+0, edx
-        mov		word ptr g_oldint23+4,cx
-        mov     ecx,cs
-        mov     edx,offset int23
-        mov     al,05h
-        int     31h
-        and		byte ptr @flat:[_CTRLBREAKVAR],not _CTRLBREAKFLAG
-        ret
-        align 4
+	mov dword ptr g_oldint23+0, edx
+	mov word ptr g_oldint23+4,cx
+	mov ecx,cs
+	mov edx,offset int23
+	mov al,05h
+	int 31h
+	and byte ptr @flat:[_CTRLBREAKVAR],not _CTRLBREAKFLAG
+	ret
+	align 4
 Install endp
 
 ;--- int 23h need not to be reset, because this is done
 ;--- by dos/dpmi or DPMILD32.
 
 Deinstall proc uses ebx
-        mov     cx,word ptr [g_oldint23+4]
-        jcxz	done
-        mov     edx,dword ptr [g_oldint23+0]
-        mov     ax,0205h
-        mov     bl,23h        ;ctrl-c
-        int     31h
+	mov cx,word ptr [g_oldint23+4]
+	jcxz done
+	mov edx,dword ptr [g_oldint23+0]
+	mov ax,0205h
+	mov bl,23h		  ;ctrl-c
+	int 31h
 done:
-        ret
+	ret
 Deinstall endp
 
-        END
+	END
 

@@ -1402,7 +1402,7 @@ if ?32BIT
 		push	eax
 		pop 	di
 		pop 	si
-		mov 	ax,502h				;free stack handle
+		mov 	ax,0502h			;free stack handle
 		int 	31h
 		pop 	si
 		jmp 	i214c_2

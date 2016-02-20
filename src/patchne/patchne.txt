@@ -40,6 +40,7 @@
 
   3. History
 
+  06/05/2009, v1.6: JWasm's -mz option is used.
   01/20/2009, v1.5: assembled with JWasm.
   12/14/2006, v1.4: added -r and -s options.
   09/29/2006, v1.3: ???

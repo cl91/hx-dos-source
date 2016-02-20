@@ -56,23 +56,25 @@ MASM=0
 ASMOPT1= -c -coff -nologo -Sg -D_KERNEL32_=1 $(AOPTD) -I$(INC32DIR) -D?FLAT=1 -Fl$* -Fo$*
 ASMOPT2= -c -coff -nologo -Sg -D_KERNEL32_=1 $(AOPTD) -I$(INC32DIR) -D?FLAT=1 -Fl$* -Fo$* -D?DIRECTDISP=1 
 
+# option -zze for JWasm is required for IsProcessorFeaturePresent
+
 !if $(MASM)
-ASM1=@ml.exe $(ASMOPT1)
-ASM2=@ml.exe $(ASMOPT2)
+ASM1=@ml800.exe $(ASMOPT1)
+ASM2=@ml800.exe $(ASMOPT2)
 !else
-ASM1=@jwasm.exe $(ASMOPT1)
-ASM2=@jwasm.exe $(ASMOPT2)
+ASM1=@jwasm.exe -zze $(ASMOPT1)
+ASM2=@jwasm.exe -zze $(ASMOPT2)
 !endif
 
-LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL /NODEFAULTLIB
+LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL
 
 .SUFFIXES: .asm .obj
 
 .asm{$(OUTD1)}.obj:
-    $(ASM1) $<
+	$(ASM1) $<
 
 .asm{$(OUTD2)}.obj:
-    $(ASM2) $<
+	$(ASM2) $<
 
 ALL: $(OUTD1) $(OUTD2) $(OUTD1)\$(NAME).DLL $(OUTD2)\$(NAME).DLL
 
@@ -81,20 +83,12 @@ ALL: $(OUTD1) $(OUTD2) $(OUTD1)\$(NAME).DLL $(OUTD2)\$(NAME).DLL
 $(OUTD1):
 	@mkdir $(OUTD1)
 
+# modules containing optional exports (IsProcessorFeaturePresent)
+# must be included explicitely!
+
 $(OUTD1)\$(NAME).DLL: $(OUTD1)\$(LIBNAME).lib $(OUTD1)\$(NAME).obj $(NAME).def
-#    @if exist $*.DLL erase $*.DLL
-#    $(LINKBIN) $(OUTD1)\$(NAME).obj $(OUTD1)\$(LIBNAME).lib $(LOPTS) $(LOPTD) /DEF:$(NAME).def /merge:.BASE=.data /OUT:$*.DLL /BASE:0xBFF00000
-	$(LINKBIN) $(OUTD1)\$(NAME).obj $(OUTD1)\$(LIBNAME).lib $(LOPTS) $(LOPTD) /DEF:$(NAME).def /merge:.BASE=.data /OUT:$*.DLL
-!if $(DEBUG)==0
-# now the SBEMU version is the one copied to HX\Bin
-#    @copy $*.DLL ..\..\bin\*.* >NUL
-#!ifdef DLL32DIR
-#    @copy $*.DLL $(DLL32DIR)\*.* >NUL
-#!endif
-# usually these libs aren't used. Use Win32 KERNEL32.LIB instead    
-#   @copy $*.lib $(LIBCOFF)\*.* >NUL
-#   @copy $(OUTD1)\$(LIBNAME).lib $(LIBCOFF)\*.*
-!endif    
+#	@$(LINKBIN) $(OUTD1)\$(NAME).obj $(OUTD1)\$(LIBNAME).lib $(LOPTS) $(LOPTD) /DEF:$(NAME).def /merge:.BASE=.data /OUT:$*.DLL /BASE:0xBFF00000
+	@$(LINKBIN) $(OUTD1)\$(NAME).obj $(OUTD1)\procfeat.obj $(OUTD1)\$(LIBNAME).lib $(LOPTS) $(LOPTD) /DEF:$(NAME).def /merge:.BASE=.data /OUT:$*.DLL
 
 ######################################################
 
@@ -104,44 +98,48 @@ $(OUTD2):
 	@mkdir $(OUTD2)
 
 $(OUTD2)\$(NAME).DLL: $(OBJMODS2) $(OUTD2)\$(LIBNAME).lib $(OUTD1)\$(NAME).obj $(NAME).def
-#   @if exist $*.DLL erase $*.DLL
-	$(LINKBIN) @<<
-$(OUTD1)\$(NAME).obj $(OUTD2)\$(LIBNAME).lib
+#	@if exist $*.DLL erase $*.DLL
+	@$(LINKBIN) @<<
+$(OUTD1)\$(NAME).obj $(OUTD1)\procfeat.obj $(OUTD2)\$(LIBNAME).lib 
 $(LOPTS) $(LOPTD)
 /DEF:$(NAME).def /merge:.BASE=.data /OUT:$*.DLL
 <<
 !if $(DEBUG)==0
-    @copy $*.DLL ..\..\Bin\*.* >NUL
+	@copy $*.DLL ..\..\Bin\*.* >NUL
 !ifdef DLL32DIR
-    @copy $*.DLL $(DLL32DIR)\*.*
+	@copy $*.DLL $(DLL32DIR)\*.* >NUL
 !endif 
 	@copy $*.LIB ..\..\Lib\*.* >NUL
-    @copy $(OUTD2)\$(LIBNAME).lib ..\..\Lib\*.* >NUL
+	@copy $(OUTD2)\$(LIBNAME).lib ..\..\Lib\*.* >NUL
 !endif    
 
 $(OBJMODS2): dkrnl32.inc
 
 ######################################################
 
+WLIBMODS=$(SRCMODS:.\=+)
+
 $(OUTD1)\$(LIBNAME).lib: $(OBJMODS)
-    @cd ..\NTLFNHLP
-    @nmake DEBUG=$(DEBUG)
-    @cd ..\DKRNL32\$(OUTD1)
-    @if exist $(NAME).DLL rename $(NAME).DLL $(NAME).DL_
-    $(LIBBIN) @<<
-$(SRCMODS:.ASM=.OBJ) $(OTHERMODS) /OUT:$(LIBNAME).lib
+	@cd ..\NTLFNHLP
+	@$(MAKE) DEBUG=$(DEBUG)
+	@cd ..\DKRNL32\$(OUTD1)
+	@if exist $(NAME).DLL rename $(NAME).DLL $(NAME).DL_
+	@$(LIBBIN) $(LIBNAME).lib @<<
+$(WLIBMODS:.ASM=.OBJ) $(OTHERMODS:.\=+) 
 <<
-    @if exist $(NAME).DL_ rename $(NAME).DL_ $(NAME).DLL
+	@if exist $(NAME).DL_ rename $(NAME).DL_ $(NAME).DLL
 	@cd ..
 
 ######################################################
 
 $(OUTD2)\$(LIBNAME).lib: $(OUTD1)\$(LIBNAME).lib
-    @cd $(OUTD2)
-    @copy ..\$(OUTD1)\$(LIBNAME).lib .\$(LIBNAME).lib
-    @if exist $(NAME).DLL rename $(NAME).DLL $(NAME).DL_
-    $(LIBBIN) $(LIBNAME).lib /REMOVE:.\thread.obj /REMOVE:.\thread3.obj .\thread.obj .\thread3.obj /OUT:$(LIBNAME).lib
-    @if exist $(NAME).DL_ rename $(NAME).DL_ $(NAME).DLL
+	@cd $(OUTD2)
+	@copy ..\$(OUTD1)\$(LIBNAME).lib .\$(LIBNAME).lib >NUL
+	@if exist $(NAME).DLL rename $(NAME).DLL $(NAME).DL_
+#	@$(LIBBIN) $(LIBNAME).lib /REMOVE:.\thread.obj /REMOVE:.\thread3.obj .\thread.obj .\thread3.obj /OUT:$(LIBNAME).lib
+# dont use $(LIBBIN), it contains the -n switch!
+	@wlib -q $(LIBNAME).lib -+thread.obj -+thread3.obj
+	@if exist $(NAME).DL_ rename $(NAME).DL_ $(NAME).DLL
 	@cd ..
 
 $(OBJMODS): dkrnl32.inc
@@ -149,15 +147,15 @@ $(OBJMODS): dkrnl32.inc
 $(OUTD1)\$(NAME).obj: version.inc dkrnl32.inc
 
 clean:
-    @del $(OUTD1)\*.obj >NUL
-    @del $(OUTD1)\*.dll >NUL
-    @del $(OUTD1)\*.lib >NUL
-    @del $(OUTD1)\*.map >NUL
-    @del $(OUTD1)\*.lst >NUL
-    @del $(OUTD1)\*.exp >NUL
-    @del $(OUTD2)\*.obj >NUL
-    @del $(OUTD2)\*.dll >NUL
-    @del $(OUTD2)\*.lib >NUL
-    @del $(OUTD2)\*.map >NUL
-    @del $(OUTD2)\*.lst >NUL
-    @del $(OUTD2)\*.exp >NUL
+	@del $(OUTD1)\*.obj >NUL
+	@del $(OUTD1)\*.dll >NUL
+	@del $(OUTD1)\*.lib >NUL
+	@del $(OUTD1)\*.map >NUL
+	@del $(OUTD1)\*.lst >NUL
+	@del $(OUTD1)\*.exp >NUL
+	@del $(OUTD2)\*.obj >NUL
+	@del $(OUTD2)\*.dll >NUL
+	@del $(OUTD2)\*.lib >NUL
+	@del $(OUTD2)\*.map >NUL
+	@del $(OUTD2)\*.lst >NUL
+	@del $(OUTD2)\*.exp >NUL

@@ -1,20 +1,28 @@
 
-;*** file mapping functions ***
+;--- implements:
+;--- CreateFileMappingA
+;--- CreateFileMappingW
+;--- MapViewOfFileEx
+;--- MapViewOfFile
+;--- UnmapViewOfFile
+;--- FlushViewOfFile
+;--- OpenFileMappingA
+;--- OpenFileMappingW
 
-		.386
+	.386
 if ?FLAT
-		.MODEL FLAT, stdcall
+	.MODEL FLAT, stdcall
 else
-		.MODEL SMALL, stdcall
+	.MODEL SMALL, stdcall
 endif
-		option casemap:none
-        option proc:private
+	option casemap:none
+	option proc:private
 
-		include winbase.inc
-		include dkrnl32.inc
-		include macros.inc
+	include winbase.inc
+	include dkrnl32.inc
+	include macros.inc
 
-		option dotname
+	option dotname
 
 if 0
 .BASE$XA segment dword public 'DATA'
@@ -22,122 +30,108 @@ if 0
 .BASE$XA ends
 endif
 
-		.CODE
+	.CODE
 
-CreateFileMappingA	proc public uses ebx hFile:DWORD, lpFileMappingAttributes:DWORD, dwProtect:DWORD,
+CreateFileMappingA proc public uses ebx hFile:DWORD, lpFileMappingAttributes:DWORD, dwProtect:DWORD,
 			dwMaximumSizeHigh:DWORD, dwMaximumSizeLow:DWORD, lpName:ptr BYTE
 
-		@trace	<"CreateFileMappingA enter",13,10>
+	@strace <"CreateFileMappingA enter">
 ;----------------------------- if it's a named object, check existance
-		.if (lpName)
-			invoke KernelHeapFindObject, lpName
-			.if (eax)
-				.if ([eax].SYNCOBJECT.dwType == SYNCTYPE_FILEMAPP)
+	.if (lpName)
+		invoke KernelHeapFindObject, lpName
+		.if (eax)
+			.if ([eax].SYNCOBJECT.dwType == SYNCTYPE_FILEMAPP)
 ;-------------------------------- currently a reference counter is used
 ;-------------------------------- that's no proper solution, but should work
 ;-------------------------------- for many cases
-					inc [eax].FILEMAPOBJ.dwCnt	
-        	    	push eax
-            	    invoke SetLastError, ERROR_ALREADY_EXISTS
-	                pop eax
-					jmp done
-				.else
-            	    invoke SetLastError, ERROR_INVALID_HANDLE
-                	xor eax,eax
-                    jmp done
-                .endif
-			.endif
-		.endif
-		.if (hFile != -1)
-			mov ecx, dwMaximumSizeLow
-			mov edx, dwMaximumSizeHigh
-			or edx, ecx
-			.if (!edx)
-				invoke GetFileSize, hFile, NULL
-				.if (!eax)
-					invoke SetLastError, ERROR_FILE_INVALID
-					xor eax, eax
-					jmp done
-				.endif
-				mov dwMaximumSizeLow, eax
-			.endif
-		.endif
-		.if (!dwMaximumSizeLow)
-			xor eax, eax
-			jmp done
-		.endif
-		invoke KernelHeapAllocObject, sizeof FILEMAPOBJ, lpName
-		.if (eax)
-			mov ebx, eax
-			mov dword ptr [ebx-4], offset destructor
-			mov [ebx].FILEMAPOBJ.dwType, SYNCTYPE_FILEMAPP
-			.if (hFile != -1)
-				invoke DuplicateHandle, 0, hFile, 0, addr [ebx].FILEMAPOBJ.hFile,\
-					0, 0,DUPLICATE_SAME_ACCESS
-				.if (!eax)
-					invoke KernelHeapFree, ebx
-					xor eax, eax
-					jmp done
-				.endif
+				inc [eax].FILEMAPOBJ.dwCnt	
+				push eax
+				invoke SetLastError, ERROR_ALREADY_EXISTS
+				pop eax
+				jmp done
 			.else
-				mov [ebx].FILEMAPOBJ.hFile, -1
+				invoke SetLastError, ERROR_INVALID_HANDLE
+				xor eax,eax
+				jmp done
 			.endif
-			mov ecx, dwMaximumSizeLow
-			mov [ebx].FILEMAPOBJ.dwSize, ecx
-			mov [ebx].FILEMAPOBJ.pView, NULL
-			mov [ebx].FILEMAPOBJ.dwFlags, NULL
-			mov [ebx].FILEMAPOBJ.dwCnt, 1
-            xor eax, eax
-			.if (lpName)
-            	lea eax, [ebx + sizeof FILEMAPOBJ]
-			.endif
-			mov [ebx].FILEMAPOBJ.lpName, eax
-			mov ecx, dwProtect
-			mov [ebx].FILEMAPOBJ.dwProtect, ecx
-			mov eax, ebx
 		.endif
-done:
-		@trace	<"CreateFileMappingA(">
-		@tracedw hFile
-		@trace	<", ">
-		@tracedw lpFileMappingAttributes
-		@trace	<", ">
-		@tracedw dwProtect
-		@trace	<", size=">
-		@tracedw dwMaximumSizeHigh
-		@trace	<":">
-		@tracedw dwMaximumSizeLow
-		@trace	<", name=">
-ifdef _DEBUG
-		.if (!lpName)
-			@trace	<"NULL">
+	.endif
+	.if (hFile != -1)
+		mov ecx, dwMaximumSizeLow
+		mov edx, dwMaximumSizeHigh
+		or edx, ecx
+		.if (!edx)
+			invoke GetFileSize, hFile, NULL
+			.if (!eax)
+				invoke SetLastError, ERROR_FILE_INVALID
+				xor eax, eax
+				jmp done
+			.endif
+			mov dwMaximumSizeLow, eax
+		.endif
+	.endif
+	.if (!dwMaximumSizeLow)
+		xor eax, eax
+		jmp done
+	.endif
+	invoke KernelHeapAllocObject, sizeof FILEMAPOBJ, lpName
+	.if (eax)
+		mov ebx, eax
+		mov dword ptr [ebx-4], offset destructor
+		mov [ebx].FILEMAPOBJ.dwType, SYNCTYPE_FILEMAPP
+		.if (hFile != -1)
+			invoke DuplicateHandle, 0, hFile, 0, addr [ebx].FILEMAPOBJ.hFile,\
+				0, 0,DUPLICATE_SAME_ACCESS
+			.if (!eax)
+				invoke KernelHeapFree, ebx
+				xor eax, eax
+				jmp done
+			.endif
 		.else
-			@tracedw lpName
-			@trace	<" ['">
-			@trace	lpName
-			@trace	<"']">
+			mov [ebx].FILEMAPOBJ.hFile, -1
 		.endif
+		mov ecx, dwMaximumSizeLow
+		mov [ebx].FILEMAPOBJ.dwSize, ecx
+		mov [ebx].FILEMAPOBJ.pView, NULL
+		mov [ebx].FILEMAPOBJ.dwFlags, NULL
+		mov [ebx].FILEMAPOBJ.dwCnt, 1
+		xor eax, eax
+		.if (lpName)
+			lea eax, [ebx + sizeof FILEMAPOBJ]
+		.endif
+		mov [ebx].FILEMAPOBJ.lpName, eax
+		mov ecx, dwProtect
+		mov [ebx].FILEMAPOBJ.dwProtect, ecx
+		mov eax, ebx
+	.endif
+done:
+ifdef _DEBUG
+	.if (!lpName)
+		mov ecx, CStr("NULL")
+	.else
+		mov ecx, lpName
+	.endif
 endif
-		@trace	<")=">
-		@tracedw eax
-		@trace	<13,10>
-		ret
-        align 4
+	@strace <"CreateFileMappingA(", hFile, ", ", lpFileMappingAttributes, ", ", dwProtect, ", size=", dwMaximumSizeHigh, ":", dwMaximumSizeLow, ", name=", &ecx, ")=", eax>
+	ret
+	align 4
 
-CreateFileMappingA	endp
+CreateFileMappingA endp
 
-CreateFileMappingW	proc public hFile:DWORD, lpFileMappingAttributes:DWORD, dwProtect:DWORD,
+CreateFileMappingW proc public hFile:DWORD, lpFileMappingAttributes:DWORD, dwProtect:DWORD,
 			dwMaximumSizeHigh:DWORD, dwMaximumSizeLow:DWORD, lpName:ptr WORD
-		@trace	<"CreateFileMappingW",13,10>
-		mov eax, lpName
-		.if (eax)
-			call ConvertWStr
-		.endif
-		invoke CreateFileMappingA, hFile, lpFileMappingAttributes, dwProtect,\
-			dwMaximumSizeHigh, dwMaximumSizeLow, eax
-		ret
-        align 4
-CreateFileMappingW	endp
+
+	@strace <"CreateFileMappingW">
+	mov eax, lpName
+	.if (eax)
+		call ConvertWStr
+	.endif
+	invoke CreateFileMappingA, hFile, lpFileMappingAttributes, dwProtect,\
+		dwMaximumSizeHigh, dwMaximumSizeLow, eax
+	ret
+	align 4
+
+CreateFileMappingW endp
 
 ;--- flush file mapping object in EBX
 
@@ -147,295 +141,275 @@ local	dwESP:DWORD
 local	dwPages:DWORD
 local	dwWritten:DWORD
 
-		.if (([ebx].FILEMAPOBJ.pView) && ([ebx].FILEMAPOBJ.dwProtect != PAGE_READONLY))
-			mov eax, [ebx].FILEMAPOBJ.dwSize
-			mov ecx, eax
-			shr eax, 12
-			test cx, 0FFFh
-            jz @F
-			inc eax
-@@:            
-			mov dwPages, eax
-			.if ([ebx].FILEMAPOBJ.hFile != HFILE_ERROR)
-				mov dwESP, esp
-				add eax, eax		;2 bytes/page
-				add eax, 4
-				and al, 0FCh
-				sub esp, eax
-				@loadesp esi
-				invoke VirtualGetPageAttr, [ebx].FILEMAPOBJ.pView, esi, dwPages
-				.if (eax && (word ptr [esi] & 10h)) ;dirty bit supplied?
-					xor edi, edi
-					mov ecx, dwPages
-					.while (ecx)
-						lodsw
-						and al, 50h			;10h=, 40h=dirty
-						.if (al == 50h)
-							push ecx
-							mov edx, edi
-							add edx, [ebx].FILEMAPOBJ.dwOffset
-							invoke SetFilePointer,[ebx].FILEMAPOBJ.hFile,\
-								edx, NULL, 0
-							mov edx, [ebx].FILEMAPOBJ.pView
-							add edx, edi
-							invoke WriteFile, [ebx].FILEMAPOBJ.hFile,\
-								edx, 1000h, addr dwWritten, 0
-							pop ecx
-						.endif
-						add edi, 1000h
-						dec ecx
-					.endw
-				.else
-					invoke SetFilePointer,[ebx].FILEMAPOBJ.hFile,\
-						[ebx].FILEMAPOBJ.dwOffset, NULL, 0
-					invoke WriteFile, [ebx].FILEMAPOBJ.hFile,\
-						[ebx].FILEMAPOBJ.pView, [ebx].FILEMAPOBJ.dwSizeReal,\
-						addr dwWritten, 0
-				.endif
-				mov esp, dwESP
+	.if (([ebx].FILEMAPOBJ.pView) && ([ebx].FILEMAPOBJ.dwProtect != PAGE_READONLY))
+		mov eax, [ebx].FILEMAPOBJ.dwSize
+		mov ecx, eax
+		shr eax, 12
+		test cx, 0FFFh
+		jz @F
+		inc eax
+@@:
+		mov dwPages, eax
+		.if ([ebx].FILEMAPOBJ.hFile != HFILE_ERROR)
+			mov dwESP, esp
+			add eax, eax		;2 bytes/page
+			add eax, 4
+			and al, 0FCh
+			sub esp, eax
+			@loadesp esi
+			invoke VirtualGetPageAttr, [ebx].FILEMAPOBJ.pView, esi, dwPages
+			.if (eax && (word ptr [esi] & 10h)) ;dirty bit supplied?
+				xor edi, edi
+				mov ecx, dwPages
+				.while (ecx)
+					lodsw
+					and al, 50h			;10h=, 40h=dirty
+					.if (al == 50h)
+						push ecx
+						mov edx, edi
+						add edx, [ebx].FILEMAPOBJ.dwOffset
+						invoke SetFilePointer,[ebx].FILEMAPOBJ.hFile,\
+							edx, NULL, 0
+						mov edx, [ebx].FILEMAPOBJ.pView
+						add edx, edi
+						invoke WriteFile, [ebx].FILEMAPOBJ.hFile,\
+							edx, 1000h, addr dwWritten, 0
+						pop ecx
+					.endif
+					add edi, 1000h
+					dec ecx
+				.endw
+			.else
+				invoke SetFilePointer,[ebx].FILEMAPOBJ.hFile,\
+					[ebx].FILEMAPOBJ.dwOffset, NULL, 0
+				invoke WriteFile, [ebx].FILEMAPOBJ.hFile,\
+					[ebx].FILEMAPOBJ.pView, [ebx].FILEMAPOBJ.dwSizeReal,\
+					addr dwWritten, 0
+			.endif
+			mov esp, dwESP
 if 0
 ;--- this code is required if share is not loaded (plain dos)???
-                .if (bResetPageFlags)
-					invoke DuplicateHandle, 0, [ebx].FILEMAPOBJ.hFile, 0, addr dwWritten,\
-						0, 0,DUPLICATE_SAME_ACCESS
-					.if (eax)
-                    	mov eax, dwWritten
-                        xchg eax, [ebx].FILEMAPOBJ.hFile
-                    	invoke CloseHandle, eax
-                    .endif
-                .endif
-endif                
-            .endif
-;---- reset dirty bits            
-            .if (bResetPageFlags)
-               	mov ecx, dwPages
-                shl ecx, 12
-				invoke VirtualSetPageAttr, [ebx].FILEMAPOBJ.pView, ecx, 10h, 50h
+			.if (bResetPageFlags)
+				invoke DuplicateHandle, 0, [ebx].FILEMAPOBJ.hFile, 0, addr dwWritten,\
+					0, 0,DUPLICATE_SAME_ACCESS
+				.if (eax)
+					mov eax, dwWritten
+					xchg eax, [ebx].FILEMAPOBJ.hFile
+					invoke CloseHandle, eax
+				.endif
 			.endif
+endif
 		.endif
-        ret
-        align 4
+;---- reset dirty bits
+		.if (bResetPageFlags)
+			mov ecx, dwPages
+			shl ecx, 12
+			invoke VirtualSetPageAttr, [ebx].FILEMAPOBJ.pView, ecx, 10h, 50h
+		.endif
+	.endif
+	ret
+	align 4
+
 _flushfmobj endp
 
 destructor proc uses ebx pThis:DWORD
 
-		@trace <"destructor filemapobj enter",13,10>
-		mov ebx, pThis
-		xor eax, eax
-		cmp [ebx].FILEMAPOBJ.dwCnt,eax
-		jz @F
-		dec [ebx].FILEMAPOBJ.dwCnt
-		jnz done					;exit, there are more references
-@@: 	
-		or [ebx].FILEMAPOBJ.dwFlags, FMO_CLOSED
-		.if ([ebx].FILEMAPOBJ.dwFlags & FMO_MAPPED)
-			jmp	done				;it's mapped, dont free it
-		.endif
-        invoke _flushfmobj,0,0,0
-		.if ([ebx].FILEMAPOBJ.pView)
-			invoke VirtualFree, [ebx].FILEMAPOBJ.pView, NULL, MEM_RELEASE
-			mov [ebx].FILEMAPOBJ.pView, NULL
-		.endif
-		.if ([ebx].FILEMAPOBJ.hFile != HFILE_ERROR)
-			invoke CloseHandle, [ebx].FILEMAPOBJ.hFile
-			mov [ebx].FILEMAPOBJ.hFile, HFILE_ERROR
-		.endif
-		@mov eax, 1
+	@strace <"destructor filemapobj enter">
+	mov ebx, pThis
+	xor eax, eax
+	cmp [ebx].FILEMAPOBJ.dwCnt,eax
+	jz @F
+	dec [ebx].FILEMAPOBJ.dwCnt
+	jnz done					;exit, there are more references
+@@:
+	or [ebx].FILEMAPOBJ.dwFlags, FMO_CLOSED
+	.if ([ebx].FILEMAPOBJ.dwFlags & FMO_MAPPED)
+		jmp done				;it's mapped, dont free it
+	.endif
+	invoke _flushfmobj,0,0,0
+	.if ([ebx].FILEMAPOBJ.pView)
+		invoke VirtualFree, [ebx].FILEMAPOBJ.pView, NULL, MEM_RELEASE
+		mov [ebx].FILEMAPOBJ.pView, NULL
+	.endif
+	.if ([ebx].FILEMAPOBJ.hFile != HFILE_ERROR)
+		invoke CloseHandle, [ebx].FILEMAPOBJ.hFile
+		mov [ebx].FILEMAPOBJ.hFile, HFILE_ERROR
+	.endif
+	@mov eax, 1
 done:
-		@trace <"destructor filemapobj exit=">
-		@tracedw eax
-		@trace <13,10>
-		ret
-        align 4
+	@strace <"destructor filemapobj exit=", eax>
+	ret
+	align 4
+
 destructor endp
 
-MapViewOfFileEx	proc public uses ebx hFileMap:DWORD, dwDesiredAccess:DWORD, dwFileOffsetHigh:DWORD,
+MapViewOfFileEx proc public uses ebx hFileMap:DWORD, dwDesiredAccess:DWORD, dwFileOffsetHigh:DWORD,
 			dwFileOffsetLow:DWORD, dwNumberOfBytesToMap:DWORD, lpBaseAddress:ptr
 
 local	dwRead:DWORD
 
-		@trace	<"MapViewOfFileEx(">
-		@tracedw hFileMap
-		@trace	<", ">
-		@tracedw dwDesiredAccess
-		@trace	<", ofs=">
-		@tracedw dwFileOffsetHigh
-		@trace	<":">
-		@tracedw dwFileOffsetLow
-		@trace	<", size=">
-		@tracedw dwNumberOfBytesToMap
-		@trace	<", base=">
-		@tracedw lpBaseAddress
-		@trace	<")",13,10>
-		mov ebx, hFileMap
+	@strace <"MapViewOfFileEx(", hFileMap, ", ", dwDesiredAccess, ", ofs=", dwFileOffsetHigh, ":", dwFileOffsetLow, ", size=", dwNumberOfBytesToMap, ", base=", lpBaseAddress, ")">
+	mov ebx, hFileMap
 ;------------------------------- dont allow files > 4 GB
-		cmp dwFileOffsetHigh,0
-		jnz error
-		mov	eax, dwFileOffsetLow
+	cmp dwFileOffsetHigh,0
+	jnz error
+	mov eax, dwFileOffsetLow
 ;------------------------------- dont allow remapping (offset change)
-		.if ([ebx].FILEMAPOBJ.dwFlags & FMO_MAPPED)
-			mov ecx, dwNumberOfBytesToMap
-			.if (eax == [ebx].FILEMAPOBJ.dwOffset)
-				.if ((!ecx) || (ecx <= [ebx].FILEMAPOBJ.dwSizeReal))
-					mov eax, [ebx].FILEMAPOBJ.pView
-					jmp done
-				.endif
+	.if ([ebx].FILEMAPOBJ.dwFlags & FMO_MAPPED)
+		mov ecx, dwNumberOfBytesToMap
+		.if (eax == [ebx].FILEMAPOBJ.dwOffset)
+			.if ((!ecx) || (ecx <= [ebx].FILEMAPOBJ.dwSizeReal))
+				mov eax, [ebx].FILEMAPOBJ.pView
+				jmp done
 			.endif
-			jmp error
 		.endif
-		mov [ebx].FILEMAPOBJ.dwOffset, eax
+		jmp error
+	.endif
+	mov [ebx].FILEMAPOBJ.dwOffset, eax
 
 if 0
 ;--------------------------- MEM_RESERVE is not correct, but the VirtualAlloc
 ;--------------------------- will in any case commit the region. With MEM_RESERVE
 ;--------------------------- we may avoid the zeroinit, so the DIRTY bits arent set
-		invoke VirtualAlloc, lpBaseAddress, [ebx].FILEMAPOBJ.dwSize, MEM_RESERVE, [ebx].FILEMAPOBJ.dwProtect
-		.if (!eax)
-			jmp error
-		.endif
+	invoke VirtualAlloc, lpBaseAddress, [ebx].FILEMAPOBJ.dwSize, MEM_RESERVE, [ebx].FILEMAPOBJ.dwProtect
+	.if (!eax)
+		jmp error
+	.endif
 else
 ;--------------------------- MEM_RESERVE cannot be used any longer since
 ;--------------------------- if dpmi host is v1.0 it will in fact reserve
 ;--------------------------- pages only.
 ;--------------------------- So we alloc a memory region and try to clear dirty
 ;--------------------------- bits. this will work for 1.0 hosts either
-;;		invoke VirtualAlloc, lpBaseAddress, [ebx].FILEMAPOBJ.dwSize, MEM_COMMIT, [ebx].FILEMAPOBJ.dwProtect
+;;	invoke VirtualAlloc, lpBaseAddress, [ebx].FILEMAPOBJ.dwSize, MEM_COMMIT, [ebx].FILEMAPOBJ.dwProtect
 ;--------------------------- 17.4.2004: we need MEM_RESERVE or MEM_COMMIT !!!
 ;--------------------------- if lpBaseAddress is != NULL
-		invoke VirtualAlloc, lpBaseAddress, [ebx].FILEMAPOBJ.dwSize, MEM_RESERVE or MEM_COMMIT, [ebx].FILEMAPOBJ.dwProtect
-		.if (!eax)
-			jmp error
-		.endif
-;--------------------------- this call tries to clear dirty bits		
-		push eax
-		invoke VirtualSetPageAttr, eax, [ebx].FILEMAPOBJ.dwSize, 0, 40h
-		pop eax
+	invoke VirtualAlloc, lpBaseAddress, [ebx].FILEMAPOBJ.dwSize, MEM_RESERVE or MEM_COMMIT, [ebx].FILEMAPOBJ.dwProtect
+	.if (!eax)
+		jmp error
+	.endif
+;--------------------------- this call tries to clear dirty bits
+	push eax
+	invoke VirtualSetPageAttr, eax, [ebx].FILEMAPOBJ.dwSize, 0, 40h
+	pop eax
 endif
-		mov [ebx].FILEMAPOBJ.pView, eax
-;		invoke VirtualFindBlock, eax
-;		.if (eax)
-;			mov [eax].MBLOCK.dwCookie, ebx
-;		.endif
-;;		invoke ZeroMemory, [ebx].FILEMAPOBJ.pView, [ebx].FILEMAPOBJ.dwSize
-		mov ecx, dwNumberOfBytesToMap
-		.if (!ecx)
-			mov ecx, [ebx].FILEMAPOBJ.dwSize
-		.endif
-		mov [ebx].FILEMAPOBJ.dwSizeReal, ecx
-		.if ([ebx].FILEMAPOBJ.hFile != HFILE_ERROR)
-			invoke SetFilePointer,[ebx].FILEMAPOBJ.hFile,\
-				[ebx].FILEMAPOBJ.dwOffset, NULL, 0
-			invoke ReadFile, [ebx].FILEMAPOBJ.hFile, [ebx].FILEMAPOBJ.pView,\
-				[ebx].FILEMAPOBJ.dwSizeReal, addr dwRead, 0
-		.endif
-		mov eax, [ebx].FILEMAPOBJ.pView
-		or [ebx].FILEMAPOBJ.dwFlags, FMO_MAPPED
-		jmp done
+	mov [ebx].FILEMAPOBJ.pView, eax
+;	invoke VirtualFindBlock, eax
+;	.if (eax)
+;		mov [eax].MBLOCK.dwCookie, ebx
+;	.endif
+;;	invoke ZeroMemory, [ebx].FILEMAPOBJ.pView, [ebx].FILEMAPOBJ.dwSize
+	mov ecx, dwNumberOfBytesToMap
+	.if (!ecx)
+		mov ecx, [ebx].FILEMAPOBJ.dwSize
+	.endif
+	mov [ebx].FILEMAPOBJ.dwSizeReal, ecx
+	.if ([ebx].FILEMAPOBJ.hFile != HFILE_ERROR)
+		invoke SetFilePointer,[ebx].FILEMAPOBJ.hFile,\
+			[ebx].FILEMAPOBJ.dwOffset, NULL, 0
+		invoke ReadFile, [ebx].FILEMAPOBJ.hFile, [ebx].FILEMAPOBJ.pView,\
+			[ebx].FILEMAPOBJ.dwSizeReal, addr dwRead, 0
+	.endif
+	mov eax, [ebx].FILEMAPOBJ.pView
+	or [ebx].FILEMAPOBJ.dwFlags, FMO_MAPPED
+	jmp done
 error:
-		xor eax, eax
+	xor eax, eax
 done:
-		@trace	<"MapViewOfFileEx()=">
-		@tracedw eax
-		@trace	<13,10>
-		ret
-        align 4
+	@strace <"MapViewOfFileEx()=", eax>
+	ret
+	align 4
 
-MapViewOfFileEx	endp
+MapViewOfFileEx endp
 
-MapViewOfFile	proc public hFileMap:DWORD, dwDesiredAccess:DWORD, dwFileOffsetHigh:DWORD,
+MapViewOfFile proc public hFileMap:DWORD, dwDesiredAccess:DWORD, dwFileOffsetHigh:DWORD,
 			dwFileOffsetLow:DWORD, dwNumberOfBytesToMap:DWORD
 
-		invoke MapViewOfFileEx, hFileMap, dwDesiredAccess, dwFileOffsetHigh,\
-				dwFileOffsetLow, dwNumberOfBytesToMap, NULL
-		ret
-        align 4
+	invoke MapViewOfFileEx, hFileMap, dwDesiredAccess, dwFileOffsetHigh,\
+			dwFileOffsetLow, dwNumberOfBytesToMap, NULL
+	ret
+	align 4
 
-MapViewOfFile	endp
+MapViewOfFile endp
 
 
-UnmapViewOfFile	proc public uses ebx lpBaseAddress:ptr
+UnmapViewOfFile proc public uses ebx lpBaseAddress:ptr
 
 local	phe:PROCESS_HEAP_ENTRY
 
-		@trace	<"UnmapViewOfFile(">
-		@tracedw lpBaseAddress
-		@trace	<")",13,10>
-
-        mov phe.lpData,0
-		.while (1)
-        	invoke KernelHeapWalk, addr phe, SYNCTYPE_FILEMAPP
-            .break .if (!eax)
-            mov ecx, lpBaseAddress
-            .if (ecx == [eax].FILEMAPOBJ.pView) 
-				and [eax].FILEMAPOBJ.dwFlags, NOT FMO_MAPPED
-				.if ([eax].FILEMAPOBJ.dwFlags & FMO_CLOSED)
-					invoke KernelHeapFree, eax
-                .endif
-				@mov eax, 1
-                .break
+	mov phe.lpData,0
+	.while (1)
+		invoke KernelHeapWalk, addr phe, SYNCTYPE_FILEMAPP
+		.break .if (!eax)
+		mov ecx, lpBaseAddress
+		.if (ecx == [eax].FILEMAPOBJ.pView) 
+			and [eax].FILEMAPOBJ.dwFlags, NOT FMO_MAPPED
+			.if ([eax].FILEMAPOBJ.dwFlags & FMO_CLOSED)
+				invoke KernelHeapFree, eax
 			.endif
-		.endw
-		ret
-        align 4
+			@mov eax, 1
+			.break
+		.endif
+	.endw
+	@strace <"UnmapViewOfFile(", lpBaseAddress, ")=", eax>
+	ret
+	align 4
+
 UnmapViewOfFile endp
 
-FlushViewOfFile	proc public uses ebx lpBaseAddress:ptr, dwBytes:DWORD
+FlushViewOfFile proc public uses ebx lpBaseAddress:ptr, dwBytes:DWORD
 
 local	phe:PROCESS_HEAP_ENTRY
 
-        mov phe.lpData,0
-		.while (1)
-        	invoke KernelHeapWalk, addr phe, SYNCTYPE_FILEMAPP
-            .break .if (!eax)
-            mov ecx, lpBaseAddress
-            .if (ecx == [eax].FILEMAPOBJ.pView) 
-            	mov ebx, eax
-				.if ([ebx].FILEMAPOBJ.dwFlags & FMO_MAPPED)
-                	invoke _flushfmobj, 0, 0, 1
-                .endif
-				@mov eax, 1
-                .break
+	mov phe.lpData,0
+	.while (1)
+		invoke KernelHeapWalk, addr phe, SYNCTYPE_FILEMAPP
+		.break .if (!eax)
+		mov ecx, lpBaseAddress
+		.if (ecx == [eax].FILEMAPOBJ.pView) 
+			mov ebx, eax
+			.if ([ebx].FILEMAPOBJ.dwFlags & FMO_MAPPED)
+				invoke _flushfmobj, 0, 0, 1
 			.endif
-		.endw
-		@trace	<"FlushViewOfFile(">
-        @tracedw lpBaseAddress
-        @trace	<", ">
-        @tracedw dwBytes
-        @trace	<")=">
-        @tracedw eax
-        @trace  <13,10>
-		ret
-        align 4
+			@mov eax, 1
+			.break
+		.endif
+	.endw
+	@strace <"FlushViewOfFile(", lpBaseAddress, ", ", dwBytes, ")=", eax>
+	ret
+	align 4
+
 FlushViewOfFile endp
 
 
 OpenFileMappingA proc public dwDesiredAccess:DWORD, bInheritHandle:DWORD, lpName:ptr BYTE
 
-		invoke KernelHeapFindObject, lpName
-		and eax, eax
-		jz @exit
-		.if ([eax].SYNCOBJECT.dwType == SYNCTYPE_FILEMAPP)
+	invoke KernelHeapFindObject, lpName
+	and eax, eax
+	jz @exit
+	.if ([eax].SYNCOBJECT.dwType == SYNCTYPE_FILEMAPP)
 ;-------------------------------- currently a reference counter is used
 ;-------------------------------- that's no proper solution, but should work
 ;-------------------------------- for many cases
-			inc [eax].FILEMAPOBJ.dwCnt	
-		.else
-			xor eax, eax
-		.endif
-@exit:		  
-		@strace	<"OpenFileMappingA(", dwDesiredAccess, ", ", bInheritHandle, ", ", &lpName, ")=", eax>
-		ret
-        align 4
+		inc [eax].FILEMAPOBJ.dwCnt	
+	.else
+		xor eax, eax
+	.endif
+@exit:
+	@strace <"OpenFileMappingA(", dwDesiredAccess, ", ", bInheritHandle, ", ", &lpName, ")=", eax>
+	ret
+	align 4
+
 OpenFileMappingA endp
 
 OpenFileMappingW proc public dwDesiredAccess:DWORD, bInheritHandle:DWORD, lpName:ptr WORD
 
-		mov eax, lpName
-		call ConvertWStr
-        invoke OpenFileMappingA, dwDesiredAccess, bInheritHandle, eax
-		@strace	<"OpenFileMappingW(", dwDesiredAccess, ", ", bInheritHandle, ", ", lpName, ")=", eax>
-		ret
-        align 4
+	mov eax, lpName
+	call ConvertWStr
+	invoke OpenFileMappingA, dwDesiredAccess, bInheritHandle, eax
+	@strace <"OpenFileMappingW(", dwDesiredAccess, ", ", bInheritHandle, ", ", lpName, ")=", eax>
+	ret
+	align 4
 
 OpenFileMappingW endp
 
@@ -446,21 +420,21 @@ if 0
 ;--- if it is to activate again, no longer use VirtualGetFileMapObject!
 ;--- Use KernelHeapFindObject instead!
 
-FreeMappingObjects	proc uses ebx
+FreeMappingObjects proc uses ebx
 
-		@trace <"FreeMappingObjects enter",13,10>
-		.while (1)
-			invoke VirtualGetFileMapObject
-			.break .if (!eax)
-			mov ebx, [eax].MBLOCK.dwCookie
-			and [ebx].FILEMAPOBJ.dwFlags, NOT FMO_MAPPED
-			invoke KernelHeapFree, ebx	
-		.endw
-		@trace <"FreeMappingObjects exit",13,10>
-		ret
-        align 4
+	@trace <"FreeMappingObjects enter",13,10>
+	.while (1)
+		invoke VirtualGetFileMapObject
+		.break .if (!eax)
+		mov ebx, [eax].MBLOCK.dwCookie
+		and [ebx].FILEMAPOBJ.dwFlags, NOT FMO_MAPPED
+		invoke KernelHeapFree, ebx	
+	.endw
+	@trace <"FreeMappingObjects exit",13,10>
+	ret
+	align 4
 
-FreeMappingObjects	endp
+FreeMappingObjects endp
 endif
 
-		end
+	end

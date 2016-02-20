@@ -2,7 +2,7 @@
 ;--- ax=0Bxx (hardware breakpoints)
 
 		.386P
-        
+
         include hdpmi.inc
         include external.inc
 
@@ -195,7 +195,7 @@ if ?ENABLEWP
         pop     ecx
         pop     eax
         ret
-else    
+else
 		stc
         ret
 endif

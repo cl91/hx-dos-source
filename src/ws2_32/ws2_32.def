@@ -26,8 +26,10 @@ EXPORTS
  shutdown       =_shutdown       @22
  socket         =_socket         @23
  
+ WSAAddressToStringA   @27
  WSACloseEvent         @29
  WSACreateEvent        @31
+ WSAIoctl              @32
  WSAEnumNetworkEvents  @36
  WSAEventSelect        @39
  
@@ -43,6 +45,9 @@ EXPORTS
  WSASocketA            @78
  WSAStringToAddressA   @80
  
+ WSAAsyncSelect        =_WSAAsyncSelect        @101
+ WSAAsyncGetHostByName =_WSAAsyncGetHostByName @103
+ WSACancelAsyncRequest =_WSACancelAsyncRequest @108
  WSASetBlockingHook    =_WSASetBlockingHook    @109
  WSAUnhookBlockingHook =_WSAUnhookBlockingHook @110
  WSAGetLastError       =_WSAGetLastError       @111

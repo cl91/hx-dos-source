@@ -18,7 +18,7 @@
   2. Requirements
 
   The tools required to build the binaries, modules and libraries are listed
-  in SRC/MAKEFILE.
+  in SRC/MAKEFILE. For detailed info see SRC/README.TXT.
 
 
   3. Files Overview
@@ -50,31 +50,37 @@
 
     The source code of the Win32 emulation dlls is:
 
-    directory    Module    emulates
+    directory    Module    Win32 name (if it differs)
    -----------------------------------------------------------------
-    Comctl32     COMCTL32  COMCTL32
-    Comdlg32     COMDLG32  COMDLG32
+    Comctl32     COMCTL32
+    Comdlg32     COMDLG32
     DAdvapi      DADVAPI   ADVAPI32
-    DCIMan32     DCIMAN32  DCIMAN32
+    DCIMan32     DCIMAN32
     DDDraw       DDDRAW    DDRAW
     DGDI32       DGDI32    GDI32
-    DInput       DINPUT    DINPUT
+    DInput       DINPUT
     DKrnl32      DKRNL32   KERNEL32
-    DSound       DSOUND    DSOUND
+    DSound       DSOUND
     DUser32      DUSER32   USER32
-    IPHLPAPI     IPHLPAPI  IPHLPAPI
-    MPR          MPR       MPR
-    MSACM32      MSACM32   MSACM32
-    Ole32        OLE32     OLE32
-    OleAut32     OLEAUT32  OLEAUT32
-    Shell32      SHELL32   SHELL32
-    WinMM        WINMM     WINMM
-    WS2_32       WS2_32    WS2_32
-    WSock32      WSOCK32   WSOCK32
+    IPHLPAPI     IPHLPAPI
+    MPR          MPR
+    MSACM32      MSACM32
+    Ole32        OLE32
+    OleAut32     OLEAUT32
+    Shell32      SHELL32
+    Version      VERSION
+    WinMM        WINMM
+    WS2_32       WS2_32
+    WSock32      WSOCK32
 
 
   4. History
 
+  11/16/2009, V2.16: Source for VERSION.DLL added.
+                     Required set of tools to make the HX binaries reduced:
+                     Linkers: MS link (COFF) and (J)WLink (OMF) are used.
+                     Librarians: WLib is used for both COFF and OMF.
+                     Resource compiler: WRC is used.
   01/20/2009, V2.15: All ASM sources assembled with JWasm.
                      source for MPR.DLL added.
   03/02/2008, V2.14: directory DPMISTUB renamed to STUBS.
@@ -136,8 +142,8 @@
   08/28/2004, V1.0:  first release. Previously HX source code
                      was in DKRNL32.ZIP and JMPPM32.ZIP.
 
-  5. Copyright
+  5. License
 
   The HX DOS extender is freeware. Copyright 1996-2009 Japheth.
 
-  Japheth (mail@japheth.de)
+  Japheth ( http://www.japheth.de )

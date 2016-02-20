@@ -16,95 +16,113 @@ endif
 ;--- convert an integer in eax to ascii, stores in edi
 ;--- 
 
-		
 __dw2aX	proc public
-		mov		dl, 0
-		jmp		dw2a
+	mov dl, 0
+	jmp dw2a
 __dw2aX	endp
 
 __dw2a	proc public
-		mov		dl,1		;suppress leading zeros
+	mov dl,1		;suppress leading zeros
 __dw2a	endp
 
-dw2a	proc
-		xor		ecx, ecx
-		push	eax
-		shr		eax, 16
-		call	w2asc
-		pop		eax
+dw2a proc
+	xor ecx, ecx
+	push eax
+	shr eax, 16
+	call w2asc
+	pop eax
 w2asc:
-		push	eax
-		shr		eax, 8
-		call	b2asc
-		pop		eax
+	push eax
+	shr eax, 8
+	call b2asc
+	pop eax
 b2asc:
-		mov		ah,al
-		shr		al, 4
-		call	nib2asc
-		mov		al,ah
-nib2asc:				
-        and     al,0Fh
-        add     al,'0'
-        cmp     al,'9'
-        jbe     @F
-        add     al,'A' - '9' - 1
+	mov ah,al
+	shr al, 4
+	call nib2asc
+	mov al,ah
+nib2asc:
+	and al,0Fh
+	add al,'0'
+	cmp al,'9'
+	jbe @F
+	add al,'A' - '9' - 1
 @@:
-		.if (dl && (al == '0'))
-			.if (ch || (cl == 7))
-				stosb
-			.endif
-		.else
-			inc ch
-	        stosb
+	.if (dl && (al == '0'))
+		.if (ch || (cl == 7))
+			stosb
 		.endif
-		inc cl
-        ret
-        align 4
-dw2a	endp
+	.else
+		inc ch
+		stosb
+	.endif
+	inc cl
+	ret
+	align 4
 
-__dw2aD	proc public uses ebx esi
-        xor		esi, esi
+dw2a endp
+
+;--- display number in EAX decimal into [edi]
+;--- 
+
+__dw2aD proc public uses ebx esi ebp
+
+	xor esi, esi
+__dw2aD_0::
+	mov bl,' '
 __dw2aD_1::
-        mov		ecx,10
-        mov		ebx,esp
+	mov ecx,10
+	mov ebp,esp
 nextchar:
-        or      eax,eax
-        je      done
-        cdq
-        div     ecx
-        push	edx
-        jmp     nextchar
+	or eax,eax
+	je done
+	cdq
+	div ecx
+	push edx
+	jmp nextchar
 done:
-		mov		ecx, ebx
-		sub		ecx, esp
-        jnz		@F
-        push	ecx
-        mov		ecx,4
+	mov ecx, ebp
+	sub ecx, esp
+	jnz @F
+	push ecx	;push 0
+	add ecx,4	;print at least a '0'
 @@:     
-        shr		ecx, 2
-        sub		esi, ecx
-		jbe 	nospaces
-        mov		al,' '
+	shr ecx, 2
+	sub esi, ecx
+	jbe nospaces
+	mov al, bl
 @@:     
-        stosb
-        dec		esi
-        jnz		@B 
+	stosb
+	dec esi
+	jnz @B 
 nospaces:
 @@:
-        pop		eax
-        add		al,'0'
-        stosb
-        loop	@B
-        ret
-        align 4
-__dw2aD	endp
+	pop eax
+	add al,'0'
+	stosb
+	loop @B
+	ret
+	align 4
 
-;--- min size of number in ESI
+__dw2aD endp
 
-__dw2aDX proc public uses ebx esi
-		jmp __dw2aD_1
-        align 4
+;--- min size of number in ESI (will be filled with ' ')
+
+__dw2aDX proc public uses ebx esi ebp
+
+	jmp __dw2aD_0
+	align 4
+
 __dw2aDX endp
+
+;--- min size of number in ESI (will be filled with value in BL)
+
+__dw2aDY proc public uses ebx esi ebp
+
+	jmp __dw2aD_1
+	align 4
+
+__dw2aDY endp
 
 if 1; ifdef _DEBUG
 ;__dw2aDebug proc uses edi

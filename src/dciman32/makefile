@@ -50,7 +50,7 @@ LIBS=dkrnl32.lib duser32.lib ..\DDDRAW\RELEASE\DDDRAW.LIB
 .SUFFIXES: .asm .obj
 
 .asm{$(OUTDIR)}.obj:
-    $(ASM) $<
+	$(ASM) $<
 
 ALL: $(OUTDIR) $(OUTDIR)\$(NAME).DLL
 
@@ -58,31 +58,33 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).LIB $(OUTDIR)\$(NAME).OBJ $(NAME).DEF
-    $(LINKBIN) @<<
+	@$(LINKBIN) @<<
 $(OUTDIR)\$(NAME).OBJ $(OUTDIR)\$(LIBNAME).LIB $(LIBS)
 $(LOPTS) $(LOPTD)
 /DEF:$(NAME).DEF /OUT:$*.DLL
 <<
 !if $(DEBUG)==0
-    @copy $*.DLL ..\..\bin\*.* >NUL
+	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR    
-    @copy $*.DLL $(DLL32DIR)\*.*
-!endif    
-#    copy $*.LIB $(LIBCOFF)\*.*
-#   copy $(OUTDIR)\$(LIBNAME).LIB $(LIBCOFF)\*.*
-!endif    
+	@copy $*.DLL $(DLL32DIR)\*.* >NUL
+!endif
+#	@copy $*.LIB $(LIBCOFF)\*.* >NUL
+#	@copy $(OUTDIR)\$(LIBNAME).LIB $(LIBCOFF)\*.* >NUL
+!endif
+
+WLIBMODS=$(SRCMODS:.\=+)
 
 $(OUTDIR)\$(LIBNAME).LIB: $(OBJMODS)
 	@cd $(OUTDIR)
-    $(LIBBIN) /NOLOGO @<<
-$(SRCMODS:.ASM=.OBJ) /OUT:$(LIBNAME).LIB
+	@$(LIBBIN) @<<
+$(LIBNAME).LIB $(WLIBMODS:.ASM=.OBJ) 
 <<
 	@cd ..
 
 clean:
-    @del $(OUTDIR)\*.obj
-    @del $(OUTDIR)\*.dll
-    @del $(OUTDIR)\*.lib
-    @del $(OUTDIR)\*.map
-    @del $(OUTDIR)\*.lst
-    @del $(OUTDIR)\*.exp
+	@del $(OUTDIR)\*.obj
+	@del $(OUTDIR)\*.dll
+	@del $(OUTDIR)\*.lib
+	@del $(OUTDIR)\*.map
+	@del $(OUTDIR)\*.lst
+	@del $(OUTDIR)\*.exp

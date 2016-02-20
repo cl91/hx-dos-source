@@ -48,7 +48,7 @@ OBJMODS = $(OBJNAMES:.\=OMF\)
 MASM=0
 !endif
 
-ASMOPT= -c -nologo -Cp -Sg -D?FLAT=1 -D_KERNEL32_=1 $(AOPTD) -I$(INC32DIR) -Fl$* -Fo$*
+ASMOPT= -c -nologo -Cp -Sg -D?FLAT=1 -D_KERNEL32_=1 -D?OMF=1 $(AOPTD) -I$(INC32DIR) -Fl$* -Fo$*
 !if $(MASM)
 ASM=@ml.exe $(ASMOPT) 
 !else
@@ -58,7 +58,7 @@ ASM=@jwasm.exe -zlc -zld $(ASMOPT)
 .SUFFIXES: .asm .obj
 
 .asm{$(OUTDIR)}.obj:
-    $(ASM) $<
+	$(ASM) $<
 
 ALL: $(OUTDIR) $(OUTDIR)\$(NAME).LIB
 
@@ -67,14 +67,16 @@ $(OUTDIR):
 
 $(OUTDIR)\$(NAME).LIB: $(OBJMODS) $(OUTDIR)\int21lfn.obj
 	@cd $(OUTDIR)
-    @if exist $(NAME).LIB del $(NAME).LIB
-    wlib -q -n $(NAME).LIB @<<
-$(OBJNAMES) $(OTHERMODS)
+	@$(LIB16BIN) $(NAME).LIB @<<
+$(OBJNAMES:\.=+) $(OTHERMODS:\.=+)
 <<
 	@cd ..
 !if $(DEBUG)==0
-#	copy $*.LIB $(LIBOMF)\*.*
+#	@copy $*.LIB $(LIBOMF)\*.* >NUL
 !endif    
+
+$(OUTDIR)\int21lfn.obj:
+	@copy ..\NTLFNHLP\OMF\int21lfn.obj $(OUTDIR)\*.*
 
 $(OBJMODS): dkrnl32.inc
 

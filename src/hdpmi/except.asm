@@ -4,11 +4,11 @@
 ;--- then waits for a keypress
 
 		.386
-        
+
 		include hdpmi.inc
 		include external.inc
         include debugsys.inc
-        
+
         option proc:private
 
 ?DUMP			= 0	;std 0, 1=call internal debugger (not implemented)
@@ -23,8 +23,8 @@
 @seg _DATA16
 
 @charout macro xx
-		push	xx
-		call	_charout
+		push xx
+		call _charout
 		endm
 
 CONST32	segment byte use32 public 'CODE'
@@ -61,25 +61,25 @@ endif
 ;*** get selector bx base (GDT or LDT)
 ;--- ES=FLAT, DS=GROUP16
 
-		assume	ds:GROUP16
+		assume ds:GROUP16
 
 mygetbase proc
-		movzx	ebx,bx
-		lar 	eax,ebx
-		jnz 	error
-		test	bl,4
-		jnz		@F
-		and 	bl,0F8h
-		add 	ebx, pdGDT.dwBase
-        jmp		mgb_1
-@@:        
-		and 	bl,0F8h
-		add 	ebx, [dwLDTAddr]
-mgb_1:        
-		mov 	ah,es:[ebx+7]
-		mov 	al,es:[ebx+4]
-		shl 	eax,16
-		mov 	ax,es:[ebx+2]
+		movzx ebx,bx
+		lar eax,ebx
+		jnz error
+		test bl,4
+		jnz @F
+		and bl,0F8h
+		add ebx, pdGDT.dwBase
+        jmp mgb_1
+@@:
+		and bl,0F8h
+		add ebx, [dwLDTAddr]
+mgb_1:
+		mov ah,es:[ebx+7]
+		mov al,es:[ebx+4]
+		shl eax,16
+		mov ax,es:[ebx+2]
 		clc
 		ret
 error:
@@ -93,7 +93,7 @@ forcetextmode proc public
 if ?FORCETEXTMODE
 		test	ss:[fMode2],FM2_FORCETEXT
         jz		exit
-endif        
+endif
         call	IsTextMode
 		jz		exit
         push	eax
@@ -561,11 +561,11 @@ if ?SETCLIENTPSP
         mov		bx,[rmpsporg]	;set client's initial PSP
         mov		ah,50h
         call	rmdosintern
-@@:        
-endif        
+@@:
+endif
 		and		fMode, not FM_RESIDENT
 		mov 	ax, _EAERR2_
-if 0        
+if 0
 		jmp 	_exitclientEx
 else
 		jmp 	_exitclient_pm
@@ -634,47 +634,52 @@ endif
 
 calldebugger proc
 if 0
-		push	ds
-		push	ss
-		pop 	ds
-;;        dec     bExcEntry
-		mov		al, byte ptr [ebp].wExcNo
-		mov		cl, NUMEXCSTR
-		mov		si, offset excstrtab
+	push ds
+	push ss
+	pop ds
+;;	dec     bExcEntry
+	mov al, byte ptr [ebp].wExcNo
+	mov cl, NUMEXCSTR
+	mov si, offset excstrtab
 nextitem:        
-		cmp al,[si].EXCSTR.nr
-        jz @F
-		add si, sizeof EXCSTR
-		dec cl
-        jnz nextitem
+	cmp al,[si].EXCSTR.nr
+	jz @F
+	add si, sizeof EXCSTR
+	dec cl
+	jnz nextitem
 @@:        
-		mov		si, [si].EXCSTR.pszText
-		.if (al >= 10)
-			add al, 7
-		.endif
-		add		ds:excnr_, al
-		movzx	esi, si
-		mov 	ax,DS_Out_Str
-		int 	Debug_Serv_Int
-		pop 	ds
+	mov si, [si].EXCSTR.pszText
+	.if (al >= 10)
+		add al, 7
+	.endif
+	add ds:excnr_, al
+	movzx esi, si
+	mov ax,DS_Out_Str
+	int Debug_Serv_Int
+	pop ds
 endif
-		mov		ebx,[ebp].de.rIP
-		mov		ecx,[ebp].de.rCSd
-        mov		eax,[ebp].de.rFL
-        lds		esi,[ebp].de.rSSSP
-        sub		esi,3*4
-        mov		[esi+0],ebx
-        mov		[esi+4],ecx
-        mov		[esi+8],eax
-        mov		[ebp].de.rSP,esi
-		mov 	ax,DS_ForcedGO
-		int 	Debug_Serv_Int
-		mov 	es, dword ptr [ebp].rES
-		mov 	ds, dword ptr [ebp].rDS
-		lea 	esp,[ebp].rEDI
-		popad
-        lss		esp,[esp+4].R3FAULT32.rSSSP
-        iretd
+if ?386SWAT
+;--- todo
+endif
+if ?WDEB386
+	mov ebx,[ebp].de.rIP
+	mov ecx,[ebp].de.rCSd
+	mov eax,[ebp].de.rFL
+	lds esi,[ebp].de.rSSSP
+	sub esi,3*4
+	mov [esi+0],ebx
+	mov [esi+4],ecx
+	mov [esi+8],eax
+	mov [ebp].de.rSP,esi
+	mov ax,DS_ForcedGO
+	int Debug_Serv_Int
+endif
+	mov es, dword ptr [ebp].rES
+	mov ds, dword ptr [ebp].rDS
+	lea esp,[ebp].rEDI
+	popad
+	lss esp,[esp+4].R3FAULT32.rSSSP
+	iretd
 
 calldebugger endp
 
@@ -682,9 +687,9 @@ endif
 
 _TEXT32 ends
 
-_TEXT16	segment
+_TEXT16 segment
 
-getakey	proc near
+getakey proc near
 
 if ?POLLKBD
 		in		al,21h
@@ -712,19 +717,19 @@ else
         push	ax
         mov		al,0FCh		;disable all devices except PIT and kbd
         out		21h,al
-  endif        
+  endif
   if ?RESETMOUSE
 		xor		ax,ax       ;reset mouse
         int		33h
-  endif   
+  endif
 		mov		ah,0
         int		16h
         or		al,20h
         mov		dl,al
-  if 0        
+  if 0
         pop		ax
         out		21h,al
-  endif        
+  endif
 endif
 		ret
 getakey	endp

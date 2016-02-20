@@ -1,11 +1,14 @@
 
-#--- before running nmake create subdirectory Release first!
+# nmake makefile to create PESTUB.EXE
+# tools used:
+# - JWasm
+# - WLink
 
 name = PESTUB
 
-#--- this app may be generated as standard MZ executable as well
-#--- but then set the path of the 16-bit OMF linker first
-#--- currently used: Digital Mars C++ OMF linker
+#--- this app may be generated as standard MZ executable as well.
+#--- however, OW WLink complains about multiple start addresses.
+#--- so another OMF linker is required.
 
 MZAPP=0
 USEDLL=0
@@ -43,17 +46,9 @@ ASM = @ml.exe $(ASMOPT)
 ASM = @jwasm.exe $(ASMOPT)
 !endif
 
-!if 0
-LIBS=$(LIBOMF)\jmppm32.lib $(LIBOMF)\dkrnl32s.lib $(LIBOMF)\duser32s.lib $(LIBOMF)\libc32.lib
-LOPT=/MAP:FULL/NON/NOE/NOD/ONE:NOE/NOLOGO $(LOPTD)
-LINK=link16.exe
-MODS=$(LIBOMF)\jmppm32.obj $*.obj $(LIBOMF)\dmythunk.obj
-!else
 LIBS=$(LIBOMF)\jmppm32.lib $(LIBOMF)\dkrnl32s.lib $(LIBOMF)\libc32.lib
-LOPT=/MAP:FULL/NON/NOE
-LINK=$(DMCDIR)\link.exe
-MODS=$*.obj $(LIBOMF)\jmppm32.obj $(LIBOMF)\dmythunk.obj
-!endif
+LINK=wlink.exe
+MODS=$*.obj $(LIBOMF)\jmppm32.obj
 
 !else
 
@@ -76,8 +71,7 @@ CRTLIB=$(LIBCOFF)\crtdll.lib
 CRTLIB=$(LIBCOFF)\libc32s.lib
 !endif
 LIBS= $(LIBCOFF)\dkrnl32.lib $(LIBCOFF)\duser32s.lib $(CRTLIB)
-LOPT=/OUT:$*.EXE /NOLOGO /NODEFAULTLIB /MAP:$*.map /SUBSYSTEM:CONSOLE $(LOPTD) /FIXED:NO  /STUB:..\..\bin\dpmist32.bin /MERGE:.rdata=.data /MERGE:.reloc=.text /OPT:NOWIN98
-LINK=polink
+LOPT=/OUT:$*.EXE /NOLOGO /NODEFAULTLIB /MAP:$*.map /SUBSYSTEM:CONSOLE $(LOPTD) /FIXED:NO  /STUB:..\..\bin\dpmist32.bin /MERGE:.rdata=.data /MERGE:.reloc=.text /OPT:NOWIN98 /STACK:0x4000
 
 !endif
 
@@ -87,23 +81,32 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 !if $(MZAPP)
+
 $(OUTDIR)\$(name).EXE: $*.obj makefile
-    $(LINK) @<<
-$(MODS),$*,$*,$(LIBS) $(LOPT);
+	@$(LINK) @<<
+format dos
+op q
+file {$(MODS)}
+name $*.EXE
+op map=$*.MAP
+lib {$(LIBS)}
 <<
+
 !else
+
 $(OUTDIR)\$(name).EXE: $*.obj makefile
-    $(LINK) $* $(LIBS) $(LOPT)
+#	@$(LINKBIN) $* $(LIBS) $(LOPT)
+	@jwlink sys nt file $* lib { $(LIBS) } op q, stub=..\..\bin\dpmist32.bin
 !if $(DEBUG)==0
 	@copy $*.EXE ..\..\bin\*.* >NUL
 !ifdef TOOLSDIR
-	@copy $*.EXE $(TOOLSDIR)\$(name).EXE
+	@copy $*.EXE $(TOOLSDIR)\$(name).EXE >NUL
 !endif    
 !endif
 !endif
 
 $(OUTDIR)\$(name).obj: $(name).asm makefile
-     $(ASM) $(name).asm
+	$(ASM) $(name).asm
 
 clean:
 	@del $(OUTDIR)\*.obj

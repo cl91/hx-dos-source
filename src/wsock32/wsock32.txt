@@ -40,6 +40,8 @@
   getservbyname    
   getservbyport    
   gethostname      
+  WSAAsyncGetHostByName      y
+  WSACancelAsyncRequest      y
   WSASetBlockingHook         y
   WSAUnhookBlockingHook      y
   WSAGetLastError    
@@ -66,8 +68,22 @@
  
  4. History
 
- 2006/10/15 V1.6
+ 2009/11/16 V1.7
  
+ þ inet_addr() did return bytes in wrong order, inet_ntoa() used them
+   in wrong order.
+ þ field iMaxUdpDg in WSADATA is now initialized to 1472, which is the
+   max size for WatTCP.
+ þ getsockopt() value SO_MAX_MSG_SIZE supported (returns 1472).
+ þ WSAStartup() won't clear the lpVendorInfo field in WSADATA anymore.
+ þ connect() in non-blocking mode returned WSAINPROGRESS, now returns
+   WSAWOULDBLOCK.
+ þ bugfix: WSAStartup() couldn't be called again once WSACleanup() was
+   called.
+ þ WSAAsyncSelect() supported.
+
+ 2006/10/15 V1.6
+
  þ accept() didn't terminate, even if closesocket() for this socket
    has been called.
  

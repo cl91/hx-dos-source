@@ -10,6 +10,8 @@ endif
 
         include windef.inc
         include winbase.inc
+        include winuser.inc
+        include shellapi.inc
         include macros.inc
 
 SE_ERR_NOASSOC	equ 31
@@ -65,4 +67,18 @@ local	szPath[MAX_PATH]:byte
         align 4
 ShellExecuteA endp
 
-		end
+ShellExecuteExA proc public lpShellExecuteInfo:ptr SHELLEXECUTEINFOA
+	xor eax, eax
+	@strace <"ShellExecuteExA(", lpShellExecuteInfo, ")=", eax>                
+	ret
+	align 4
+ShellExecuteExA endp
+
+FindExecutableA proc public lp1:ptr BYTE, lp2:ptr BYTE, lp3:ptr BYTE
+	xor eax, eax
+	@strace <"FindExecutableA(", lp1, ", ", lp2, ", ", lp3, ")=", eax>                
+	ret
+	align 4
+FindExecutableA endp
+
+	end

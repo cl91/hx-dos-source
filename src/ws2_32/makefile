@@ -38,7 +38,7 @@ LIBS=dkrnl32.lib
 .SUFFIXES: .asm .obj
 
 .asm{$(OUTDIR)}.obj:
-    $(ASM) $<
+	$(ASM) $<
 
 ALL: $(OUTDIR) $(OUTDIR)\$(NAME).DLL
 
@@ -46,15 +46,15 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(NAME).OBJ $(NAME).DEF Makefile
-    $(LINKBIN) @<<
+	@$(LINKBIN) @<<
 $(OUTDIR)\$(NAME).OBJ $(LIBS)
 $(LOPTS) $(LOPTD)
 /DEF:$(NAME).def /OUT:$*.DLL
 <<
 !if $(DEBUG)==0
-    copy $*.DLL ..\..\bin\*.* >NUL
+	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR
-    copy $*.DLL $(DLL32DIR)\*.*
+	@copy $*.DLL $(DLL32DIR)\*.* >NUL
 !endif    
 !endif    
 

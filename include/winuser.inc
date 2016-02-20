@@ -20,13 +20,13 @@ DIFFERENCE equ 11
 RT_GROUP_CURSOR	equ RT_CURSOR + DIFFERENCE
 RT_GROUP_ICON	equ RT_ICON + DIFFERENCE
 
-RT_VERSION		EQU	16
-RT_DLGINCLUDE	EQU	17
-RT_PLUGPLAY		EQU	19
-RT_VXD			EQU	20
-RT_ANICURSOR	EQU	21
-RT_ANIICON		EQU	22
-RT_HTML			EQU	23
+RT_VERSION		EQU 16
+RT_DLGINCLUDE	EQU 17
+RT_PLUGPLAY		EQU 19
+RT_VXD			EQU 20
+RT_ANICURSOR	EQU 21
+RT_ANIICON		EQU 22
+RT_HTML			EQU 23
 
 ;--- menu constants
 
@@ -426,6 +426,19 @@ ptMaxPosition		POINT	<>
 rcNormalPosition	RECT	<>
 WINDOWPLACEMENT	ends
 
+WINDOWINFO	struct 
+cbSize	DWORD	?
+rcWindow	RECT	<>
+rcClient	RECT	<>
+dwStyle	DWORD	?
+dwExStyle	DWORD	?
+dwWindowStatus	DWORD	?
+cxWindowBorders	DWORD	?
+cyWindowBorders	DWORD	?
+atomWindowType	ATOM	?
+wCreatorVersion	WORD	?
+WINDOWINFO	ends
+
 ; * Window Styles
 
 WS_OVERLAPPED     equ  00000000h
@@ -674,7 +687,8 @@ endif
 
 if ?INDCALL_ eq 0
 
-        .CODE
+;	.CODE
+;_TEXT segment
 
 BeginPaint       proto stdcall :HWND, :ptr PAINTSTRUCT
 CharToOemBuffA   proto stdcall a1:dword,a2:dword,a3:dword
@@ -742,9 +756,12 @@ WindowFromPoint  proto stdcall :POINT
 wsprintfA        proto c       a1:ptr byte,a2:ptr byte,a3:vararg
 wvsprintfA       proto stdcall a1:ptr byte,a2:ptr byte,a3:ptr
 
+;_TEXT ends
+
 else
 
-        .DATA
+;	.DATA
+_DATA segment
 
 externdef stdcall _imp__CharToOemBuffA@12:pfunc@12
 externdef stdcall _imp__CloseClipboard@0:pfunc@0
@@ -791,6 +808,8 @@ externdef stdcall _imp__ShowWindow@8:pfunc@8
 externdef stdcall _imp__WindowFromPoint@8:pfunc@8
 externdef stdcall _imp__wsprintfA:cpfunc@8v
 externdef stdcall _imp__wvsprintfA@12:pfunc@12
+
+_DATA ends
 
 CharToOemBuffA      equ <_imp__CharToOemBuffA@12>
 CloseClipboard      equ <_imp__CloseClipboard@0>

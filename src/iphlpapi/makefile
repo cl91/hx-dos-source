@@ -39,7 +39,7 @@ ASM=@ml.exe $(ASMOPT)
 !else
 ASM=@jwasm.exe $(ASMOPT)
 !endif
-LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL /ENTRY:DllMain /LIBPATH:$(LIBCOFF) /OPT:NOWIN98
+LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL /ENTRY:DllMain /LIBPATH:$(LIBCOFF) /OPT:NOWIN98 /merge:.edata=.text
 LINK=link.exe 
 
 NAME=IPHLPAPI
@@ -49,7 +49,7 @@ LIBS=dkrnl32.lib
 .SUFFIXES: .asm .obj
 
 .asm{$(OUTDIR)}.obj:
-    $(ASM) $<
+	$(ASM) $<
 
 ALL: $(OUTDIR) $(OUTDIR)\$(NAME).dll
 
@@ -57,18 +57,18 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).dll: $(OUTDIR)\$(NAME).obj $(NAME).def Makefile
-    $(LINK) @<<
+	@$(LINK) @<<
 $(OUTDIR)\$(NAME).obj $(LIBS)
 $(LOPTS) $(LOPTD)
 /DEF:$(NAME).def /OUT:$*.DLL
 <<
 !if $(DEBUG)==0
-    @copy $*.DLL ..\..\bin\*.* >NUL
+	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR    
-    @copy $*.DLL $(DLL32DIR)\*.*
+	@copy $*.DLL $(DLL32DIR)\*.* >NUL
 !endif    
-#    copy $*.LIB $(LIBCOFF)\*.*
-#   copy $(OUTDIR)\$(LIBNAME).LIB $(LIBCOFF)\*.*
+#	@copy $*.LIB $(LIBCOFF)\*.* >NUL
+#	@copy $(OUTDIR)\$(LIBNAME).LIB $(LIBCOFF)\*.* >NUL
 !endif    
 
 clean:

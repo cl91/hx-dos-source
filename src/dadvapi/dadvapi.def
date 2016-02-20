@@ -38,6 +38,7 @@ EXPORTS
  DeleteService
  DeregisterEventSource
  DuplicateToken
+ DuplicateTokenEx
  EqualSid
  FreeSid
  GetAce
@@ -76,6 +77,7 @@ EXPORTS
  OpenThreadToken
  QueryServiceStatus
  RegCloseKey
+ RegConnectRegistryA
  RegCreateKeyA
  RegCreateKeyExA
  RegCreateKeyExW

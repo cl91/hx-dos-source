@@ -2,10 +2,10 @@
 ;--- implements int 31h, ax=00xxh functions (LDT descriptors)
 
 		.386
-        
+
         include hdpmi.inc
         include external.inc
-        
+
         option proc:private
 
 @seg _TEXT32
@@ -25,11 +25,11 @@ _TEXT32 segment
 
 alloc1sel proc
         mov     cx,1
-alloc1sel endp		;fall throu        
+alloc1sel endp		;fall throu
         
 ;--- int 31h, ax=0000 - alloc CX selectors
 
-allocsel proc public 
+allocsel proc public
 
 		pushad
         movzx	ecx,cx
@@ -49,7 +49,7 @@ if _LTRACE_
         shl		eax, 16
         mov		ax,[ebx+2]
         @strout <"selector %X not free: (%lX %X %X)",lf>,bx, eax, <word ptr [ebx+0]>, <word ptr [ebx+5]>
-endif        
+endif
 allocsel3:
         add     ebx,8
         cmp     ebx,edx
@@ -63,12 +63,12 @@ allocsel3:
         shr		ax, 3
         cmp		ax,cx
         jb		exit
-        
+
         call    EnlargeLDT          ;all registers preserved!
         jnc     tryagain
         @strout <"not enough selectors available (%X/%X)",lf>,bx,dx
         jmp		exit
-        
+
 ;--- free selector found
 
 allocsel_1:
@@ -134,7 +134,7 @@ allocselx proc public
         add     ebx,8
         dec     ecx
         jnz     @B
-done:        
+done:
         @strout <"allocselx: ok",lf>
         clc
         ret
@@ -144,7 +144,7 @@ allocselx_err1:
         @strout <"allocselx: error",lf>
         stc
         ret
-        align 	4
+        align 4
 allocselx endp
 
 ;*** free ECX selectors beginning with EBX
@@ -160,15 +160,15 @@ freeselx proc public
         add     ebx,8
         or      bl,4
         loopd   @B
-@@:     
+@@:
         pop		ecx
         lar		eax,ecx
         jz		@F
         xor		ecx,ecx
-@@:        
+@@:
 		mov		ds,ecx
         ret
-        align 	4
+        align 4
 freeselx endp
 
 endif
@@ -182,14 +182,14 @@ freesel proc public
         cmp     bx,[esp].I31FR1.wDS
         jnz     @F
         mov     [esp].I31FR1.dwDS,0
-@@:        
+@@:
 freesel1::
         call    checksel        ;will pop return addr if error
         mov     dword ptr [ebx+0],0
         mov     dword ptr [ebx+4],0
         or      bl,4+?RING
         call    resetrmsel
-        
+
         push    eax
         mov     eax, es
         sub     ax, bx
@@ -210,8 +210,8 @@ freesel1::
         pop     eax
         clc
         ret
-        align 	4
-freesel	endp
+        align 4
+freesel endp
 
 ;*** search an entry in real-mode selector list
 ;--- inp: ax = selector
@@ -231,7 +231,7 @@ notfound:
 		mov		ebx, edx
 		stc
         ret
-        align 	4
+        align 4
 getrmentry endp
 
 ;*** add an entry in real mode selector list
@@ -278,7 +278,7 @@ setrmsel proc public uses ebx eax ds
 found:
 error:
         ret 8
-        align 	4
+        align 4
 setrmsel endp
 
 ;*** delete selector from real mode selector list
@@ -298,8 +298,8 @@ resetrmsel proc uses ebx eax ds
         mov     [ebx].RMSEL.limit,ax
 exit:
         ret
-        align 	4
-        
+        align 4
+
 resetrmsel endp
 
 ;*** check rm selector list, delete invalid entries
@@ -327,7 +327,7 @@ skipitem:
         jnz     nextitem
         popad
         ret
-        align 	4
+        align 4
 checkrmsel endp
 
 ;*** allocate a selector for conventional memory (dos rm sel)
@@ -403,7 +403,7 @@ found:
 error:
         popad
         ret
-        align 	4
+        align 4
         assume  ds:nothing
 allocxsel endp
 
@@ -420,7 +420,7 @@ allocrmsel proc public
         mov     ax,0002		;restore value of AX
 ;       mov     ax,8011h	;set DPMI v1.0 error code
         ret
-        align 	4
+        align 4
 allocrmsel endp
 
 ;*** function 0003 ***
@@ -428,7 +428,7 @@ allocrmsel endp
 getincvalue proc public
         mov     ax,0008h
         ret
-        align 	4
+        align 4
 getincvalue endp
 
 ;*** function 0005 ***
@@ -441,7 +441,7 @@ unlocksel endp	;fall through
 locksel proc public
         clc
         ret
-        align 	4
+        align 4
 locksel endp
 
 
@@ -460,7 +460,7 @@ error:
         add     esp,4
         stc
         ret
-        align 	4
+        align 4
 checksel endp
 
 ;*** function 0006 ***
@@ -471,7 +471,7 @@ getbase proc public
         mov     cl,[ebx].DESCRPTR.A1623
         mov     ch,[ebx].DESCRPTR.A2431
         ret
-        align 	4
+        align 4
 getbase endp
         
 ;--- function 0007
@@ -489,7 +489,7 @@ _reloadexit::
         push    gs
         pop     gs
         ret
-        align 	4
+        align 4
 setbase endp
         
 ;--- function 0008, set limit of BX in CX:DX
@@ -517,7 +517,7 @@ setlim2:
 carryexit::
         stc
         ret
-        align 	4
+        align 4
 setlimit endp
 
 ;--- function 0009
@@ -537,7 +537,7 @@ setaccrights proc public
         and     byte ptr [ebx].DESCRPTR.lim_gr,08Fh
         or      [ebx].DESCRPTR.lim_gr,ch
         jmp     _reloadexit
-        align 	4
+        align 4
 setaccrights endp
 
 ;*** function 000D alloc specific LDT descriptor bx
@@ -558,7 +558,7 @@ endif
         mov     byte ptr [ebx+5],92h or ?PLVL ;set data descriptor
         or      bl,4+?RING
         ret
-        align 	4
+        align 4
 allocspecific endp
 
 ;--- int 31h, ax=000A - get cs alias of selector in BX
@@ -583,7 +583,7 @@ getcsalias proc public
 @@:
 		popad
         ret
-        align 	4
+        align 4
 getcsalias endp
 
 ;--- int 31h, ax=000B - get descriptor
@@ -604,7 +604,7 @@ else
 endif
         pop     eax
         ret
-        align 	4
+        align 4
 getdesc endp
 
 ;*** function 000C - set descriptor bx ***
@@ -639,7 +639,7 @@ error:
         pop     eax
         stc
         ret
-        align 	4
+        align 4
 setdesc endp
 
 DESCITEM struct
@@ -666,9 +666,9 @@ ife ?32BIT
 endif
         mov edx, setdesc
         cmp al,0Fh
-		jz @F        
+		jz @F
         mov edx, getdesc
-@@:        
+@@:
 nextitem:
         jecxz done
         mov bx, es:[edi].DESCITEM.wSel
@@ -683,13 +683,13 @@ error:
 		sub [esp].PUSHADS.rCX,cx
         mov [esp].PUSHADS.rAX,8022h
         stc
-done:        
+done:
         popad
         ret
-        align 	4
+        align 4
 getmultdesc endp
 
-_TEXT32  ends
+_TEXT32 ends
 
         end
 

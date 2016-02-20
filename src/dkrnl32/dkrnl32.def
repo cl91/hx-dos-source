@@ -67,6 +67,7 @@ EXPORTS
  ClearCommBreak
  ClearCommError
  CloseHandle
+ CmdBatNotification
  CommConfigDialogA
  CompareFileTime
  CompareStringA
@@ -103,6 +104,8 @@ EXPORTS
  DbgPrint
  DebugActiveProcess
  DebugBreak
+ DecodePointer
+ DefineDosDeviceA
  DeleteAtom
  DeleteCriticalSection
  DeleteFileA
@@ -113,6 +116,7 @@ EXPORTS
  DosDateTimeToFileTime
  DuplicateHandle
  EnterCriticalSection
+ EncodePointer
  EnumCalendarInfoA
  EnumResourceLanguagesA
  EnumResourceNamesA
@@ -143,6 +147,7 @@ EXPORTS
  FindNextFileW
  FindResourceA
  FindResourceExA
+ FindResourceExW
  FindResourceW
  FlushConsoleInputBuffer
  FlushFileBuffers
@@ -160,6 +165,7 @@ EXPORTS
  GetACP
  GetAtomNameA
  GetBinaryTypeA
+ GetBinaryTypeW
  GetCPInfo
  GetCommConfig
  GetCommModemStatus
@@ -266,6 +272,8 @@ EXPORTS
  GetSystemTime
  GetSystemTimeAdjustment
  GetSystemTimeAsFileTime
+ GetSystemWindowsDirectoryA
+ GetSystemWindowsDirectoryW
  GetTapeParameters
  GetTapePosition
  GetTapeStatus
@@ -285,6 +293,7 @@ EXPORTS
  GetUserDefaultLangID
  GetUserDefaultLCID
  GetUserDefaultUILanguage
+ GetVDMCurrentDirectories
  GetVersion
  GetVersionExA
  GetVersionExW
@@ -320,6 +329,7 @@ EXPORTS
  HeapFree
  HeapLock
  HeapReAlloc
+ HeapSetInformation
  HeapSize
  HeapUnlock
  HeapValidate

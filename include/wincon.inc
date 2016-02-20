@@ -153,7 +153,8 @@ WriteConsoleOutputCharacterA proto near stdcall :dword, :ptr BYTE, :dword, :COOR
 
 else
 
-        .DATA
+;	.DATA
+_DATA segment
 
 externdef stdcall _imp__AllocConsole@0                  :pfunc@0
 externdef stdcall _imp__FillConsoleOutputAttribute@20   :pfunc@20
@@ -183,6 +184,8 @@ externdef stdcall _imp__WriteConsoleA@20                :pfunc@20
 externdef stdcall _imp__WriteConsoleInputA@16           :pfunc@16
 externdef stdcall _imp__WriteConsoleOutputA@20          :pfunc@20
 externdef stdcall _imp__WriteConsoleOutputCharacterA@20 :pfunc@20
+
+_DATA ends
 
 AllocConsole                 equ <_imp__AllocConsole@0>
 FillConsoleOutputAttribute   equ <_imp__FillConsoleOutputAttribute@20>

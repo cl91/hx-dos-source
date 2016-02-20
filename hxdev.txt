@@ -6,7 +6,7 @@
   package). It contains:
 
    þ libraries with HX's Win32 emulation in COFF format
-   þ samples in ASM, C, Pascal, Basic, Cobol
+   þ samples in assembly, C, Pascal, Basic, Cobol
    þ support files for debugging with Open Watcom's WD
    þ some helper tools
 
@@ -89,8 +89,8 @@
   available in HXDEV for the DOS PE format.
    HX's Win32 emulation can optionally be used by DOS-PEs. If dynamic
   linking is supported (true for all stubs except LOADPEx.BIN), DKRNL32.DLL
-  can be loaded at runtime. But usually it's a better idea to link the
-  Win32 emulation statically and to create a stand-alone binary.
+  can be loaded at runtime. But usually it's a better idea to create a
+  stand-alone binary with the Win32 emulation code linked statically.
 
   c) DOS-MZ
 
@@ -245,6 +245,7 @@
 
  9. History
 
+  11/16/2009, V2.16: InitW32x.obj added.
   01/20/2009, V2.15: All samples for Masm changed to use JWasm instead of
                      Masm. Masm can be used optionally.
   03/02/2008, V2.14: Added stubs LOADPE.BIN/LOADPEX.BIN.
@@ -334,11 +335,11 @@
   08/27/2004, V1.0:  first version. Previously this was in DPMILDXX package.
 
 
- 10. Copyright
+ 10. License
 
   The HX DOS extender is freeware. Copyright Japheth 1996-2009. HX can be 
   used for any purpose. The HX development package can be freely distributed
   for non-commercial purposes.
 
-  Japheth (mail@japheth.de)
+  Japheth ( http://www.japheth.de )
 

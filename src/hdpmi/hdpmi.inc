@@ -25,7 +25,7 @@ ifndef ?ENHANCED
 endif
 if ?ENHANCED
 ?SUPI2F1600		equ 1	;int 2F,ax=1600 support (win enh mode) - real mode
-?SUPI2F160A		equ 1	;int 2F,ax=160A unterstÅtzen (get version) - real mode
+?SUPI2F160A		equ 1	;int 2F,ax=160A support (get version) - real mode
 ?WINMODE		equ 3	;3=enhanced mode (Pharlab TNT has problems with this)
 else
 ?SUPI2F1600		equ 0

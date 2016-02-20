@@ -55,8 +55,9 @@ _ITEXT16 segment byte use16 public 'CODE'
 extern mystart:near					;use EXTERN to force include of mystart!
 _ITEXT16 ends
 ife ?STACKLAST
-STACK	segment use16 stack 'CODE'	;the stack needs class 'CODE'
-STACK	ends        				;to work with MS OMF linker
+;STACK	segment use16 stack 'CODE'	;with VALX+MS, the stack must be 'CODE'
+STACK	segment use16 stack 'STACK'	;WLink needs 'STACK' to find the stack seg
+STACK	ends
 endif
 ENDTEXT16 segment para use16 public 'CODE'
 endof16bit label byte
@@ -576,7 +577,7 @@ if ?LDTROSEL
 	@defdesc <0FFFh,0,0,90h or ?PLVL,0,0>,_SELLDTSAFE_, ?RING
 endif
 
-;--- selectors for kernel debugger wdeb386
+;--- selectors for kernel debugger wdeb386/386swat
 
 if ?KDSUPP
   if ?RING0FLATCS
@@ -585,7 +586,7 @@ if ?KDSUPP
 	@defdesc <?GDTLIMIT,offset curGDT,0,92h,0,0>,_GDTSEL_
 	@defdesc <0,0,0,0,0,0>,_KDSEL_
   if ?386SWAT
-    rept 29
+    rept 29   ;386swat requires max 30 free entries
 	@defdesc <0,0,0,0,0,0>						;reserved
     endm
   else
@@ -844,7 +845,7 @@ bFPUOr    db CR0_NE
 if ?KDSUPP
 fDebug	  db 0					;kernel debugger present?
 bTrap	  db 0
-pminit	  df 0
+dbgpminit df 0
 endif
 if ?LOGINT30
 lint30	  dw 0
@@ -3061,24 +3062,24 @@ endif
         align	4
 rpmstackr_rm endp
 
-_TEXT16	ends
+_TEXT16 ends
 
-		@ResetTrace
+	@ResetTrace
 
-_TEXT32	segment
+_TEXT32 segment
 
 ;*** mode switches
 ;*** there exist some cases
 ;*** 1. client hasn't set pm-vecs -> count = zero
-;***	-> no pm-mapper installed in rm  -> call original int
+;***    -> no pm-mapper installed in rm  -> call original int
 ;*** 2. client has set pm-vecs, there are 2 alternatives:
 ;***  a. irq occured in protected mode -> route to client pm proc
-;***	 if irq arrives at default handler, it will be routed to real-mode.
-;***	 problem: unknown rm-handler, which hasn't used INT 31h to install,
-;***	 is not notified
+;***     if irq arrives at default handler, it will be routed to real-mode.
+;***     problem: unknown rm-handler, which hasn't used INT 31h to install,
+;***     is not notified
 ;***  b. irq im real mode -> is routed to protected mode
-;***	 if irq arrives at default handler, it will be routed to real-mode
-;***	 handler installed before HDPMI
+;***     if irq arrives at default handler, it will be routed to real-mode
+;***     handler installed before HDPMI
 
 ;--- Ints 00-05 + 07 route to real-mode
 ;--- stack frame:
@@ -3088,10 +3089,10 @@ _TEXT32	segment
 ;--- used by macro @callrmint 
 
 dormint proc
-		xchg	ebx, [esp]
-		@getrmintvec [calladdr1]
-		jmp 	dormproc_1
-        align 4
+	xchg ebx, [esp]
+	@getrmintvec [calladdr1]
+	jmp dormproc_1
+	align 4
 dormint endp
 
 ;--- Ints 08-0F and 70-77, 1C
@@ -3101,41 +3102,41 @@ dormint endp
 ;--- used by macro @callrmproc
 
 dormproc proc
-		pop		ss:[calladdr1]
-        push	ebx
+	pop ss:[calladdr1]
+	push ebx
 dormproc_1::
-		mov 	ebx, [esp+4].IRET32.rFL
-		and 	bh,not _TF		;reset TF
+	mov ebx, [esp+4].IRET32.rFL
+	and bh,not _TF		;reset TF
 if ?SETRMIOPL
-		and 	bh,0CFh
-		or		bh,?RMIOPL
+	and bh,0CFh
+	or bh,?RMIOPL
 endif
-		mov 	ss:[tmpFLReg], bx
-        pop		ebx
-		@jmp_rm dormproc_rm
-        align   4
+	mov ss:[tmpFLReg], bx
+	pop ebx
+	@jmp_rm dormproc_rm
+	align 4
 
 dormproc endp
 
-_TEXT32	ends
+_TEXT32 ends
 
-_TEXT16	segment
+_TEXT16 segment
 
 dormproc_rm proc
-		push	cs:[tmpFLReg]
-		call	cs:[calladdr1]
-		@jmp_pmX dormproc_pm2
-		align 4
+	push cs:[tmpFLReg]
+	call cs:[calladdr1]
+	@jmp_pmX dormproc_pm2
+	align 4
 
 dormproc_rm endp
 
-_TEXT16	ends
+_TEXT16 ends
 
-_TEXT32	segment
+_TEXT32 segment
 
 dormproc_pm2 proc        
-		iretd
-        align 4
+	iretd
+	align 4
 dormproc_pm2 endp
 
 ;***  call real-mode software interrupt
@@ -3144,52 +3145,52 @@ dormproc_pm2 endp
 ;---  flags are modified!
 ;---  used by macro @callrmsint
 
-		@ResetTrace
+	@ResetTrace
 
 dormsint proc public
 
-		xchg	ebx,[esp]
-        @strout <"#dormsint %lX", lf>, ebx
-		@getrmintvec [calladdr2]
-		mov 	ebx,[esp+4].IRET32.rFL
-        pushfd
-		and 	bh,not _TF		;reset TF
-		mov 	ss:[tmpFLReg],bx
-        popfd
-		pop 	ebx				;stack: ip,cs,fl,sp,ss
-		@jmp_rm dormsint_rm
-        align   4
+	xchg ebx,[esp]
+	@strout <"#dormsint %lX", lf>, ebx
+	@getrmintvec [calladdr2]
+	mov ebx,[esp+4].IRET32.rFL
+	pushfd
+	and bh,not _TF		;reset TF
+	mov ss:[tmpFLReg],bx
+	popfd
+	pop ebx				;stack: ip,cs,fl,sp,ss
+	@jmp_rm dormsint_rm
+	align 4
 dormsint endp
 
-_TEXT32	ends
+_TEXT32 ends
 
-_TEXT16	segment
+_TEXT16 segment
 
 dormsint_rm proc
 
-        @stroutrm <"-dormsint %lX", lf>, cs:[calladdr2]
-		push	cs:[tmpFLReg]
-		call	cs:[calladdr2]
-		pushf
-		@rm2pmbreak
-		pop		cs:[tmpFLReg]
-        @jmp_pm	dormsint_pm2
-        align	4
+	@stroutrm <"-dormsint %lX", lf>, cs:[calladdr2]
+	push cs:[tmpFLReg]
+	call cs:[calladdr2]
+	pushf
+	@rm2pmbreak
+	pop cs:[tmpFLReg]
+	@jmp_pm dormsint_pm2
+	align 4
 dormsint_rm endp
 
-_TEXT16	ends
+_TEXT16 ends
 
-_TEXT32	segment
+_TEXT32 segment
 
 dormsint_pm2 proc
-		push	eax
-		mov 	ax,ss:[tmpFLReg]
-		and 	ah,8Fh				;reset NT, IOPL
-		or		ah,?PMIOPL
-		mov		word ptr [esp+4].IRET32.rFL,ax
-		pop 	eax
-		iretd
-        align  4
+	push eax
+	mov ax,ss:[tmpFLReg]
+	and ah,8Fh				;reset NT, IOPL
+	or ah,?PMIOPL
+	mov word ptr [esp+4].IRET32.rFL,ax
+	pop eax
+	iretd
+	align 4
 dormsint_pm2 endp
 
 ;--- call a real-mode far proc internally
@@ -3198,54 +3199,54 @@ dormsint_pm2 endp
 ;--- DS+ES may contain ring 0 selectors!
 
 dormprocintern proc public
-		push eax
-        mov eax, [esp+2*4]
-;   	mov ss:[calladdr3], eax
-		mov ss:[calladdr3], ax
-        pop eax
-        pop [esp]
+	push eax
+	mov eax, [esp+2*4]
+;	mov ss:[calladdr3], eax
+	mov ss:[calladdr3], ax
+	pop eax
+	pop [esp]
 
-		push ds
-        push es
+	push ds
+	push es
 
-        push 0		;clear es+ds
-        pop es
-        push 0
-        pop ds
-		@jmp_rm dormprocintern_rm
-        align  4
+	push 0		;clear es+ds
+	pop es
+	push 0
+	pop ds
+	@jmp_rm dormprocintern_rm
+	align 4
 dormprocintern endp
 
-_TEXT32	ends
+_TEXT32 ends
 
-_TEXT16	segment
+_TEXT16 segment
         
 dormprocintern_rm proc
 
-;;		push cs
-        call cs:[calladdr3]
-        pushf
-		@rm2pmbreak			;clears IF,TF+NT
-        pop	cs:[tmpFLReg]
-		@jmp_pm dormprocintern_pm2
-		align 4
+;;	push cs
+	call cs:[calladdr3]
+	pushf
+	@rm2pmbreak			;clears IF,TF+NT
+	pop cs:[tmpFLReg]
+	@jmp_pm dormprocintern_pm2
+	align 4
 dormprocintern_rm endp
 
-_TEXT16	ends
+_TEXT16 ends
 
-		@ResetTrace
+	@ResetTrace
 
 _TEXT32 segment
 
 dormprocintern_pm2 proc
-		pop es
-        pop ds
-		push eax
-        mov ah, byte ptr ss:[tmpFLReg]
-        sahf
-        pop eax
-		ret
-        align  4
+	pop es
+	pop ds
+	push eax
+	mov ah, byte ptr ss:[tmpFLReg]
+	sahf
+	pop eax
+	ret
+	align 4
 dormprocintern_pm2 endp
 
 ;*** proc called by macro @simrmint 
@@ -3253,97 +3254,97 @@ dormprocintern_pm2 endp
 ;--- esp+4 -> DWORD intno
 ;--- this proc is to be called internally by host code
 
-        @ResetTrace
+	@ResetTrace
 
 dormintintern proc public
-		
-		push	ebx
-		mov		ebx,[esp+2*4]
-		@getrmintvec [calladdr2]
-		pop 	ebx
-        pop     [esp]
-		@jmp_rm dormintintern_rm
-        align  4
+
+	push ebx
+	mov ebx,[esp+2*4]
+	@getrmintvec [calladdr2]
+	pop ebx
+	pop [esp]
+	@jmp_rm dormintintern_rm
+	align 4
 dormintintern endp
 
-_TEXT32	ends
+_TEXT32 ends
 
-_TEXT16	segment
+_TEXT16 segment
 
 dormintintern_rm proc
 
-;		@stroutrm <"dormintintern_rm enter", lf>
-		pushf
-        call	cs:[calladdr2]
+;	@stroutrm <"dormintintern_rm enter", lf>
+	pushf
+	call cs:[calladdr2]
 
 externdef dormintintern_rm_exit:near16
 
 dormintintern_rm_exit::	;<--- entry for int21api.asm
 
-		@jmp_pmX dormintintern_pm2
-		align 4
+	@jmp_pmX dormintintern_pm2
+	align 4
         
 dormintintern_rm endp
 
-_TEXT16	ends
+_TEXT16 ends
 
-_TEXT32	segment
+_TEXT32 segment
 
 dormintintern_pm2 proc
 
-;		@strout <"dormintintern_pm2 enter", lf>
-		ret
-        align  4
+;	@strout <"dormintintern_pm2 enter", lf>
+	ret
+	align 4
 
 dormintintern_pm2 endp
 
-        @ResetTrace
+	@ResetTrace
 
 if ?CATCHREBOOT
 myint09proc proc near
-		pushfd
-		push eax
-		push ds
-		push byte ptr _FLATSEL_
-		pop  ds
-		mov  al,byte ptr ds:[417h]
-		and  al,0Ch					;ctrl+alt pressed?
-		cmp  al,0Ch
-		jnz  @F
-		in	 al,60h
-		cmp  al,__DEL_MAKE
-		jz   isreboot
+	pushfd
+	push eax
+	push ds
+	push byte ptr _FLATSEL_
+	pop ds
+	mov al,byte ptr ds:[417h]
+	and al,0Ch					;ctrl+alt pressed?
+	cmp al,0Ch
+	jnz @F
+	in al,60h
+	cmp al,__DEL_MAKE
+	jz isreboot
 @@:
-		pop  ds
-		pop  eax
-		popfd
-		ret
+	pop ds
+	pop eax
+	popfd
+	ret
 isreboot:
 if 1
 if ?SAVEPSP
 ;--- if another PSP is active, do NOT try to terminate the client
-        mov  eax,ss:[dwSDA]
-        mov  ax,[eax+10h]
-        cmp  ax, ss:[rmpsporg]
-        jnz	 @B
+	mov eax,ss:[dwSDA]
+	mov ax,[eax+10h]
+	cmp ax, ss:[rmpsporg]
+	jnz @B
 endif        
 endif        
-		mov  al,20h
-		out  20h,al
-		pop  ds
-		pop  eax
-		popfd
-		lea  esp, [esp+4]   	;throw away return address
+	mov al,20h
+	out 20h,al
+	pop ds
+	pop eax
+	popfd
+	lea esp, [esp+4]   	;throw away return address
 
-		@printf <lf,"hdpmi: app terminated by user request",lf>
+	@printf <lf,"hdpmi: app terminated by user request",lf>
 
-		mov		[esp].IRET32.rIP, offset clientexit
-		mov		[esp].IRET32.rCS, _CSR3SEL_
-		iretd
+	mov [esp].IRET32.rIP, offset clientexit
+	mov [esp].IRET32.rCS, _CSR3SEL_
+	iretd
 clientexit:
-		mov 	ax,4cffh
-		int 	21h
-        align 4
+	mov ax,4cffh
+	int 21h
+	align 4
 
 myint09proc endp
 
@@ -4381,18 +4382,14 @@ endif
 _initrms endp
 
 _initclientstate proc
-		call _initrms
+	call _initrms
 if ?MOU33RESET
-        xor  edx,edx
-        cmp  word ptr cs:mevntvec._Cs, dx
-        jz   @F
-        push es
-        mov  es,edx					;if previous client has set mouse 
-        call mouse33_reset			;event proc, reset it now
-        pop  es
+	cmp word ptr cs:mevntvec._Cs, 0
+	jz @F
+	call mouse33_reset			;event proc, reset it now
 @@:        
 endif
-		ret
+	ret
 _initclientstate endp
 
 
@@ -4693,19 +4690,19 @@ termclient2:
 ;--- no client running as of yet
 
 termserver:
-		mov		ah,80h
-        mov		[ebp].PUSHADS.rAX, ax
-        mov		esp, ebp
-        popad
+		mov ah,80h
+		mov [ebp].PUSHADS.rAX, ax
+		mov esp, ebp
+		popad
 
 		@printf <"hdpmi: cannot initialize",lf>
 
-		push	byte ptr _FLATSEL_
-		pop 	es
-		call	resetrmvecs
-        
+		push byte ptr _FLATSEL_
+		pop es
+		call resetrmvecs
+
 		@exitserver_pm _initclienterr_rm	;preserves ax, back in real mode
-        align 	4
+		align 4
         
 _initclient_pm endp
 
@@ -4759,147 +4756,148 @@ closeinterrupts endp
 
 if ?CHECKHOSTSTACK
 _exitclientEx5 proc public
-		int 01
-		mov ax,_EAERR5_
-        mov ss:[taskseg._Esp0],offset ring0stack
-		mov ss:[dwHostStackExc],offset ring0stack - sizeof R3FAULT32
-        jmp _exitclientEx
+	int 01
+	mov ax,_EAERR5_
+	mov ss:[taskseg._Esp0],offset ring0stack
+	mov ss:[dwHostStackExc],offset ring0stack - sizeof R3FAULT32
+	jmp _exitclientEx
 _exitclientEx5 endp
 endif
 
 ife ?RMCBSTATICSS
 _exitclientEx4 proc public
-		mov ax,_EAERR4_
+	mov ax,_EAERR4_
 _exitclientEx4 endp ;fall through
 endif
 
 _exitclientEx proc near public
 
-		call	forcetextmode
-		@printf <lf,"hdpmi: fatal exit %X",lf,lf>,ax
+	call forcetextmode
+	@printf <lf,"hdpmi: fatal exit %X",lf,lf>,ax
         
 _exitclientEx endp ;fall through
 
-		@ResetTrace
+	@ResetTrace
 
 ;--- client terminated with int 21h, ah=4Ch
 
 _exitclient_pm proc public
-		@DebugBreak 0
-		push	eax					;save return code
-		push	ss
-		pop 	ds
-		assume DS:GROUP16
-        push	byte ptr _FLATSEL_
-        pop		es
-		@strout <"#exitclient enter, cApps=%X, task=%lX",lf>,<word ptr cApps>, ltaskaddr
-		call	closeinterrupts
-		cmp		[cApps],0			;fatal error on host initialization?
-        jz		exitclient_1
-if 1        
-;--- make sure host is not reentered now (VCPI free memory)
-		push	dword ptr wStdRmCb
-        mov 	dword ptr wStdRmCb,0
-endif        
-		@strout <"#exitclient: call freeclientmemory",lf>
-		call	_freeclientmemory	;no register modified
-		@strout <"#exitclient: call pm_exitclient",lf>
-		call	pm_exitclient		;no register modified
+	@DebugBreak 0
+	push eax					;save return code
+	push ss
+	pop ds
+	assume DS:GROUP16
+	push byte ptr _FLATSEL_
+	pop es
+	@strout <"#exitclient enter, cApps=%X, task=%lX",lf>,<word ptr cApps>, ltaskaddr
+	call closeinterrupts
+	cmp [cApps],0			;fatal error on host initialization?
+	jz exitclient_1
 if 1
-		pop		dword ptr wStdRmCb
+;--- make sure host is not reentered now (VCPI free memory)
+	push dword ptr wStdRmCb
+	mov dword ptr wStdRmCb,0
+endif
+	@strout <"#exitclient: call freeclientmemory",lf>
+	call _freeclientmemory	;no register modified
+	@strout <"#exitclient: call pm_exitclient",lf>
+	call pm_exitclient		;no register modified
+if 1
+	pop dword ptr wStdRmCb
 endif
 if ?ALWAYSRESTORE
-		@strout <"#exitclient: call restoreclientstate",lf>
-        mov		bx,tskstate.rmSP
-        mov		dx,tskstate.rmSS
-		call	_restoreclientstate	;no register modified
-endif		 
-		@strout <"#exitclient: last task check",lf>
+	@strout <"#exitclient: call restoreclientstate",lf>
+	mov bx,tskstate.rmSP		;needed for _exitclient_rm
+	mov dx,tskstate.rmSS
+	call _restoreclientstate	;no register modified
+endif
+	@strout <"#exitclient: last task check",lf>
 if ?ALWAYSRESTORE
-		cmp		[cApps],0
-		jz		exitclient_1
+	cmp [cApps],0
+	jz exitclient_1
 else
-		cmp		[cApps],1
-		jbe		exitclient_1
-endif		 
+	cmp [cApps],1
+	jbe exitclient_1
+endif
 exitclient_2:
-		@strout <"#exitclient: client about to terminate",lf>
-ife ?ALWAYSRESTORE		  
-		@strout <"#exitclient: call restoreclientstate",lf>
-        mov		bx,tskstate.rmSP
-        mov		dx,tskstate.rmSS
-		call	_restoreclientstate	;no registers modified
-endif		 
-		@strout <"#exitclient: jump to exitclient_rm",lf>
-		pop 	eax			;get return code
-		@rawjmp_rm	_exitclient_rm	;raw jump to rm, no stack switch
+	@strout <"#exitclient: client about to terminate",lf>
+ife ?ALWAYSRESTORE
+	@strout <"#exitclient: call restoreclientstate",lf>
+	mov bx,tskstate.rmSP		;needed for _exitclient_rm
+	mov dx,tskstate.rmSS
+	call _restoreclientstate	;no registers modified
+endif
+	@strout <"#exitclient: jump to exitclient_rm",lf>
+	pop eax			;get return code
+	@rawjmp_rm _exitclient_rm	;raw jump to rm, no stack switch
         
 ;--- either last client terminates
 ;--- or server terminates without client (fatal exit on init)
+;--- ES=FLAT, DS=GROUP16
         
 exitclient_1:
 if ?CR0COPY
-		mov		eax,cr0
-		@strout <"#current CR0=%lX",lf>,eax
-        and		al, bFPUAnd
-        or 		al, bCR0
-        mov		cr0,eax
-		@strout <"#restored CR0=%lX",lf>,eax
+	mov eax,cr0
+	@strout <"#current CR0=%lX",lf>,eax
+	and al, bFPUAnd
+	or al, bCR0
+	mov cr0,eax
+	@strout <"#restored CR0=%lX",lf>,eax
 endif        
 if ?TLBLATE
-		call	resettlb_pm
+	call resettlb_pm
 endif
-		@strout <"#no more clients, call resetrmvecs (can server terminate?)",lf>
-		call	resetrmvecs 		;check rm IVT (will set es=FLAT)
-		jc		exitclient_2		;keep resident on errors
-		@strout <"#server termination would be ok",lf>
+	@strout <"#no more clients, call resetrmvecs (can server terminate?)",lf>
+	call resetrmvecs 		;check rm IVT
+	jc exitclient_2		;keep resident on errors
+	@strout <"#server termination would be ok",lf>
 if ?RESIDENT
-		test	fMode, FM_RESIDENT
-		jnz		exitclient_2
-endif		 
-		@strout <"#server *will* terminate",lf>
-		pop		eax					;get return code
-		@exitserver_pm _dosexit_rm	;will return in real mode
-        align	4
+	test fMode, FM_RESIDENT
+	jnz exitclient_2
+endif
+	@strout <"#server *will* terminate",lf>
+	pop eax					;get return code
+	@exitserver_pm _dosexit_rm	;will return in real mode
+	align 4
 
 _exitclient_pm endp
 
 if ?TLBLATE
 
-		@ResetTrace
+	@ResetTrace
 
 ;--- is called when server goes idle (no clients)
 ;--- DS=GROUP16, ES=FLAT
         
 resettlb_pm proc
 
-		@strout <"#resettlb_pm, tlbseg=%X",lf>, wSegTLB
-		test fMode2,FM2_TLBLATE
-        jz   exit
-		test fMode,FM_TLBMCB
-        jz   exit
-		cmp  wSegTLB,0
-        jz   exit
-        pushad
-        mov  eax,[dwSDA]
-        mov  bx,es:[eax+10h]
-		@strout <"#resettlb_pm: set owner TLB to current PSP %X",lf>, bx
-        xor  eax, eax
-        xchg eax, dwSegTLB	;clears wSegTLB
-        dec  eax
-        shl  eax,4
-        mov  es:[eax+1],bx
-		mov	 ecx, pdGDT.dwBase
-		and  es:[ecx+(_TLBSEL_ and 0F8h)].DESCRPTR.attrib,not 2	;readonly
-        and  fMode, not FM_TLBMCB
-        popad
-exit:   
-		ret
-        align	4
+	@strout <"#resettlb_pm, tlbseg=%X",lf>, wSegTLB
+	test fMode2,FM2_TLBLATE
+	jz exit
+	test fMode,FM_TLBMCB
+	jz exit
+	cmp wSegTLB,0
+	jz exit
+	pushad
+	mov eax,[dwSDA]
+	mov bx,es:[eax+10h]
+	@strout <"#resettlb_pm: set owner TLB to current PSP %X",lf>, bx
+	xor eax, eax
+	xchg eax, dwSegTLB	;clears wSegTLB
+	dec eax
+	shl eax,4
+	mov es:[eax+1],bx
+	mov ecx, pdGDT.dwBase
+	and es:[ecx+(_TLBSEL_ and 0F8h)].DESCRPTR.attrib,not 2	;readonly
+	and fMode, not FM_TLBMCB
+	popad
+exit:
+	ret
+	align 4
 resettlb_pm endp
 endif
 
-		@ResetTrace
+	@ResetTrace
         
 ;*** start: modify all irq IVT vectors to our handler
 ;--- DS=GROUP16, ES=FLAT!
@@ -4907,31 +4905,31 @@ endif
 
 savermvecs proc
 
-		assume	DS:GROUP16
+	assume DS:GROUP16
 
-		test	byte ptr [fMode],FM_RMVECS
-		jnz 	exit
-		or		byte ptr [fMode],FM_RMVECS
-		mov 	cl,SIZESTDRMCB
-		mov 	ebx,offset stdrmcbs
+	test byte ptr [fMode],FM_RMVECS
+	jnz exit
+	or byte ptr [fMode],FM_RMVECS
+	mov cl,SIZESTDRMCB
+	mov ebx,offset stdrmcbs
 nextvec:
-		test	byte ptr [ebx].STDRMCB.flags, RMVFL_IGN or RMVFL_FARPROC
-		jnz 	@F
-		movzx  	esi, [ebx].STDRMCB.wIvtOfs
-		mov 	eax,es:[esi]
-		mov 	[ebx].STDRMCB.rm_vec, eax
-		mov 	[ebx].STDRMCB.orgvec, eax
-        mov		eax, [dwHostSeg]			;GROUP16
-        shl		eax, 16
-		mov 	ax,[ebx].STDRMCB.myproc
-		mov 	es:[esi+0],eax
+	test byte ptr [ebx].STDRMCB.flags, RMVFL_IGN or RMVFL_FARPROC
+	jnz @F
+	movzx esi, [ebx].STDRMCB.wIvtOfs
+	mov eax,es:[esi]
+	mov [ebx].STDRMCB.rm_vec, eax
+	mov [ebx].STDRMCB.orgvec, eax
+	mov eax, [dwHostSeg]			;GROUP16
+	shl eax, 16
+	mov ax,[ebx].STDRMCB.myproc
+	mov es:[esi+0],eax
 @@:
-		add 	ebx,sizeof STDRMCB
-        dec		cl
-		jnz		nextvec
+	add ebx,sizeof STDRMCB
+	dec cl
+	jnz nextvec
 exit:
-		ret
-        align 4
+	ret
+	align 4
 savermvecs endp
 
 ;--- this proc will first check all vectors if they can be restored
@@ -4939,65 +4937,65 @@ savermvecs endp
 ;--- in: DS=GROUP16, ES=FLAT
 ;--- out: C if vectors cannot be restored
 
-		@ResetTrace
+	@ResetTrace
 
 resetrmvecs proc 
 
-		assume DS:GROUP16
+	assume DS:GROUP16
 
-		pushad
-		@strout <"restore rm vectors",lf>
-        mov		di, wHostSeg				;GROUP16
-		mov 	ah, 00
-		test	fMode,FM_RMVECS				;IRQ vectors modified by HDPMI?
-		jz		exit
-		mov 	cl,TESTSTDRMCB				;check IRQs and i1c
+	pushad
+	@strout <"restore rm vectors",lf>
+	mov di, wHostSeg				;GROUP16
+	mov ah, 00
+	test fMode,FM_RMVECS				;IRQ vectors modified by HDPMI?
+	jz exit
+	mov cl,TESTSTDRMCB				;check IRQs and i1c
 
-		test	fMode,FM_CLONE
-        jnz		l2
-		cmp		es:[2Fh*4+2], di			;check vector 2Fh in IVT
-		jz		l2
-		@strout <"rm int 2F cannot be restored",lf>
-		mov		ah,2
-		jmp 	exit
+	test fMode,FM_CLONE
+	jnz l2
+	cmp es:[2Fh*4+2], di			;check vector 2Fh in IVT
+	jz l2
+	@strout <"rm int 2F cannot be restored",lf>
+	mov ah,2
+	jmp exit
 truereset:
-		mov 	cl,SIZESTDRMCB
-		mov 	ah,01
-		and 	byte ptr [fMode],not FM_RMVECS
+	mov cl,SIZESTDRMCB
+	mov ah,01
+	and byte ptr [fMode],not FM_RMVECS
 l2:
-		mov 	esi,offset stdrmcbs
+	mov esi,offset stdrmcbs
 nextvec:
-		test	byte ptr [esi].STDRMCB.flags,RMVFL_IGN or RMVFL_FARPROC
-		jnz 	l1
-;;  	and 	byte ptr [esi].STDRMCB.flags,not RMVFL_ACTIVE
-		mov 	edx,[esi].STDRMCB.orgvec	;restore rm vectors in table
-		mov 	[esi].STDRMCB.rm_vec, edx
-		movzx 	ebx,[esi].STDRMCB.wIvtOfs	;that's harmless, since table
-											;will be restored immediately
-							 				;if there is another client
-		test	ah,01h						;test mode?
-		jnz 	@F
-		cmp 	es:[ebx+2], di				;there might be the case
-		jz		l1							;that the app itself has restored
-											;the IVT vector
-		cmp 	edx,es:[ebx]
-		jz		l1
-		@strout <"rm int %X (*4) cannot be restored",lf>,ax
-		or		ah,2						;save this in AH
-		jmp 	l1
+	test byte ptr [esi].STDRMCB.flags,RMVFL_IGN or RMVFL_FARPROC
+	jnz l1
+;;	and byte ptr [esi].STDRMCB.flags,not RMVFL_ACTIVE
+	mov edx,[esi].STDRMCB.orgvec	;restore rm vectors in table
+	mov [esi].STDRMCB.rm_vec, edx
+	movzx ebx,[esi].STDRMCB.wIvtOfs	;that's harmless, since table
+									;will be restored immediately
+									;if there is another client
+	test ah,01h						;test mode?
+	jnz @F
+	cmp es:[ebx+2], di				;there might be the case
+	jz l1							;that the app itself has restored
+									;the IVT vector
+	cmp edx,es:[ebx]
+	jz l1
+	@strout <"rm int %X (*4) cannot be restored",lf>,ax
+	or ah,2						;save this in AH
+	jmp l1
 @@:
-		mov 	es:[ebx],edx
+	mov es:[ebx],edx
 l1:
-		add 	esi,sizeof STDRMCB
-        dec		cl
-		jnz 	nextvec
-		cmp 	ah,00
-		jz		truereset
+	add esi,sizeof STDRMCB
+	dec cl
+	jnz nextvec
+	cmp ah, cl
+	jz truereset
 exit:
-		shr 	ah,2						;return with C if not ok
-		popad
-		ret
-        align 4
+	shr ah,2						;return with C if not ok
+	popad
+	ret
+	align 4
 resetrmvecs endp
 
 ;--- exit the dpmi server
@@ -5005,30 +5003,30 @@ resetrmvecs endp
 ;--- is this routine never called without an active client?
 ;--- DS=GROUP16, ES=FLAT
 
-		@ResetTrace	;@SetTrace may require to set ?USEBIOS=0 in putchr.asm
+	@ResetTrace	;@SetTrace may require to set ?USEBIOS=0 in putchr.asm
 
 _exitserver_pm proc
 
-		push	eax
+	push eax
 if ?WDEB386
-		test	fDebug,FDEBUG_KDPRESENT
-		jz		@F
-		mov 	ax,DS_ExitCleanup
-		int 	Debug_Serv_Int
-@@:        
+	test fDebug,FDEBUG_KDPRESENT
+	jz @F
+	mov ax,DS_ExitCleanup
+	int Debug_Serv_Int
+@@:
 endif
-		@strout <"#exitserver enter, ds=%lX es=%lX esp=%lX",lf>, ds, es, esp
-		or		[fMode],FM_DISABLED		;disable int 2Fh real-mode interface
-		@strout <"#call mouse33_exit, esp=%lX",lf>, esp
-		call	mouse33_exit
-		@strout <"#call exitpagemgr_pm, ds=%lX es=%lX esp=%lX",lf>, ds, es, esp
-		call	pm_exitserver_pm			;modifies no general purpose register
-		@strout <"#final jump to real-mode, ds=%lX es=%lX esp=%lX [ESC]",lf>, ds, es, esp
-;        @waitesckey
-        pop		eax
-        pop		ss:[taskseg._Esi]
-		@rawjmp_rm	_exitserver_rm		;jmp rm, no stack switch
-        align 4
+	@strout <"#exitserver enter, ds=%lX es=%lX esp=%lX",lf>, ds, es, esp
+	or [fMode],FM_DISABLED		;disable int 2Fh real-mode interface
+;	@strout <"#call mouse33_exit, esp=%lX",lf>, esp
+;	call mouse33_exit
+	@strout <"#call pm_exitserver_pm, ds=%lX es=%lX esp=%lX",lf>, ds, es, esp
+	call pm_exitserver_pm			;modifies no general purpose register
+	@strout <"#final jump to real-mode, ds=%lX es=%lX esp=%lX [ESC]",lf>, ds, es, esp
+;	@waitesckey
+	pop eax
+	pop ss:[taskseg._Esi]
+	@rawjmp_rm	_exitserver_rm		;jmp rm, no stack switch
+	align 4
 _exitserver_pm endp
 
 _TEXT32	ends
@@ -5307,40 +5305,40 @@ _exitclient_rm proc
 ;--- the RMS of the previous client!!!)
 
 if 0
-		@setrmstk
+	@setrmstk
 else
-        mov		ss,dx
-        mov		sp,bx
+	mov ss,dx
+	mov sp,bx
 endif
         
-		@stroutrm <"-exitclient_rm enter: ss:sp=%X:%X",lf>,ss,sp
+	@stroutrm <"-exitclient_rm enter: ss:sp=%X:%X",lf>,ss,sp
         
-        call	load_rmsegs	;restore rm segment registers
-		@stroutrm <"-exitclient_rm: ds-gs=%X %X %X %X",lf>,ds,es,fs,gs
+	call load_rmsegs	;restore rm segment registers
+	@stroutrm <"-exitclient_rm: ds-gs=%X %X %X %X",lf>,ds,es,fs,gs
 if _LTRACE_
-		push	ax
-		mov 	ah,51h
-		int 	21h
-        push	ds
-		mov 	ds,bx
-		assume	ds:SEG16
-		@stroutrm <"-exitclient_rm: psp=%X, [psp:0A=%X:%X, 16=%X, 2E=%X:%X]",lf>,bx,\
-				<word ptr ds:[000Ch]>,<word ptr ds:[000Ah]>,<word ptr ds:[0016h]>,\
-                <word ptr ds:[0030h]>,<word ptr ds:[002Eh]>
-		mov 	ds,ds:[0016h]
-		@stroutrm <"-exitclient_rm: [prevPSP:2E=%X:%X]",lf>,ds:[0030h],ds:[002Eh]
-        pop		ds
-		assume	ds:nothing
-		pop 	ax
+	push ax
+	mov ah,51h
+	int 21h
+	push ds
+	mov ds,bx
+	assume ds:SEG16
+	@stroutrm <"-exitclient_rm: psp=%X, [psp:0A=%X:%X, 16=%X, 2E=%X:%X]",lf>,bx,\
+		<word ptr ds:[000Ch]>,<word ptr ds:[000Ah]>,<word ptr ds:[0016h]>,\
+		<word ptr ds:[0030h]>,<word ptr ds:[002Eh]>
+	mov ds,ds:[0016h]
+	@stroutrm <"-exitclient_rm: [prevPSP:2E=%X:%X]",lf>,ds:[0030h],ds:[002Eh]
+	pop ds
+	assume ds:nothing
+	pop ax
 endif
-		@stroutrm <"-exitclient_rm: jmp to DOS, ax=%X",lf>,ax
+	@stroutrm <"-exitclient_rm: jmp to DOS, ax=%X",lf>,ax
 
 _exitclient_rm endp	;fall through
 
 _dosexit_rm proc        
-		sti
-		mov 	ah,4Ch
-		int 	21h
+	sti
+	mov ah,4Ch
+	int 21h
 _dosexit_rm endp
 
 if ?TRAPINT06RM

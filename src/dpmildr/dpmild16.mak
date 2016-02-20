@@ -1,10 +1,11 @@
 
-# nmake makefile which creates DPMILD16.EXE/DPMILD16.BIN
+# nmake makefile which creates 
+# - DPMILD16.EXE: stand-alone DPMI loader
+# - DPMILD16.BIN: 14k stub which includes the DPMI loader
+# - HDLD16.BIN:   48k stub which includes the DPMI loader and HDPMI
 # tools used:
-# - Assembler: MASM
-# - Linker:
-#    + MS LINK 
-#    + OPTLINK (Digital Mars)
+# - Assembler: JWasm
+# - Linker:    WLink v1.8 modified
 
 !ifndef DEBUG
 DEBUG = 0
@@ -19,9 +20,6 @@ OUTDIR = REL16
 !include <..\dirs>
 
 NAME  = DPMILD16
-LOPTS = /FAR/MAP:FULL/NOE/NON/ONERROR:NOEXE/NOD
-#LINK16  = link16.exe
-LINK16  = $(DMCDIR)\link.exe
 LIBS  = LIB16\ldr16.lib
 
 !ifndef MASM
@@ -54,13 +52,18 @@ STUBX16:
 # create $(OUTDIR)\DPMILD16.EXE
 
 $(OUTDIR)\$(NAME).EXE: $(OUTDIR)\dpmildr.obj $(OUTDIR)\kernel16.obj LIB16\ldr16.lib $(NAME).mak 
-	@$(LINK16) @<<
-$(OUTDIR)\dpmildr.obj $(OUTDIR)\kernel16.obj $(LOPTS), $*.EXE, $*.map, $(LIBS);
+	@wlink @<<
+format dos
+op q
+file {$(OUTDIR)\dpmildr.obj $(OUTDIR)\kernel16.obj}
+name $*.EXE
+op map=$*.map
+lib $(LIBS)
 <<
 !if $(DEBUG)==0
 	@copy $*.EXE ..\..\bin >NUL
 !ifdef TOOLSDIR    
-	@copy $*.EXE $(TOOLSDIR)\$(NAME).EXE
+	@copy $*.EXE $(TOOLSDIR)\$(NAME).EXE >NUL
 !endif    
 !endif
 
@@ -73,44 +76,57 @@ $(OUTDIR)\kernel16.obj: kernel16.asm dpmildr.inc kernel16.inc version.inc trace.
 # create STUB16\DPMILD16.BIN
 
 STUB16\$(NAME).BIN: STUB16\dpmildr.OBJ STUB16\kernel16.obj LIB16\ldr16.lib $(NAME).mak 
-	@link16 /NOLOGO /KNOWEAS @<<
-STUB16\dpmildr.obj STUB16\kernel16.obj $(LOPTS), $*.BIN, $*.map, $(LIBS);
+	@jwlink @<<
+format dos
+op q, knoweas 
+file STUB16\dpmildr.obj, STUB16\kernel16.obj 
+name $*.BIN
+op map=$*.map
+lib $(LIBS)
 <<
-	@..\..\Bin\SHRMZHDR $*.BIN
 	@copy $*.BIN ..\..\Bin\*.* >NUL
 !ifdef TOOLSDIR
 	@copy $*.BIN $(TOOLSDIR)\*.* >NUL
 !endif
 
 STUB16\dpmildr.obj: dpmildr.asm dpmildr.inc kernel16.inc version.inc trace.inc
-    $(ASM) -D?STUB=1 dpmildr.asm
+	$(ASM) -D?STUB=1 dpmildr.asm
 
 STUB16\kernel16.obj: kernel16.asm dpmildr.inc kernel16.inc version.inc trace.inc
-    $(ASM) -D?STUB=1 kernel16.asm
+	$(ASM) -D?STUB=1 kernel16.asm
 
 # create STUBX16\HDLD16.BIN
 
 STUBX16\HDLD16.BIN: STUBX16\dpmildr.OBJ $(OUTDIR)\kernel16.OBJ LIB16\ldr16.lib $(NAME).mak
-    @link16 /NOLOGO /KNOWEAS @<<
-STUBX16\dpmildr.OBJ $(OUTDIR)\kernel16.OBJ $(LOPTS), $*.BIN, $*.MAP, $(LIBS);
+#	link16 @<<
+#	/KNOWEAS STUBX16\dpmildr.obj $(OUTDIR)\kernel16.obj, $*.BIN, $*.MAP, $(LIBS);
+#<<
+	@jwlink @<<
+format dos
+op q, knoweas
+file STUBX16\dpmildr.OBJ, $(OUTDIR)\kernel16.OBJ
+name $*.BIN
+op map=$*.MAP
+lib $(LIBS)
 <<
-	..\..\Bin\SHRMZHDR $*.BIN
 	@copy $*.BIN ..\..\Bin\*.* >NUL
 !ifdef TOOLSDIR
 	@copy $*.BIN $(TOOLSDIR)\*.* >NUL
 !endif
 
 STUBX16\dpmildr.obj: dpmildr.asm dpmildr.inc peload.inc version.inc trace.inc ..\HDPMI\STUB16\HDPMI16.INC dpmild16.mak
-    $(ASM) -D?STUB=1 -D?LOADDBGDLL=0 -D?SERVER=0 -D?HDPMI=1 dpmildr.asm
+	$(ASM) -D?STUB=1 -D?LOADDBGDLL=0 -D?SERVER=0 -D?HDPMI=1 dpmildr.asm
 
 clean:
 	@del $(OUTDIR)\*.exe
 	@del $(OUTDIR)\*.obj
-	@del $(OUTDIR)\*.lib
 	@del $(OUTDIR)\*.lst
 	@del $(OUTDIR)\*.map
-	@del STUB16\*.exe
+	@del STUB16\*.bin
 	@del STUB16\*.obj
-	@del STUB16\*.lib
 	@del STUB16\*.lst
 	@del STUB16\*.map
+	@del STUBX16\*.bin
+	@del STUBX16\*.obj
+	@del STUBX16\*.lst
+	@del STUBX16\*.map

@@ -66,25 +66,27 @@ $(OUTDIR):
 # put all sections in one physical section to reduce memory load
 
 $(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).lib $(OUTDIR)\$(NAME).obj makefile
-    $(LINKBIN) @<<
+	@$(LINKBIN) @<<
 $(LOPTS) $(OUTDIR)\$(NAME).obj $(OUTDIR)\$(LIBNAME).lib $(LIBS)
 $(LOPTD)
 /DEF:$(NAME).DEF /SECTION:.text,ERW /MERGE:.rdata=.text /MERGE:.data=.text /OUT:$*.DLL
 <<
 !if $(DEBUG)==0
-    @copy $*.DLL ..\..\bin\*.* >NUL
+	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR    
-    @copy $*.DLL $(DLL32DIR)\*.*
+	@copy $*.DLL $(DLL32DIR)\*.* >NUL
 !endif
 !endif
 
+WLIBMODS=$(SRCMODS:.\=+) 
+
 $(OUTDIR)\$(LIBNAME).lib: $(OBJMODS)
 	@cd $(OUTDIR)
-    $(LIBBIN) /NOLOGO @<<
-$(SRCMODS:.ASM=.OBJ) /OUT:$(LIBNAME).LIB
+	@$(LIBBIN) @<<
+$(LIBNAME).LIB $(WLIBMODS:.ASM=.OBJ) 
 <<
 	@cd ..
-#    copy $(OUTDIR)\$(LIBNAME).lib $(LIBCOFF)\*.*
+#	copy $(OUTDIR)\$(LIBNAME).lib $(LIBCOFF)\*.*
 
 clean:
 	@del $(OUTDIR)\*.dll

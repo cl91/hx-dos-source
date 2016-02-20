@@ -16,7 +16,7 @@ if ?FLAT
 @flatwr	equ <ds>
 ?NE		equ 0
 ?DPMI16 equ 0
-        assume	fs:nothing
+        assume fs:nothing
 
 else
         .model small, stdcall		;this will be virtually TINY 
@@ -58,7 +58,7 @@ endif
 
         
 		include dpmi.inc
-        include winnt.inc
+		include winnt.inc
 if ?RMDBGHLP
 ?RMCALLBACK equ 0
 ?TRAPRM2F   equ 0
@@ -67,28 +67,6 @@ if ?RMDBGHLP
 		include rmdbghlp.inc
 endif
 		include hxhelp.inc
-
-;*******************************************************************************
-;Similar to PROC but it resets the variables needed for ESP local variable and
-;stack parameter addressing.
-;
-;Usage:   PROCS TestProc
-;
-; Does:   TestProc PROC   and some initialisation.
-;
-;*******************************************************************************
-procs   macro name
-curproc        textequ <name>
-;curproc textequ name
-curproc proc    
-        endm
-
-;*******************************************************************************
-;Similar to ENDP but doesn't need a name. It closes a PROCS routine.
-;*******************************************************************************
-endps   macro
-curproc endp
-        endm
 
 ;*******************************************************************************
 ;Replacement for PUSH that maintains the stack offset for PARAMS,LOCALS &
@@ -598,9 +576,9 @@ DisplayMsg proc stdcall pText:ptr byte
         mov     ah,9
         int     21h
         ret
-DisplayMsg endp        
+DisplayMsg endp
 
-OpenLogFile	proc        
+OpenLogFile proc
         mov     edx,offset szLogFileName
         mov     ax,3d01h
         int     21h
@@ -617,11 +595,11 @@ OpenLogFile	proc
         xor     dx,dx
         mov     ax,4202h
         int     21h
-error:        
+error:
         ret
-OpenLogFile	endp
+OpenLogFile endp
 
-CloseLogFile proc        
+CloseLogFile proc
         mov		bx, g_hLogFile
         cmp		bx, -1
         jz		done
@@ -646,7 +624,7 @@ WriteLog proc
 		ret
 WriteLog endp
 
-StartLog	proc
+StartLog proc
 
 		pushad
 		mov		ah,51h
@@ -1671,7 +1649,7 @@ restorefpuemu endp
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_GET_SYS_CONFIG
+REQ_GET_SYS_CONFIG proc
         local   @@incount:DWORD,@@inaddr:DWORD,@@outaddr:DWORD
 
 ;       pushads
@@ -1776,7 +1754,8 @@ endif
         mov     esi,@@inaddr
         mov     edi,@@outaddr
         ret
-        endps
+
+REQ_GET_SYS_CONFIG endp
 
 
 ;--- get handle(=selector) of a segment#
@@ -1847,8 +1826,9 @@ REPLY_MAP_ADDR ends
 MAP_FLAT_CODE_SELECTOR	equ -1
 MAP_FLAT_DATA_SELECTOR	equ -2
 
-        procs   Request_Map_Addr
-        local   @@incount:DWORD,@@inaddr:DWORD,@@outaddr:DWORD
+Request_Map_Addr proc
+
+local   @@incount:DWORD,@@inaddr:DWORD,@@outaddr:DWORD
 
         pushad
 ;
@@ -2005,8 +1985,7 @@ moddone:
         mov     esi,@@inaddr
         mov     edi,@@outaddr
         ret
-        endps
-
+Request_Map_Addr endp
 
 ;*******************************************************************************
 ;
@@ -2024,7 +2003,7 @@ moddone:
 ;
 ;*******************************************************************************
 ; commented MED 1/20/2003
-        procs   REQ_ADDR_INFO
+REQ_ADDR_INFO proc
         movzx   eax,word ptr [esi+1+4]  ; addr_info_req.req + addr_info_req.in_addr.segment
 if ?RMDBGHLP
 		cmp		g_fRealMode,0
@@ -2046,7 +2025,7 @@ endif
         add     esi,1+6         ; sizeof (addr_info_req)
         sub     ecx,1+6
         ret
-        endps
+REQ_ADDR_INFO endp
 
 ;--- what is this proc for?
 ;--- the debuggee may have switched to 32bit protected mode
@@ -2100,7 +2079,7 @@ cache_end	dd ?
 bFlags		db ?
 REPLY_MACHINE_DATA ends
 
-        procs   Request_Machine_Data
+Request_Machine_Data proc
         movzx   ebx,[esi].REQ_MACHINE_DATA.wSeg
 if ?RMDBGHLP
         cmp		g_fRealMode,0
@@ -2157,7 +2136,7 @@ done:
         add     esi,sizeof REQ_MACHINE_DATA
         sub     ecx,sizeof REQ_MACHINE_DATA
         ret
-        endps
+Request_Machine_Data endp
 
 ;--- read memory byte [esi] into BL
 
@@ -2237,7 +2216,7 @@ WriteMemory endp
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_CHECKSUM_MEM
+REQ_CHECKSUM_MEM proc
         push    ecx
         mov     bx,[esi+1+4]            ;get selector.
         mov		ax,6
@@ -2279,7 +2258,7 @@ WriteMemory endp
         add     esi,1+6+2
         sub     ecx,1+6+2
         ret
-        endps
+REQ_CHECKSUM_MEM endp
 
 ;--- read @flat:[esi] to es:[edi], ecx bytes
 
@@ -2326,7 +2305,7 @@ WriteFlatMemory endp
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_READ_MEM
+REQ_READ_MEM proc
         movzx   ebx,word ptr [esi+1+4]
 if ?RMDBGHLP
 		cmp		g_fRealMode,0
@@ -2389,9 +2368,9 @@ limitok:
         mov		fs,ebx
         mov		edx,[esi+1]
         jmp		isgdt
-@@:        
+@@:
 		add     edx,[esi+1]
-isgdt:        
+isgdt:
         pushs   ecx,esi
         movzx   ecx,word ptr [esi+1+6]
         mov     esi,edx
@@ -2421,7 +2400,7 @@ done:
         add     esi,1+6+2
         sub     ecx,1+6+2
         ret
-        endps
+REQ_READ_MEM endp
 
 
 ;*******************************************************************************
@@ -2439,7 +2418,7 @@ done:
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_WRITE_MEM
+REQ_WRITE_MEM proc
 
         movzx   ebx,word ptr [esi+1+4]
 if ?RMDBGHLP
@@ -2524,7 +2503,7 @@ done:
         add     edi,2
         xor     ecx,ecx
         ret
-        endps
+REQ_WRITE_MEM endp
 
 ;*******************************************************************************
 ;
@@ -2541,7 +2520,7 @@ done:
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_READ_IO
+REQ_READ_IO proc
         inc		esi
         lodsd
         mov		edx, eax               ;get I/O port.
@@ -2570,7 +2549,7 @@ done:
 ;
 @@9io:  sub     ecx,1+4+1
         ret
-        endps
+REQ_READ_IO endp
 
 
 ;*******************************************************************************
@@ -2588,7 +2567,7 @@ done:
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_WRITE_IO
+REQ_WRITE_IO proc
         inc		esi
         lodsd   
         mov     edx,eax             ;get I/O address.
@@ -2623,7 +2602,7 @@ done:
 		stosb
         xor     ecx,ecx
         ret
-        endps
+REQ_WRITE_IO endp
 
 
 ;*******************************************************************************
@@ -2641,7 +2620,7 @@ done:
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_READ_CPU
+REQ_READ_CPU proc
         local   @@incount:DWORD,@@inaddr:DWORD,@@outaddr:DWORD
 
         pushad
@@ -2673,7 +2652,7 @@ endif
         mov     esi,@@inaddr
         mov     edi,@@outaddr
         ret
-        endps
+REQ_READ_CPU endp
 
 ;*******************************************************************************
 ;
@@ -2690,7 +2669,7 @@ endif
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_READ_FPU
+REQ_READ_FPU proc
         local   @@incount:DWORD,@@inaddr:DWORD,@@outaddr:DWORD
 
         pushad
@@ -2719,7 +2698,7 @@ endif
         mov     esi,@@inaddr
         mov     edi,@@outaddr
         ret
-        endps
+REQ_READ_FPU endp
 
 
 ;*******************************************************************************
@@ -2737,7 +2716,7 @@ endif
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_WRITE_CPU
+REQ_WRITE_CPU proc
 ;
         inc     esi             ;skip REQ_WRITE_CPU
         dec     ecx
@@ -2752,7 +2731,7 @@ endif
 ;
         sub     ecx,sizeof trap_cpu_regs
         ret
-        endps
+REQ_WRITE_CPU endp
 
 
 ;*******************************************************************************
@@ -2770,7 +2749,7 @@ endif
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_WRITE_FPU
+REQ_WRITE_FPU proc
 ;
         inc     esi             ;skip REQ_WRITE_FPU
         dec     ecx
@@ -2779,39 +2758,39 @@ endif
 ;
 ;Set FPU register values.
 ;
-        frstor  [esi]
+        frstor [esi]
         fwait
-        add     esi,108
-        sub     ecx,108
+        add esi,108
+        sub ecx,108
 
-		call	restorefpuemu
+		call restorefpuemu
 ;
         ret
-        endps
+REQ_WRITE_FPU endp
 
 
 ;*******************************************************************************
 ; REQ_READ_REGS processing, follows REQ_READ_CPU, MED 1/20/2003
 ;*******************************************************************************
-        procs   REQ_READ_REGS
-        call    REQ_READ_CPU
+REQ_READ_REGS proc
+        call REQ_READ_CPU
         dec esi
         inc ecx
-        call    REQ_READ_FPU
+        call REQ_READ_FPU
         ret
-        endps
+REQ_READ_REGS endp
 
 
 ;*******************************************************************************
 ; REQ_WRITE_REGS processing, follows REQ_WRITE_CPU, MED 1/20/2003
 ;*******************************************************************************
-        procs   REQ_WRITE_REGS
-        call    REQ_WRITE_CPU
+REQ_WRITE_REGS proc
+        call REQ_WRITE_CPU
         dec esi
         inc ecx
-        call    REQ_WRITE_FPU
+        call REQ_WRITE_FPU
         ret
-        endps
+REQ_WRITE_REGS endp
 
 ;--- this is to overcome a WD restriction.
 ;--- it helps WD to determine that a soft break has been hit
@@ -2856,7 +2835,7 @@ CheckForBreakHits endp
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_PROG_GO
+REQ_PROG_GO proc
         local   @@result:DWORD
 
         inc     esi
@@ -2884,7 +2863,7 @@ CheckForBreakHits endp
         mov     [edi],ax
         add     edi,2
         ret
-        endps
+REQ_PROG_GO endp
 
 ;*******************************************************************************
 ;
@@ -2901,7 +2880,7 @@ CheckForBreakHits endp
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_PROG_STEP
+REQ_PROG_STEP proc
         local   @@result:DWORD
 
         inc     esi
@@ -2930,7 +2909,7 @@ CheckForBreakHits endp
         mov     [edi],ax
         add     edi,2
         ret
-        endps
+REQ_PROG_STEP endp
 
 if ?DJGPP
 
@@ -3002,7 +2981,7 @@ dwModule	dd ?
 bFlags		db ?
 REPLY_PROG_LOAD ends
 
-        procs   REQ_PROG_LOAD
+REQ_PROG_LOAD proc
         local   @@incount:DWORD,@@inaddr:DWORD,@@outaddr:DWORD
 
 		xor		eax,eax
@@ -3270,7 +3249,7 @@ load_done:
         mov     ecx,@@incount
         mov     esi,@@inaddr
         ret
-        endps
+REQ_PROG_LOAD endp
 
 cmppsps proc
 		mov ax,6
@@ -3307,7 +3286,7 @@ bReq   		db ?
 dwTask		dd ?
 REQ_PROG_KILL ends
 
-        procs   Request_Prog_Kill
+Request_Prog_Kill proc
         pushad
 		invoke	String2File, CStr(<"REQ_PROG_KILL enter, current PSP=">)
         invoke	DWord2File, DebugPSP
@@ -3390,7 +3369,7 @@ endif
 terminate:
 		mov		ax,4cffh
         int		21h
-        endps
+Request_Prog_Kill endp
 
 
 ;*******************************************************************************
@@ -3408,163 +3387,163 @@ terminate:
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_SET_WATCH
+REQ_SET_WATCH proc
 ;
 ;Check if size is OK for HBRK
 ;
-		cmp		g_bIsNT,0				;no HW breaks for NT platforms!
-		jnz		@@3watch        
-        cmp     byte ptr [esi+1+6],1
-        jz      @@0watch
-        cmp     byte ptr [esi+1+6],2
-        jz      @@0watch
-        cmp     byte ptr [esi+1+6],4
-        jnz     @@3watch
+		cmp g_bIsNT,0				;no HW breaks for NT platforms!
+		jnz @@3watch        
+        cmp byte ptr [esi+1+6],1
+        jz @@0watch
+        cmp byte ptr [esi+1+6],2
+        jz @@0watch
+        cmp byte ptr [esi+1+6],4
+        jnz @@3watch
 ;
 ;Size is OK so see if we can find a free entry.
 ;
 @@0watch:
-        mov     ebx,offset HBRKTable
-        mov     ebp,4
+        mov ebx,offset HBRKTable
+        mov ebp,4
 @@1watch:
-        test    [ebx].HBRK.HBRK_Flags,1       ;free?
-        jz      @@2watch
-        add     ebx,size HBRK
-        dec     ebp
-        jnz     @@1watch
-        jmp     @@3watch                ;have to be software watch then.
+        test [ebx].HBRK.HBRK_Flags,1       ;free?
+        jz @@2watch
+        add ebx,size HBRK
+        dec ebp
+        jnz @@1watch
+        jmp @@3watch                ;have to be software watch then.
 ;
 ;Fill in hardware break point details.
 ;
 @@2watch:
-        mov     [ebx].HBRK.HBRK_Flags,1       ;mark it in use.
-        mov     dx,[esi+1+4]            ;get selector.
+        mov [ebx].HBRK.HBRK_Flags,1       ;mark it in use.
+        mov dx,[esi+1+4]            ;get selector.
 if ?RMDBGHLP
-		cmp		g_fRealMode,0
-        jz		isprotmode
-        movzx	edx,dx
-        shl		edx,4
-        jmp		cont_1
+		cmp g_fRealMode,0
+        jz isprotmode
+        movzx edx,dx
+        shl edx,4
+        jmp cont_1
 isprotmode:        
 endif
-        pushs   ebx,ecx
-        mov		ebx,edx
-		mov		ax,6
+        pushs ebx,ecx
+        mov ebx,edx
+		mov ax,6
         @callint31
-        push	cx
-        push	dx
-        pop		edx
-        pops    ebx,ecx
-        jc		@@7watch					;is wrong error code currently
+        push cx
+        push dx
+        pop edx
+        pops ebx,ecx
+        jc @@7watch					;is wrong error code currently
 cont_1:        
-        add     edx,[esi+1]                   ;include offset.
-        mov     [ebx].HBRK.HBRK_Address,edx   ;set linear address of break.
-        mov     al,[esi+1+6]
-        mov     [ebx].HBRK.HBRK_Size,al       ;set break point size.
-        mov     [ebx].HBRK.HBRK_Type,1        ;set type to write.
-        mov     dword ptr [edi],0             ;clear error field.
-        add     edi,4
-        mov     dword ptr [edi],10+(1 shl 31)
-        add     edi,4
-        add     esi,1+6+1
-        sub     ecx,1+6+1
-        jmp     @@9watch
+        add edx,[esi+1]                   ;include offset.
+        mov [ebx].HBRK.HBRK_Address,edx   ;set linear address of break.
+        mov al,[esi+1+6]
+        mov [ebx].HBRK.HBRK_Size,al       ;set break point size.
+        mov [ebx].HBRK.HBRK_Type,1        ;set type to write.
+        mov dword ptr [edi],0             ;clear error field.
+        add edi,4
+        mov dword ptr [edi],10+(1 shl 31)
+        add edi,4
+        add esi,1+6+1
+        sub ecx,1+6+1
+        jmp @@9watch
 ;
 ;OK, either the size won't work for a HBRK or all HBRK's are in use so set up
 ;a software WATCH.
 ;
 @@3watch:
-        cmp     NumWatches,MaxWatches   ;all watches in use?
-        jnz     @@4watch
+        cmp NumWatches,MaxWatches   ;all watches in use?
+        jnz @@4watch
         ;
         ;No more watches either so return an error.
         ;
 @@7watch:
-        add     esi,1+6+1
-        sub     ecx,1+6+1
-        mov     dword ptr [edi], MSG_5
-        add     edi,4
-        mov     dword ptr [edi],0
-        add     edi,4
-        invoke  SetErrorText, MSG_5
-        jmp     @@9watch
+        add esi,1+6+1
+        sub ecx,1+6+1
+        mov dword ptr [edi], MSG_5
+        add edi,4
+        mov dword ptr [edi],0
+        add edi,4
+        invoke SetErrorText, MSG_5
+        jmp @@9watch
 ;
 ;Must be a free WATCH entry so find it.
 ;
 @@4watch:
-        mov     ebx,offset WATCHTable
-        mov     ebp,MaxWatches
+        mov ebx,offset WATCHTable
+        mov ebp,MaxWatches
 @@5watch:
-        test    [ebx].WATCH.WATCH_Flags,1
-        jz      @@6watch
-        add     ebx,size WATCH
-        dec     ebp
-        jnz     @@5watch
-        jmp     @@7watch                ;can't happen but...
+        test [ebx].WATCH.WATCH_Flags,1
+        jz @@6watch
+        add ebx,size WATCH
+        dec ebp
+        jnz @@5watch
+        jmp @@7watch                ;can't happen but...
 ;
 ;Found next free WATCH so fill in the details.
 ;
 @@6watch:
-        mov     [ebx].WATCH.WATCH_Flags,1
-        pushs   ebx,ecx
-        mov     bx,[esi+1+4]            ;get selector.
+        mov [ebx].WATCH.WATCH_Flags,1
+        pushs ebx,ecx
+        mov bx,[esi+1+4]            ;get selector.
 if ?RMDBGHLP
-		cmp		g_fRealMode,0
-        jz		isprotmode2
-        movzx	edx,bx
-        shl		edx,4
-        jmp		cont_2
+		cmp g_fRealMode,0
+        jz isprotmode2
+        movzx edx,bx
+        shl edx,4
+        jmp cont_2
 isprotmode2:        
 endif
-		mov		ax,6
+		mov ax,6
         @callint31
-        push	cx
-        push	dx
-        pop		edx
-        pops    ebx,ecx
-cont_2:        
-        add     edx,[esi+1]             ;include offset.
-        mov     [ebx].WATCH.WATCH_Address,edx  ;set linear address of WATCH.
-        xor     eax,eax
-        mov     al,[esi+1+6]
-        mov     [ebx].WATCH.WATCH_Length,eax   ;set WATCH length.
+        push cx
+        push dx
+        pop edx
+        pops ebx,ecx
+cont_2:
+        add edx,[esi+1]             ;include offset.
+        mov [ebx].WATCH.WATCH_Address,edx  ;set linear address of WATCH.
+        xor eax,eax
+        mov al,[esi+1+6]
+        mov [ebx].WATCH.WATCH_Length,eax   ;set WATCH length.
         ;
         ;Need to setup checksum.
         ;
-        call    SetIntExc0E
-        pushs   esi,edi
-        mov		dwExcProc, offset acc_err
-        xor     edi,edi
-        mov     esi,eax
-        xor     eax,eax
+        call SetIntExc0E
+        pushs esi,edi
+        mov dwExcProc, offset acc_err
+        xor edi,edi
+        mov esi,eax
+        xor eax,eax
 @@8watch:
-        mov     al,@flat:[edx]
-        add     edi,eax
-        inc     edx
-        dec     esi
-        jnz     @@8watch
-        mov     eax,edi
+        mov al,@flat:[edx]
+        add edi,eax
+        inc edx
+        dec esi
+        jnz @@8watch
+        mov eax,edi
 acc_err:
-        pops    esi,edi
-        mov     [ebx].WATCH.WATCH_Check,eax    ;set check-sum.
-        call    ResetIntExc0E
+        pops esi,edi
+        mov [ebx].WATCH.WATCH_Check,eax    ;set check-sum.
+        call ResetIntExc0E
 ;
-        inc     NumWatches              ;update WATCH count.
+        inc NumWatches              ;update WATCH count.
 ;
 ;set return details.
 ;
-        mov     dword ptr [edi],0                ;clear error field.
-        add     edi,4
-        mov     dword ptr [edi],5000             ;copy DOS4GW slow down value.
-        add     edi,4
-        add     esi,1+6+1
-        sub     ecx,1+6+1
+        mov dword ptr [edi],0                ;clear error field.
+        add edi,4
+        mov dword ptr [edi],5000             ;copy DOS4GW slow down value.
+        add edi,4
+        add esi,1+6+1
+        sub ecx,1+6+1
 ;
 ;Return to caller.
 ;
 @@9watch:
         ret
-        endps
+REQ_SET_WATCH endp
 
 
 ;*******************************************************************************
@@ -3582,31 +3561,31 @@ acc_err:
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_CLEAR_WATCH
+REQ_CLEAR_WATCH proc
 ;
 ;Get the linear address ready for comparison.
 ;
-        mov     bx,[esi+1+4]            ;get selector.
+        mov bx,[esi+1+4]            ;get selector.
 if ?RMDBGHLP
-		cmp		g_fRealMode,0
-        jz		isprotmode
-        movzx	edx,bx
-        shl		edx,4
-        jmp		cont_1
+		cmp g_fRealMode,0
+        jz isprotmode
+        movzx edx,bx
+        shl edx,4
+        jmp cont_1
 isprotmode:        
 endif
-        push    ecx
-		mov		ax,6
+        push ecx
+		mov ax,6
         @callint31
-        push	cx
-        push	dx
-        pop		edx
-        pop     ecx
-        jc		done
-cont_1:        
-        add     edx,[esi+1]             ;include offset.
-        xor     eax,eax
-        mov     al,[esi+1+6]            ;get size.
+        push cx
+        push dx
+        pop edx
+        pop ecx
+        jc done
+cont_1:
+        add edx,[esi+1]             ;include offset.
+        xor eax,eax
+        mov al,[esi+1+6]            ;get size.
 ;
 ;Check all HBRK's
 ;
@@ -3652,7 +3631,7 @@ done:
         add     esi,1+6+1
         sub     ecx,1+6+1
         ret
-        endps
+REQ_CLEAR_WATCH endp
 
 ;--- since WD has problems to determine if a break has been hit
 ;--- we must help him. For this we have to save all breaks WD will set
@@ -3746,7 +3725,7 @@ FindBreakInTable endp
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_SET_BREAK
+REQ_SET_BREAK proc
         inc     esi             ;skip REQ_SET_BREAK
         dec     ecx
 ;
@@ -3807,7 +3786,7 @@ exit:
         sub     ecx,6
 ;
         ret
-        endps
+REQ_SET_BREAK endp
 
 
 ;*******************************************************************************
@@ -3825,7 +3804,7 @@ exit:
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_CLEAR_BREAK
+REQ_CLEAR_BREAK proc
         inc     esi
         dec     ecx             ;skip REQ_CLEAR_BREAK
 ;
@@ -3886,7 +3865,7 @@ exit:
         sub     ecx,6+4
 ;
         ret
-        endps
+REQ_CLEAR_BREAK endp
 
 
 ;*******************************************************************************
@@ -3914,7 +3893,7 @@ wSeg	dw ?
 wAlias	dw ?
 REPLY_ALIAS ends
 
-        procs   REQ_GET_NEXT_ALIAS
+REQ_GET_NEXT_ALIAS proc
         mov     [edi].REPLY_ALIAS.wSeg,0
         mov     [edi].REPLY_ALIAS.wAlias,0
         mov		al,g_fRealMode
@@ -3957,7 +3936,7 @@ done:
         add     esi,sizeof REQ_ALIAS
         sub     ecx,sizeof REQ_ALIAS
         ret
-        endps
+REQ_GET_NEXT_ALIAS endp
 
 if ?DPMI16
 
@@ -4005,7 +3984,7 @@ dwHandle	dd ?
 szName		db ?
 REPLY_GET_LIB_NAME ends
 
-        procs   REQ_GET_LIB_NAME
+REQ_GET_LIB_NAME proc
 
         mov     [edi].REPLY_GET_LIB_NAME.dwHandle,0
         mov     [edi].REPLY_GET_LIB_NAME.szName,0
@@ -4091,7 +4070,7 @@ done:
         add     esi,1+4
         sub     ecx,1+4
         ret
-        endps
+REQ_GET_LIB_NAME endp
 
 
 ;*******************************************************************************
@@ -4109,7 +4088,7 @@ done:
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_GET_ERR_TEXT
+REQ_GET_ERR_TEXT proc
         mov     edx,[esi+1]
         add     esi,1+4
         sub     ecx,1+4
@@ -4129,7 +4108,7 @@ done:
         mov     [edi],al
         inc     edi
 		ret
-        endps
+REQ_GET_ERR_TEXT endp
 
 
 ;*******************************************************************************
@@ -4147,7 +4126,7 @@ done:
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_GET_MESSAGE_TEXT
+REQ_GET_MESSAGE_TEXT proc
         xor		edx,edx
         xchg    edx,pErrorMessage
         add     esi,1
@@ -4162,7 +4141,7 @@ nextchar:
         or      al,al
         jnz     nextchar
         ret
-        endps
+REQ_GET_MESSAGE_TEXT endp
 
 
 ;*******************************************************************************
@@ -4180,14 +4159,14 @@ nextchar:
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_REDIRECT_STDIN
+REQ_REDIRECT_STDIN proc
         add     esi,ecx
         xor     ecx,ecx
         mov     dword ptr [edi], MSG_6
         invoke  SetErrorText, MSG_6
         add     edi,4
         ret
-        endps
+REQ_REDIRECT_STDIN endp
 
 
 ;*******************************************************************************
@@ -4205,14 +4184,14 @@ nextchar:
 ;ECX,ESI & EDI updated.
 ;
 ;*******************************************************************************
-        procs   REQ_REDIRECT_STDOUT
+REQ_REDIRECT_STDOUT proc
         add     esi,ecx
         xor     ecx,ecx
         mov     dword ptr [edi], MSG_6
         invoke  SetErrorText, MSG_6
         add     edi,4
         ret
-        endps
+REQ_REDIRECT_STDOUT endp
 
 
 ;*******************************************************************************
@@ -4428,7 +4407,7 @@ RestoreInternalBrk endp
 ;EAX    - status (see REQ_PROG_GO/STEP return flags)
 ;
 ;*******************************************************************************
-        procs   Execute
+Execute proc
         pushs   ebx,ecx,edx,esi,edi,ebp
         mov     bExecuteFlags,al
 
@@ -4439,24 +4418,24 @@ RestoreInternalBrk endp
 ;
 ;Switch to debuggee's PSP.
 ;
-        mov     ebx,DebugPSP
-        mov     ah,50h
+        mov ebx,DebugPSP
+        mov ah,50h
         @callint21
 ;
 ;Install hardware break points.
 ;
-		call	InstallHWBreaks
+		call InstallHWBreaks
 ;
 ;Force watch point checking if watches are present.
 ;
-        cmp     NumWatches,0
-        jz      @F
-        or      bExecuteFlags,2  ;force single steping.
+        cmp NumWatches,0
+        jz @F
+        or bExecuteFlags,2  ;force single steping.
 @@:
-		mov		al,g_fRealMode
-        mov		g_fPrevMode,al	;save CPU state 
-        mov		g_fPrevDef,0
-        cmp		al,0
+		mov al,g_fRealMode
+        mov g_fPrevMode,al	;save CPU state 
+        mov g_fPrevDef,0
+        cmp al,0
         jnz		@F
         mov		ax,Debuggee._Cs
         lar		eax,eax
@@ -4469,14 +4448,14 @@ cont_execute:
 ;Set debuggee trap flag if it's a single instruction trace else clear it if
 ;not.
 ;
-        and     byte ptr Debuggee._Efl+1,not 1
-        cmp     bExecuteFlags,0
-        jz      @F
-;        or      byte ptr Debuggee._Efl+1,1	;set TRACE flag
-        or      Debuggee._Efl, 10100h		;set TRACE + RESUME flags
-        cmp		g_fRealMode,-1
-        jz		@F
-        call	forceexc01supply
+        and byte ptr Debuggee._Efl+1,not 1
+        cmp bExecuteFlags,0
+        jz @F
+;        or byte ptr Debuggee._Efl+1,1	;set TRACE flag
+        or Debuggee._Efl, 10100h		;set TRACE + RESUME flags
+        cmp g_fRealMode,-1
+        jz @F
+        call forceexc01supply
 @@:
 ;
 ;Set flags ready for execution.
@@ -4553,7 +4532,7 @@ nextitem:
         ;Check if this watch changed.
         ;
         call    SetIntExc0E
-        mov		dwExcProc, offset acc_err
+        mov		dwExcProc, offset acc_err2
         mov     edi,[esi].WATCH.WATCH_Address
         mov     ecx,[esi].WATCH.WATCH_Length
         xor     eax,eax
@@ -4564,13 +4543,13 @@ nextitem:
         inc     edi
         dec     ecx
         jnz     @B
-acc_err:        
+acc_err2:
         call    ResetIntExc0E
         and		ecx,ecx					;access error?
         jnz		@F
         cmp     eax,[esi].WATCH.WATCH_Check
         jnz     @@10exec                ;signal COND_WATCH
-@@:        
+@@:
 @@hbrk7:
         add     esi,size WATCH
         dec     ebp
@@ -4702,7 +4681,7 @@ check_msg:
 done:
         pops    ebx,ecx,edx,esi,edi,ebp
         ret
-        endps
+Execute endp
 
 
 ;*******************************************************************************
@@ -5257,50 +5236,50 @@ Int09Handler    proc    near
 ;
 ;Update the key table.
 ;
-        in      al,60h          ;get the scan code.
-        mov		ah,[bScanCode]
-        mov		[bPrevScanCode],ah
-        mov		[bScanCode],al
-        mov     bl,al
-        and     ebx,7Fh         ;isolate scan code.
-        test    al,80h
-        jnz		@F
-        bts		Keytable,ebx
-        jmp		bitset
+        in al,60h          ;get the scan code.
+        mov ah,[bScanCode]
+        mov [bPrevScanCode],ah
+        mov [bScanCode],al
+        mov bl,al
+        and ebx,7Fh         ;isolate scan code.
+        test al,80h
+        jnz @F
+        bts Keytable,ebx
+        jmp bitset
 @@:
-        btr		Keytable,ebx
+        btr Keytable,ebx
 bitset:
 ;
 ;Check if anything is running.
 ;
-        cmp     bExecuting,0
-        jz      @@oldbc
+        cmp bExecuting,0
+        jz @@oldbc
 ;
 ;Check if our break combination is set.
 ;
-        mov     ebx,offset BreakKeyList
-        cmp     dword ptr [ebx],0       ;check if any keys in the list.
-        jz      breakkey_checked
+        mov ebx,offset BreakKeyList
+        cmp dword ptr [ebx],0       ;check if any keys in the list.
+        jz breakkey_checked
 nextitem:
-        cmp     dword ptr [ebx],0       ;End of the list?
-        jz      breakkey_pressed
-        mov     eax,[ebx]               ;Get scan code.
-        bt      KeyTable,eax
-        jnc     breakkey_checked
-        add     ebx,4
-        jmp     nextitem
+        cmp dword ptr [ebx],0       ;End of the list?
+        jz breakkey_pressed
+        mov eax,[ebx]               ;Get scan code.
+        bt KeyTable,eax
+        jnc breakkey_checked
+        add ebx,4
+        jmp nextitem
 ;
 ;--- reset the key combination causing the break
 ;
 breakkey_pressed:
-        mov     ebx,offset BreakKeyList
+        mov ebx,offset BreakKeyList
 nextitem2:
-        cmp     dword ptr [ebx],0       ;End of the list?
-        jz      @F
-        mov     eax,[ebx]
-        btr     KeyTable,eax
-        add     ebx,4
-        jmp     nextitem2
+        cmp dword ptr [ebx],0       ;End of the list?
+        jz @F
+        mov eax,[ebx]
+        btr KeyTable,eax
+        add ebx,4
+        jmp nextitem2
 @@:        
 ;
 ;Want to break into the program so swollow this key press.

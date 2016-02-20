@@ -154,11 +154,11 @@
   þ DKRNL32.DLL, DADVAPI.DLL, DUSER32.DLL, DGDI32.DLL, DDDRAW.DLL: Win32
     emulation dlls which will be loaded by DPMILD32 instead of the windows
     dlls KERNEL32.DLL, ADVAPI32.DLL, USER32.DLL, GDI32.DLL and DDRAW.DLL.
-    View Doc\*.TXT for more details.
+    View Doc\*.TXT and DPMILD32.TXT for more details.
 
-  þ OLE32.DLL, OLEAUT32.DLL: Some more Win32 Emulation dlls which have 
-    identical names as the dlls they are emulating. Rarely used. View
-    DPMILD32.TXT for more details.
+  þ OLE32.DLL, OLEAUT32.DLL, VERSION.DLL, SECUR32.DLL: Some more Win32 
+    Emulation dlls which have identical names as the dlls they are emulating.
+    Rarely used.
 
   þ DPMIST32.BIN: this is a MZ stub to be added to PE binaries to make them
     run in DOS without help of HXLdr32. It is used either by PEStub.EXE or
@@ -193,6 +193,10 @@
 
   7. History
 
+  11/16/2009, V2.16: HDPMI V3.17, DPMILD32 V3.7, DKRNL32 V3.4,
+                     DADVAPI V2.10, DUSER32 V2.13, OLE32 V1.9,
+                     OLEAUT32 V1.8, HXLdr32 V1.12, 
+                     VERSION.DLL and SECUR32.DLL added.
   01/20/2009, V2.15: HDPMI V3.16, DPMILD32 V3.6, DKRNL32 V3.3
                      DADVAPI V2.9, DUSER32 V2.12, DGDI32 V1.12,
                      OLE32 V1.8, OLEAUT32 V1.7, DDDRAW V2.8, VESA32 V1.12,
@@ -362,11 +366,11 @@
   in subdirectory DOC.
 
 
-  8. Copyright
+  8. License
 
   The HX DOS extender runtime is freeware and may be used for any purpose.
   Copyright Japheth 1996-2009. The HX runtime can be freely distributed
   with any application.
 
-  Japheth   (Web: http://www.japheth.de, Email: mail@japheth.de)
+  Japheth   ( http://www.japheth.de )
 

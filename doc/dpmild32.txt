@@ -8,18 +8,19 @@
 
       1.  Introduction
       2.  Requirements
-      3.  Environment variable DPMILDR
-      4.  Win32 API Emulation
-      5.  Memory Model
-      6.  Loader API
-      7.  PX executables
-      8.  Support for NE binaries
-      9.  Debugging Support
-     10.  Returncodes
-     11.  Error Messages
-     12.  Restrictions
-     13.  History
-     14.  Copyright
+      3.  Starting DPMILD32 from the Command-Line
+      4.  Environment variable DPMILDR
+      5.  Win32 API Emulation
+      6.  Memory Model
+      7.  Loader API
+      8.  PX executables
+      9.  Support for NE binaries
+     10.  Debugging Support
+     11.  Returncodes
+     12.  Error Messages
+     13.  Restrictions
+     14.  History
+     15.  Copyright
 
 
  1.  Introduction
@@ -34,20 +35,11 @@
      automatically. This is done either with the help of HXLdr32, a DOS
      TSR, or by a stub (DPMIST32.BIN) which has been added to the PE binary.
 
-     If DPMILD32 is launched manually, the syntax is as follows:
-
-       DPMILD32 [ options ] name_of_binary_to_load
-
-     valid options are:
-       - g = instructs DPMILD32 to load a console application as if it is
-             a GUI application, that is, it will try to load HXGUIHLP.DLL
-             before the application's entry point is called.
-
      DPMILD32 will search for the binary to load (.EXE extension may be
      omitted) in the current directory and then in all directories of the
      PATH environment variable.
 
-     One of DPMILD32's first tasks is to check if the DPMI API is available.
+     One of DPMILD32's first tasks is to check if a DPMI host is active.
      If this is not the case, it will try to silently start HDPMI32.EXE,
      which will be found only if it is located in the same directory as
      DPMILD32.EXE.
@@ -75,9 +67,21 @@
        DOS box, the loader's LFN support is disabled).
 
 
- 3.  Environment variable DPMILDR
+ 3.  Starting DPMILD32 from the Command-Line
 
-     By setting the environment variable DPMILDR you can control some aspects
+     If DPMILD32 is launched manually, the syntax is as follows:
+
+       DPMILD32 [ options ] name_of_binary_to_load
+
+     valid options are:
+       - g = instructs DPMILD32 to load a console application as if it is
+             a GUI application, that is, it will try to load HXGUIHLP.DLL
+             before the application's entry point is called.
+
+
+ 4.  Environment variable DPMILDR
+
+     By setting environment variable DPMILDR one can control some aspects
      of the loader's behaviour. The variable is a number whose individual bits
      are interpreted as follows:
 
@@ -156,7 +160,7 @@
        allows to launch Win32 GUI apps from DPMI applications.
 
 
- 4.  Win32 API Emulation
+ 5.  Win32 API Emulation
 
      During the load process some imported dlls will be "replaced"
      by DPMI compatible versions. These are:
@@ -178,14 +182,14 @@
      other PE loaders won't do the job. 
 
 
- 5.  Memory Model
+ 6.  Memory Model
 
      As in Win32, PE binaries loaded by DPMILD32 execute in a flat, zero
      based environment with a 4 GB 32-bit code selector in CS and a 4 GB
-     32-bit data selector in SS, DS and ES. FS and GS are not used (should
-     be initialized to ZERO by the DPMI host). 
+     32-bit data selector in SS, DS and ES. FS and GS are not used, they
+     should have been initialized to ZERO by the DPMI host. 
 
-      Processes in a Win32 environment execute in their own address spaces.
+      Processes in a Win32 environment execute in separate address spaces.
      For PE applications loaded with DPMILD32 this is not true. In fact,
      DPMILD32 has no means to support several address spaces. There 
      exist 2 workarounds:
@@ -207,9 +211,9 @@
      memory.
 
 
- 6.  Loader API
+ 7.  Loader API
 
-     DPMILD32 itself offers a simple API for loading exes and dlls.
+     DPMILD32 installs a simple API for loading PE/NE binaries.
 
      þ Int 21h, AX=4B00h (LoadModule/LoadLibrary): Loads a PE/NE module
        dynamically.
@@ -358,10 +362,10 @@
          ES = PSP
          EAX = 4734FFFFh
 
-     These services are available in protected mode only.
+     This API is available in protected mode only.
 
 
- 7.  PX executables
+ 8.  PX executables
 
      If a PE executable uses non-Win32 compatible features (like software
      interrupts 0x21/0x31 or in/out instructions), it should be ensured
@@ -372,7 +376,7 @@
      recognized by PE tools anymore.
 
 
- 8.  Support for NE binaries
+ 9.  Support for NE binaries
 
      The loader has built-in support for NE binaries. Usually this support
      isn't needed at all and can be ignored. But on some very rare occasions
@@ -396,7 +400,7 @@
      be unknown to NE file dumpers. 
 
 
- 9.  Debugging Support
+10.  Debugging Support
 
      DPMILD32 supports Int 41h in protected mode. That is, events such as
      loading a dll, starting a task, loading a segment a.s.o are all
@@ -404,7 +408,7 @@
      a breakpoint at app start set environment variable "DPMILDR=1".
 
 
-10.  Returncodes
+11.  Returncodes
 
      Usually DPMILD32 returns the returncode of the (last) program it
      has executed. But there are several internal error conditions, which
@@ -430,7 +434,7 @@
      DPMILD32 always displays an error text to STDERR in these cases.
 
 
-11.  Error Messages
+12.  Error Messages
 
      "relocs stripped, cannot load": relocation information is stripped
                       from PE binary. It can only be loaded at prefered
@@ -449,7 +453,7 @@
      "dll init failed": dll entry code was called and returned with EAX != 1
 
 
-12.  Restrictions
+13.  Restrictions
 
      The Loader loads the PE header in the first page of a module, but it
      doesn't map the header as it is found in the image file. In fact, only
@@ -464,14 +468,20 @@
      a binary. Use "PEStub -r filename" and watch for warning messages.
 
 
-13.  History
+14.  History
+
+ 16.11.2009: version 3.7
+
+ þ bugfix: int 21h, ax=4B81h (GetProcAddress32) didn't check if RVA of
+   export directory is NULL.
+ þ WLink is used as linker.
 
  20.01.2009: version 3.6
- 
+
  þ assembler switched to JWasm.
  þ int 21h, ax=4B82h (GetModuleHandle) now checks the full path if
    a full path is given.
- 
+
  01.03.2008: version 3.5
 
  þ bugfix: the stub version (HDLD32.BIN) did release too much DOS
@@ -483,7 +493,7 @@
  þ for PE applications, it's ensured that ESI points to module base on
    entry (makes DPMILD32 compatible with HX's LOADPE.BIN stub).
  þ int 21h, ax=4B82h, edx=0 API returns more info.
- 
+
  11.01.2008: version 3.4
 
  þ environment variable switch DPMILDR=512 isn't used anymore.
@@ -685,7 +695,7 @@
    if DPMI host supports int 31h, ax=0507h (V1.0).
 
  13.07.2005: version 2.9.3
- 
+
  þ new DPMILDR setting (512) to exclude DKRNL32 from module list reset.
  þ bugfix: setting DPMILDR=4 worked, but then if a 32bit NE
    app was started, this caused a loop.
@@ -937,15 +947,14 @@
   In 2003 some support for DPMI V1.0 features were added to the DPMI
   server HDPMI. The most remarkable extension was support for function
   0x0504, which allows a client to allocate memory at a specified address.
-  This feature allowed the PE loader to load and execute commercial
-  (console) programs which don't have relocation infos. So now it
-  was possible to run apps like MASM V6.15 in native DOS.
+  This feature allowed the PE loader to load and execute (console) 
+  programs even if relocation infos are missing.
 
 
-14.  Copyright
+15.  Copyright
 
   DPMILD32.EXE is part of HX DOS extender. This extender is freeware. 
-  View HXRT.TXT for licence details.
+  View HXRT.TXT for license details.
 
   Japheth (http://www.japheth.de)
 

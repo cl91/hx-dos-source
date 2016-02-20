@@ -150,7 +150,7 @@
                       installed. Makefile for JWasm/Masm is included.
 
 
- b). MZ and NE File Format Samples
+ b). MZ File Format Samples
 
   Name      Language  Comment
   ----------------------------------------------------------------------

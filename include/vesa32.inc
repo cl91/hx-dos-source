@@ -162,7 +162,8 @@ VesaExit proto stdcall	;exit vesa (must be called if statically linked)
 
 else
 
-        .DATA
+;	.DATA
+_DATA segment
 
 externdef stdcall _imp__EnumVesaModes@8:pfunc@8
 externdef stdcall _imp__GetVesaDisplayStart@0:pfunc@0
@@ -187,6 +188,8 @@ externdef stdcall _imp__SetVesaMode@4:pfunc@4
 externdef stdcall _imp__SetVesaPaletteEntries@12:pfunc@12
 externdef stdcall _imp__VesaMouseInit@0:pfunc@0
 externdef stdcall _imp__VesaMouseExit@0:pfunc@0
+
+_DATA ends
 
 EnumVesaModes           equ <_imp__EnumVesaModes@8>
 GetVesaDisplayStart     equ <_imp__GetVesaDisplayStart@0>

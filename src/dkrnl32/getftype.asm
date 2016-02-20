@@ -1,40 +1,49 @@
 
-        .386
+	.386
 if ?FLAT
-        .MODEL FLAT, stdcall
+	.MODEL FLAT, stdcall
 else
-        .MODEL SMALL, stdcall
+	.MODEL SMALL, stdcall
 endif
-		option casemap:none
-        option proc:private
+	option casemap:none
+	option proc:private
 
-        include winbase.inc
-		include macros.inc
+	include winbase.inc
+	include macros.inc
 
-        .DATA
+	.DATA
 
-        .CODE
+	.CODE
+
+;--- if FILE_TYPE_UNKNOWN is returned, last error has to be set!
 
 GetFileType proc public uses ebx handle:dword
 
-        mov     ebx,handle
-        mov     ax,4400h
-        int     21h
-        jc      unknown
-;        test    dh,80h				;device?
-        test    dl,80h				;device?
-        jnz     device
-        mov     eax,FILE_TYPE_DISK
-        jmp     exit
-device:
-        mov     eax,FILE_TYPE_CHAR
-        jmp     exit
+	mov ebx,handle
+	cmp ebx,10000h
+	ja  unknown
+	mov ax,4400h
+	int 21h
+	jc invalid
+	test dl,80h				;device?
+	mov eax,FILE_TYPE_CHAR
+	jnz exit
+	test dh,80h				;remote flag set?
+	mov eax,FILE_TYPE_DISK
+	jz exit
+	mov eax,FILE_TYPE_REMOTE
+	jmp exit
 unknown:
-        mov     eax,FILE_TYPE_UNKNOWN
+	invoke SetLastError, NO_ERROR
+	mov eax,FILE_TYPE_UNKNOWN
+	jmp exit
+invalid:
+	movzx eax, ax
+	invoke SetLastError, eax
+	mov eax,FILE_TYPE_UNKNOWN
 exit:
-        @strace  <"GetFileType(", handle, ")=", eax>
-        ret
+	@strace  <"GetFileType(", handle, ")=", eax>
+	ret
 GetFileType endp
 
 end
-

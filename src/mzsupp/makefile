@@ -1,13 +1,14 @@
 
-# call: nmake 
+# NMAKE makefile to create library JMPPM32.LIB and
+# object modules JMPPM32.OBJ, LOADSRVR.OBJ, DEFSTACK.OBJ
+# tools used:
+# - JWasm/Masm
+# - WLib
 
 !include <..\dirs>
 
 # define directory for OMF libs/modules
 #LIBOMF=..\..\lib
-
-# define name of OMF lib utility
-LIB=$(LIB16BIN)
 
 !ifdef TRACE
 ASMT=-D?TRACE=1
@@ -40,7 +41,7 @@ ASM=@jwasm.exe
 
 ALL: $(OUTDIR) $(STUBDIR) $(OUTDIR)\JMPPM32.LIB $(OUTDIR)\JMPPM32.OBJ $(OUTDIR)\defstack.obj \
 	$(OUTDIR)\dmysrvr.obj $(OUTDIR)\dmymove.obj \
-    $(STUBDIR)\loadsrvr.OBJ $(OUTDIR)\loadpe.obj
+	$(STUBDIR)\loadsrvr.OBJ $(OUTDIR)\loadpe.obj
 
 $(OUTDIR):
 	@mkdir $(OUTDIR)
@@ -53,8 +54,7 @@ $(OUTDIR)\JMPPM32.LIB: $(OUTDIR)\getcmdl.obj $(OUTDIR)\getenv.obj \
 					$(OUTDIR)\stksize.obj $(OUTDIR)\loadext.obj \
                     $(OUTDIR)\loadpe.obj
 	@cd $(OUTDIR)
-    @if exist JMPPM32.LIB del JMPPM32.LIB
-	$(LIB) JMPPM32.LIB @<<
+	@$(LIB16BIN) JMPPM32.LIB @<<
 +getcmdl.obj +getenv.obj +loadsrvr.obj +movehigh.obj +stksize.obj +loadext.obj +loadpe.obj
 <<
 	@cd ..
@@ -85,7 +85,7 @@ $(OUTDIR)\loadpe.obj: loadpe.asm makefile
 
 $(STUBDIR)\loadsrvr.obj: loadsrvr.asm ..\hdpmi\stub32\hdpmi32.inc makefile
 	$(ASM) $(ASMOPT) -D?HDPMI=1 loadsrvr.asm
-    @copy $*.obj $(LIBOMF)\*.* >NUL
+	@copy $*.obj $(LIBOMF)\*.* >NUL
 
 
 $(OUTDIR)\JMPPM32.OBJ: jmppm32.asm makefile

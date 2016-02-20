@@ -21,7 +21,8 @@ endif
 
 ?LOWLEVEL_CTRLBRK	equ 1	;std=1, 1=check for ctrl-break in IRQ 1 routine
 
-?COMMSUPP		equ 0	;std=1, 1=support low-level COMM API
+?COMMSUPP		equ 0	;std=0, 1=support low-level COMM API
+?PROCFEAT		equ 1	;std=1, 1=support IsProcessorFeaturePresent
 
 ;--- offset in THREAD_INFORMATION_BLOCK
 ;--- to store last error
@@ -46,7 +47,6 @@ HANDLE_DUMMY	equ -29	;a handle CloseHandle is ignoring
 CURRENT_THREAD	equ -2	;value returned by GetCurrentThread in Win32
 ?TLSSLOTS		equ 64	;entries in TLS array
 
-
 protoDeviceCmpProc typedef proto :dword
 LPFNDEVICECMPPROC typedef ptr protoDeviceCmpProc
 protoDeviceIoHandler typedef proto :dword, :dword, :dword, :dword, :dword, :dword, :dword, :dword
@@ -55,9 +55,9 @@ LPFNDEVICEIOHANDLER typedef ptr protoDeviceIoHandler
 ;--- help structure for DeviceIoControl to call VxD services
 ;--- currently only vwin32+apix support is implemented
 
-VXDENTRY	struct
+VXDENTRY struct
 pCmpProc	LPFNDEVICECMPPROC ?
-VXDENTRY	ends
+VXDENTRY ends
 
 DPMIEXC struct
 if ?CLEARHIGHEBP
@@ -87,9 +87,9 @@ rEsp    dd ?	;+24
 rSS     dd ?	;+28
 ends
 struct
-rSSESP	df ?	;+24
-		dw ?
-ends        
+rSSESP  df ?	;+24
+        dw ?
+ends
 ends
 endif
 DPMIEXC ends
@@ -97,7 +97,7 @@ DPMIEXC ends
 PF16	typedef far16 ptr
 PF32	typedef far32 ptr
 
-IRETDS  struct
+IRETDS struct
 if ?CLEARHIGHEBP
 rEip    dw ?
 rCS     dw ?
@@ -107,12 +107,11 @@ rEip    dd ?
 rCS     dd ?
 rEflags dd ?
 endif
-IRETDS  ends
-
+IRETDS ends
 
 KEYEVNT struct
-bScan 	db ?
-bAscii  db ?
+bScan	db ?
+bAscii	db ?
 bStat17	db ?
 bStat18	db ?
 bStat96	db ?
@@ -137,13 +136,13 @@ _GetNumberOfMouEvents	proto
 ;------------------------------------ kernel heap objects
 
 ifndef CONSOLE_CURSOR_INFO
-CONSOLE_CURSOR_INFO   struct
+CONSOLE_CURSOR_INFO struct
 dwSize   dd ?
 bVisible dd ?
-CONSOLE_CURSOR_INFO   ends
+CONSOLE_CURSOR_INFO ends
 endif
 
-SCREENBUF	struct
+SCREENBUF struct
 dwType		dd ?	;must be first
 dwFlags		dd ?	;if the order of the fields is changed, 
 pMem		dd ?	;g_sb must be changed as well!
@@ -153,7 +152,7 @@ dwAttributes dd ?
 dwSize		COORD <>
 dwCursorPos COORD <>
 cci			CONSOLE_CURSOR_INFO <>
-SCREENBUF	ends
+SCREENBUF ends
 
 TYPE_SCREENBUF	textequ <"SCBF">
 
@@ -175,12 +174,12 @@ MDESC ends
 
 ;--- MBLOCK describes an address space region (VirtualAlloc/VirtualFree)
 
-MBLOCK  struct
-dwSize	 dd ?	;virtual block size in bytes
-dwAddr	 dd ?	;virtual block linear base address
-dwBase   dd ?	;DPMI linear base address of block
+MBLOCK struct
+dwSize	dd ?	;virtual block size in bytes
+dwAddr	dd ?	;virtual block linear base address
+dwBase	dd ?	;DPMI linear base address of block
 dwHandle dd ?	;DPMI handle
-MBLOCK  ends
+MBLOCK ends
 
 ;------------------- Heap definitions 
 
@@ -189,10 +188,10 @@ MBLOCK  ends
 ;--- HBLOCK used by HeapAlloc/HeapDestroy
 ;--- this structure is used for multiple heap regions
 
-HBLOCK  struct
+HBLOCK struct
 pNext    dd ?
 dwAddr   dd ?	;linear address of block
-HBLOCK	ends
+HBLOCK ends
 
 ;--- heap item  (+ freelist item)
 ;--- used by HeapAlloc, HeapFree
@@ -209,13 +208,13 @@ FHEAPITEM_INTERNAL	equ 2
 
 ;------------------- kernel sync objects 
 
-SYNCOBJECT	struct
+SYNCOBJECT struct
 dwType		dd ?
-SYNCOBJECT	ends
+SYNCOBJECT ends
 
-SYNCTYPE_FILE   	textequ <"FILE">
+SYNCTYPE_FILE		textequ <"FILE">
 SYNCTYPE_SEMAPHOR	textequ <"SEMA">
-SYNCTYPE_MUTEX   	textequ <"MUTE">
+SYNCTYPE_MUTEX		textequ <"MUTE">
 SYNCTYPE_EVENT		textequ <"EVEN">
 SYNCTYPE_TIMER		textequ <"TIME">
 SYNCTYPE_PROCESS	textequ <"PROC">
@@ -223,25 +222,25 @@ SYNCTYPE_THREAD		textequ <"THRD">
 SYNCTYPE_FILEMAPP	textequ <"FMAP">
 SYNCTYPE_CHANGENOT	textequ <"CHNT">
 SYNCTYPE_SOCKET		textequ <"SCKT">
-SYNCTYPE_PIPE   	textequ <"PIPE">
+SYNCTYPE_PIPE		textequ <"PIPE">
 
-FILE	struct
+FILE struct
 		SYNCOBJECT <>
 flags	db ?
 union
 bDrive	db ?			;drive/disk
-bDevice db ?            ;COM device 
+bDevice db ?			;COM device 
 ends
 wDOSFH	dw ?			;DOS file handle
-union        
+union
 pHandler  LPFNDEVICEIOHANDLER ?
 pVxdHandler LPFNDEVICEIOHANDLER ?
 ends
 union
 dqPos	dq ?			;current position
-pParams dd ?            ;additional parameters
+pParams dd ?			;additional parameters
 ends
-FILE	ends
+FILE ends
 
 ;--- FILE.flags values
 
@@ -250,44 +249,43 @@ FF_DRIVE	equ 2		;is a drive (a:, c:, ...)
 FF_FILE		equ 4		;is a "true" file (position can be set)
 FF_CDROM	equ 8		;drive is a cdrom (not FAT32)
 FF_VXD		equ 16		;is a vxd
-FF_DEVICE   equ 32      ;is a device (COM:, AUX:, PRT:, LPT:, ...)
-FF_CHS      equ 64      ;for FF_DISK: is CHS device
+FF_DEVICE	equ 32		;is a device (COM:, AUX:, PRT:, LPT:, ...)
+FF_CHS		equ 64		;for FF_DISK: is CHS device
 
-THREAD  struct
+THREAD struct
 		SYNCOBJECT <>
 pNext      dd ?			;next thread
 pContext   dd ?
-dwExitCode dd ?         ;thread exit code
+dwExitCode dd ?			;thread exit code
 dwTibSel   dd ?
 flags      db ?
            db 3 dup (?)
 hStack     dd ?			;stack allocated for this thread (also TIB)
 if 0
-pAPC       dd ?		
+pAPC       dd ?
 endif
-bBoosted   db ?         ;boost count
+bBoosted   db ?			;boost count
 bSuspended db ?			;suspended count
 bPriority  SBYTE ?
-           db ?			
-THREAD  ends
+           db ?
+THREAD ends
 
 ;--- THREAD.flags values
 
 TF_TERMINATED	equ 01h ;thread has terminated
-TF_CLOSED		equ 02h	;CloseHandle has been called for this thread
-TF_WAITING		equ 04h	;thread is blocked (Sleep(0) called)
-TF_LINKED		equ 08h	;thread is in linked list
-TF_ALERTABLE	equ 10h	;thread is in an alertable wait state
-
+TF_CLOSED		equ 02h ;CloseHandle has been called for this thread
+TF_WAITING		equ 04h ;thread is blocked (Sleep(0) called)
+TF_LINKED		equ 08h ;thread is in linked list
+TF_ALERTABLE	equ 10h ;thread is in an alertable wait state
 
 ;--- internal structure for ReadFileEx/WriteFileEx
 
 ASYNCFILE struct
-pNext        dd ?
-dwFlags      dd ?
-handle	     dd ?
-pBuffer	     dd ?
-numBytes     dd ?
+pNext		dd ?
+dwFlags		dd ?
+handle		dd ?
+pBuffer		dd ?
+numBytes	dd ?
 lpOverlapped dd ?
 lpCompletionRoutine dd ?
 ASYNCFILE ends
@@ -303,43 +301,42 @@ rEsp   dd ?
 SegSs  dd ?
 CONTEXT_CTRL ends
 
-FILEMAPOBJ	struct
+FILEMAPOBJ struct
 			SYNCOBJECT <>
 hFile		DWORD ?		;file handle
 dwSize		DWORD ?		;total size
 pView		DWORD ?		;linear address of view
-dwProtect	DWORD ?		;PAGE_READONLY or PAGE_READWRITE 
+dwProtect	DWORD ?		;PAGE_READONLY or PAGE_READWRITE
 dwOffset	DWORD ?		;file offset
 dwSizeReal	DWORD ?		;real size to read/write
 dwFlags		DWORD ?
 dwCnt		DWORD ?		;workaround: use a reference counter
 lpName		DWORD ?
-FILEMAPOBJ	ends
+FILEMAPOBJ ends
 
 ;--- FILEMAPOBJ dwFlags values
 
 FMO_MAPPED	equ 1
 FMO_CLOSED	equ 2
 
-
-SEMAPHORE	struct
+SEMAPHORE struct
 			SYNCOBJECT <>
 dwCurCnt	DD ?
 dwMaxCnt	DD ?
 lpName		dd ?
-SEMAPHORE	ends
+SEMAPHORE ends
 
-MUTEX		struct
+MUTEX struct
 			SYNCOBJECT <>
 dwCnt		DD ?
 dwOwner		DD ?	;thread who owns the mutex
 lpName		dd ?
-MUTEX    	ends
+MUTEX ends
 
 protoTimerAPCProc typedef proto :DWORD, :DWORD, :DWORD
 LPFNTIMERAPCPROC typedef ptr protoTimerAPCProc
 
-TIMER		struct
+TIMER struct
 			SYNCOBJECT <>
 pNext		dd ?	;active timers are in a linked list
 filetime	FILETIME <>
@@ -358,17 +355,17 @@ bSignaled	DB ?	;
 bDispatch   db ?	;dispatch to the thread waiting for the timer
 			db ?
 lpName		dd ?
-TIMER    	ends
+TIMER ends
 
-EVENT		struct
+EVENT struct
 			SYNCOBJECT <>
-bFlags   	db ?            
+bFlags		db ?
 bCount		db ?
 			dw ?
 if ?EVENTOPT
 dwThread	dd ?
 endif
-EVENT		ends
+EVENT ends
 
 EVNT_SIGNALED	equ 1
 EVNT_MANRESET	equ 2
@@ -376,7 +373,7 @@ EVNT_NAMED		equ 4
 
 EVNT_SIGNALED_BIT equ 0	;for BT, BTS, BTR, BTC functions
 
-PROCESS		struct
+PROCESS struct
 			SYNCOBJECT <>
 hThread		dd ?	;process main thread
 hModule		dd ?	;main module handle
@@ -389,29 +386,29 @@ pCmdLine	dd ?	;process command line
 if ?HOOKINT21
 wPSP		dw ?	;process's PSP
 endif
-PROCESS		ends
+PROCESS ends
 
 PF_TERMINATING	equ 0001h
 PF_LOCKED		equ 0002h	;1=no thread switches allowed
 PF_TERMINATED	equ 0004h
 PF_CON_ATTACHED	equ 0008h	;1=console is attached
 
-SOCKET		struct
+SOCKET struct
 			SYNCOBJECT <>
 dwRefCnt	dd ?
-hSocket		dd ?
+hSocket		dd ?        ;WatTCP socket handle
 			dd ?		;reserve another DWORD for WSOCK32
-SOCKET		ends
+SOCKET ends
 
 ;--- a pipe is mapped by a DOS file, but
 ;--- the DOS file handle cannot be used directly
 
-PIPE		struct
+PIPE struct
 			SYNCOBJECT <>
 dwfh		dd ?
 dwPos		dd ?
 bWrite		db ?
-PIPE		ends
+PIPE ends
 
 ;--- dispatcher
 
@@ -424,7 +421,6 @@ if ?DIRECTDISP
 FTI_DIRDISP	equ 2	;0=use exception 01
 					;1=dispatch directly in IRQ 0 routine
 endif                
-
 
 ;------------------- internal functions
 
@@ -448,6 +444,7 @@ _GetEnvironmentVariableInt proto stdcall :ptr BYTE
 __dw2a				proto stdcall
 __dw2aD				proto stdcall
 __dw2aDX    		proto stdcall
+__dw2aDY    		proto stdcall
 __dw2aX				proto stdcall
 __kernel32init		proto stdcall
 __kernel32exit		proto stdcall
@@ -493,11 +490,10 @@ _WriteConsole		proto stdcall :ptr SCREENBUF, :ptr BYTE, :DWORD, :ptr DWORD
 _mul64				proto stdcall :qword, :dword
 _div64				proto stdcall :qword, :qword, :dword
 
-ife ?FLAT
-	.data
-endif    
-
 ;------------------- global vars
+
+;.data
+_DATA segment
 
 externdef g_bProcessed:DWORD
 externdef g_bIsConsole:DWORD
@@ -511,7 +507,7 @@ externdef g_bIsActive:BYTE		;is this kernel instance active?
 externdef g_bIntFl:BYTE			;global internal DKRNL32 flags
 externdef g_bHost:BYTE			;DPMI host
 externdef g_bDPMICap:BYTE		;page get/set attr supported
-externdef g_wPics:WORD          ;current master/slave PIC mappings
+externdef g_wPics:WORD			;current master/slave PIC mappings
 
 externdef g_dwIdleProc:DWORD
 externdef g_bDispatchFlags:BYTE	;dispatcher flags
@@ -526,7 +522,9 @@ externdef g_dwGetTimerValue:dword
 externdef g_dwGetTimerValuems:dword
 externdef g_dwBoostProc:dword
 externdef g_bDispReq:BYTE
+externdef g_dwDebugFlags:dword
 
+_DATA ends
 
 ;--- g_bHost values
 
@@ -542,7 +540,7 @@ HF_DOSEMU	equ 5
 DKF_NODISABLE	equ 1	;dkrnl32 remains active if a new process is launched
 DKF_NODBGHOOK	equ 2	;dont hook exceptions 1 and 3 (for debuggers)
 DKF_FULLSTACK	equ 4	;full stack for threads
-DKF_DISABLEKBD  equ 8	;1=disable kbd before reading port 60h
+;DKF_DISABLEKBD  equ 8	;1=disable kbd before reading port 60h
 DKF_USERTC      equ 16	;1=always use RTC to get GetTickCount value
 DKF_NOEXCHOOK	equ 32	;dont hook any exceptions (for debuggers)
 
@@ -565,38 +563,37 @@ endif
 
 @iret   macro
 if ?CLEARHIGHEBP
-    iret
+	iret
 else
-    iretd
+	iretd
 endif
-    endm
+	endm
 
 @pushf  macro
 if ?CLEARHIGHEBP
-    pushf
+	pushf
 else
-    pushfd
+	pushfd
 endif
-    endm
+	endm
 
 @traceF macro x,y
 ifdef _DEBUG
-		.if (cs:g_dwDebugFlags & x)
-        	@trace <y>
-        .endif
+	.if (cs:g_dwDebugFlags & x)
+		@trace <y>
+	.endif
 endif
-		endm
+	endm
 
 @straceF macro x,y
 ifdef _DEBUG
-		.if (cs:g_dwDebugFlags & x)
-        	@strace <y>
-        .endif
+	.if (cs:g_dwDebugFlags & x)
+		@strace <y>
+	.endif
 endif
-		endm
+	endm
 
 if 1;def _DEBUG
-externdef g_dwDebugFlags:dword
 DBGF_FLUSH	equ 1	;flush dos file buffers after each write
 DBGF_CIN	equ 2	;verbose log console input
 DBGF_COUT	equ 4	;verbose log console output
@@ -652,8 +649,3 @@ endif
 
 FKF_DISTHREADLIBCALLS	equ 1
 
-if ?FLAT
-_TEXT16 segment word use16 public
-_TEXT16	ends
-		assume fs:_TEXT16	;declare FS=TIB a 16 bit segment (saves space)
-endif

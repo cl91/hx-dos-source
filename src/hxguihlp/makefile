@@ -1,4 +1,9 @@
 
+# NMAKE makefile to create HXGUIHLP.DLL
+# tools used:
+# - Masm/JWasm
+# - WLink
+
 !include <..\dirs>
 
 NAME=HXGUIHLP
@@ -19,11 +24,11 @@ AOPTD=
 MASM=0
 !endif
 
-ASMOPT= -c -nologo -Sg -Fl$* -Fo$* -coff -D_ML -I$(INC32DIR) $(AOPTD)
+ASMOPT= -c -nologo -coff -Sg -Fl$* -Fo$* -D_ML -I$(INC32DIR) $(AOPTD)
 !if $(MASM)
-ASM=@ml.exe $(ASMOPT)
+ASM=ml.exe $(ASMOPT)
 !else
-ASM=@jwasm.exe $(ASMOPT)
+ASM=jwasm.exe $(ASMOPT)
 !endif
 
 LOPTS= /SUBSYSTEM:CONSOLE /DLL /MAP /NOLOGO /NOD /LIBPATH:$(LIBCOFF)
@@ -36,16 +41,29 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).DLL: $*.obj Makefile
-    $(LINKBIN) $*.obj $(LOPTS) $(LIBS) /OUT:$*.DLL /DEF:$(NAME).DEF /MERGE:.CRT=.data
+	@$(LINKBIN) $*.obj $(LOPTS) $(LIBS) /OUT:$*.DLL /DEF:$(NAME).DEF /MERGE:.CRT=.data
+!if 0
+# doesn't work yet!
+	@wlink @<<
+format windows nt dll
+runtime console
+file $*.obj
+name $*.DLL
+libpath $(LIBCOFF)
+lib { $(LIBS) }
+export GetProfileString='_GetProfileString@16'
+op map=$*.MAP
+<<
+!endif
 !if $(DEBUG)==0
     @copy $*.DLL ..\..\Bin\$(NAME).* >NUL
 !ifdef DLL32DIR
-    @copy $*.DLL $(DLL32DIR)\$(NAME).*
+    @copy $*.DLL $(DLL32DIR)\$(NAME).* >NUL
 !endif
 !endif
 
 $(OUTDIR)\$(NAME).obj: $(NAME).asm $(NAME).inc Makefile
-    $(ASM) $(NAME).asm
+	@$(ASM) $(NAME).asm
 
 clean:
 	@del $(OUTDIR)\*.obj

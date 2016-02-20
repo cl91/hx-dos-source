@@ -95,6 +95,10 @@
 
  3. History
 
+ 2009/11/16:  version 2.14
+ 
+ þ bugfix: "one shot" timers might have caused a GPF.
+ 
  2009/01/20:  version 2.13
  
  þ source assembled with JWasm.

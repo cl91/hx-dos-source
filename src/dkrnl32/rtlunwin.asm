@@ -1,99 +1,81 @@
 
-        .386
+	.386
 if ?FLAT
-        .MODEL FLAT, stdcall
+	.MODEL FLAT, stdcall
 else
-        .MODEL SMALL, stdcall
+	.MODEL SMALL, stdcall
 endif
-        option proc:private
-        option casemap:none
+	option proc:private
+	option casemap:none
 
-        include winbase.inc
-        include excpt.inc
-        include macros.inc
+	include winbase.inc
+	include dkrnl32.inc
+	include excpt.inc
+	include macros.inc
 
-;STATUS_UNWIND	equ 0C0000027h
-STATUS_UNWIND	equ 0C0000026h
+TIBSEG segment use16
+TIBSEG ends
+	assume fs:TIBSEG	;declare FS=TIB a 16 bit segment (saves space)
 
-?CREATECONTEXT	equ 0
+;STATUS_UNWIND	equ 0C0000026h ;this is STATUS_INVALID_DISPOSITION!
+STATUS_UNWIND	equ 0C0000027h
 
-        .DATA
+	.CODE
 
-        .CODE
-
-		assume fs:nothing
-
-if ?CREATECONTEXT
-SaveContext proto stdcall :ptr CONTEXT
-endif
-
-;*** this function is pretty "undocumented"
+;*** this function is/was "undocumented"
 ;*** but described sufficiently by Matt Pietrek in MSJ 1997/01
 ;*** should unwind stack if exception occured and a "higher"
 ;*** handler has choosen to handle it
 
-RtlUnwind proc public uses esi edi ebx pRegistrationFrame:ptr EXCEPTION_REGISTRATION,
-		returnAddr:DWORD, pExceptRecord:ptr EXCEPTION_RECORD, _eax_value:dword
+;--- from MSDN:
+;--- PVOID TargetFrame [optional]
+;--- PVOID TargetIp [optional] (ignored if TargetFrame is NULL)
+;--- PEXCEPTION_RECORD ExceptionRecord [optional]
+;--- PVOID ReturnValue
 
-if ?CREATECONTEXT
-local	context:CONTEXT
-endif
+
+RtlUnwind proc public uses esi edi ebx TargetFrame:ptr EXCEPTION_REGISTRATION,
+		TargetIp:DWORD, ExceptionRecord:ptr EXCEPTION_RECORD, return_value:dword
 
 local	_er:EXCEPTION_RECORD
 
-        @trace  <"RtlUnwind(">
-        @tracedw pRegistrationFrame
-        @trace	<", ">
-        @tracedw returnAddr
-        @trace	<", ">
-        @tracedw pExceptRecord
-        @trace	<", ">
-        @tracedw _eax_value
-		@trace	<")",13,10>
+	@strace <"RtlUnwind(", TargetFrame, ", ", TargetIp, ", ", ExceptionRecord, ", ", return_value, ")">
 
-		mov 	ecx, pExceptRecord
-        .if (!ecx)
-        	lea ecx, _er
-            mov [ecx].EXCEPTION_RECORD.ExceptionCode, STATUS_UNWIND
-            mov eax, [ebp+4]
-            mov [ecx].EXCEPTION_RECORD.ExceptionAddress, eax
-            mov [ecx].EXCEPTION_RECORD.ExceptionRecord, 0
-            mov [ecx].EXCEPTION_RECORD.NumberParameters, 0
-            mov [ecx].EXCEPTION_RECORD.ExceptionInformation, 0
-            mov pExceptRecord, ecx
-        .endif
-        .if (pRegistrationFrame)
-            mov [ecx].EXCEPTION_RECORD.ExceptionFlags, _EH_UNWINDING
-        .else
-            mov [ecx].EXCEPTION_RECORD.ExceptionFlags, _EH_UNWINDING or _EH_EXIT_UNWIND
-        .endif
+	mov ecx, ExceptionRecord
+	.if (!ecx)
+		lea ecx, _er
+		mov [ecx].EXCEPTION_RECORD.ExceptionCode, STATUS_UNWIND
+		mov eax, [ebp+4]  ;current eip?
+		mov [ecx].EXCEPTION_RECORD.ExceptionAddress, eax
+		mov [ecx].EXCEPTION_RECORD.ExceptionRecord, 0
+		mov [ecx].EXCEPTION_RECORD.NumberParameters, 0
+		mov [ecx].EXCEPTION_RECORD.ExceptionInformation, 0
+		mov ExceptionRecord, ecx
+	.endif
+	.if ( TargetFrame )
+		mov [ecx].EXCEPTION_RECORD.ExceptionFlags, _EH_UNWINDING
+	.else
+		mov [ecx].EXCEPTION_RECORD.ExceptionFlags, _EH_UNWINDING or _EH_EXIT_UNWIND
+	.endif
 
-if ?CREATECONTEXT        
-        invoke SaveContext, addr context
-        mov eax, _eax_value
-        mov context.rEax, eax
-endif
-
-        mov		edi, fs:[THREAD_INFORMATION_BLOCK.pvExcept]
-        .while ((edi != -1) && (edi != pRegistrationFrame))
-if ?CREATECONTEXT            
-			lea		eax,context
-else
-			xor		eax, eax
-endif
-if 1
-	        mov		esi, esp
-			invoke	[edi].EXCEPTION_REGISTRATION.ExceptionHandler, \
-            	pExceptRecord, edi, eax, 0
-	        mov		esp, esi
-        	mov		edi, [edi].EXCEPTION_REGISTRATION.prev_structure
-            mov		fs:[THREAD_INFORMATION_BLOCK.pvExcept],edi
-else
-
-	        invoke	FatalAppExit,0, CStr(<13,10,"DKRNL32: stopped in RtlUnwind(), app terminated",13,10>)
-endif        
-        .endw
-        ret
+	mov edi, fs:[THREAD_INFORMATION_BLOCK.pvExcept]
+	.while ((edi != -1) && (edi != TargetFrame))
+		@strace <"RtlUnwind: calling exc handler ", [edi].EXCEPTION_REGISTRATION.ExceptionHandler, ", edi=", edi, ", esp=", esp >
+		invoke _GetCurrentThread
+		mov ecx, ExceptionRecord
+		push ebp               ;for Borland, set EBP to a exc handler frame!
+		mov esi, esp
+		lea ebp, [esp-6*4]     ;see also except.asm
+		invoke [edi].EXCEPTION_REGISTRATION.ExceptionHandler, \
+			ecx, edi, [eax].THREAD.pContext, 0
+		@strace <"RtlUnwind: returned from exc handler, edi=", edi, ", esp=", esp, ", esi=", esi >
+		mov esp, esi
+		pop ebp
+		mov edi, [edi].EXCEPTION_REGISTRATION.prev_structure
+		mov fs:[THREAD_INFORMATION_BLOCK.pvExcept],edi
+	.endw
+	@strace <"RtlUnwind: exit">
+	ret
         
 RtlUnwind endp
 

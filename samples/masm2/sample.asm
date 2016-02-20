@@ -22,28 +22,27 @@ else
 LSTRING		equ $ - szString
 endif
 
-        .CODE
+	.CODE
 
 main    proc
 
 local   dwWritten:dword
 local   hConsole:dword
 
-        invoke  GetStdHandle, STD_OUTPUT_HANDLE
-        mov     hConsole,eax
+	invoke GetStdHandle, STD_OUTPUT_HANDLE
+	mov hConsole,eax
 
-        invoke  WriteConsoleA, hConsole, addr szString, LSTRING, addr dwWritten, 0
+	invoke WriteConsoleA, hConsole, addr szString, LSTRING, addr dwWritten, 0
 
-        xor     eax,eax
-        ret
+	xor eax,eax
+	ret
 main    endp
 
 ;--- entry
 
 mainCRTStartup  proc c
-        invoke  main
-        invoke  ExitProcess, eax
+	invoke main
+	invoke ExitProcess, eax
 mainCRTStartup endp
 
-        END mainCRTStartup
-
+	END mainCRTStartup

@@ -7,4 +7,11 @@
   this binary to be executed. If this stub should run while HXLDR32 is
   installed use HXDOSLD.
   
+  Usage:
+  
+  HXDOSLD name_of_binary [ parameters ]
+  
+  If no path is given with the name of the binary, it must be found in
+  the current directory.
+  
   Japheth

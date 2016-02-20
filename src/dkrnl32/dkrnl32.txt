@@ -207,8 +207,7 @@
         if the application is to run under a debugger.
   0004: 1=threads will get full default stack size. 0=threads get a
         default stack size of 96 kB.
-  0008: 1=DKRNL32 will disable keyboard before reading port 60h. This makes
-        DKRNL32 work better with Qemu.
+  0008: not used.
   0016: 1=DKRNL32 will always use the RTC for GetTickCount, the PIT timer
         isn't used at all then.
   0032: 1=DKRNL32 will hook no exceptions (for debugging).
@@ -255,6 +254,7 @@
   ClearCommBreak
   ClearCommError
   CloseHandle
+  CmdBatNotification             dummy
   CompareFileTime
   CompareStringA
   CompareStringW
@@ -288,6 +288,7 @@
   CreateWaitableTimerA
   DebugActiveProcess             dummy 
   DebugBreak
+  DefineDosDeviceA               dummy
   DeleteAtom
   DeleteCriticalSection
   DeleteFileA
@@ -325,6 +326,7 @@
   FindResourceA
   FindResourceW
   FindResourceExA
+  FindResourceExW
   FlushConsoleInputBuffer
   FlushFileBuffers
   FlushViewOfFile
@@ -338,6 +340,8 @@
   GenerateConsoleCtrlEvent
   GetACP
   GetAtomNameA
+  GetBinaryTypeA
+  GetBinaryTypeW
   GetCPInfo
   GetCommConfig
   GetCommMask
@@ -391,7 +395,7 @@
   GetLargestConsoleWindowSize
   GetLastError
   GetLocaleInfoA
-  GetLocaleInfoW                 dummy
+  GetLocaleInfoW
   GetLocalTime
   GetLogicalDrives
   GetLogicalDriveStringsA
@@ -434,6 +438,8 @@
   GetSystemTime
   GetSystemTimeAdjustment
   GetSystemTimeAsFileTime
+  GetSystemWindowsDirectoryA
+  GetSystemWindowsDirectoryW
   GetTapeParameters              dummy
   GetTapePosition                dummy
   GetTapeStatus                  dummy
@@ -444,7 +450,7 @@
   GetThreadContext
   GetThreadLocale
   GetThreadPriority
-  GetThreadSelectorEntry         dummy
+  GetThreadSelectorEntry
   GetTickCount
   GetTimeFormatA
   GetTimeFormatW
@@ -452,6 +458,7 @@
   GetUserDefaultLangID
   GetUserDefaultLCID
   GetUserDefaultUILanguage
+  GetVDMCurrentDirectories       dummy
   GetVersion
   GetVersionExA
   GetVolumeInformationA
@@ -499,7 +506,7 @@
   IsDBCSLeadByte
   IsDBCSLeadByteEx
   IsDebuggerPresent
-;  IsProcessorFeatureAvailable   deactivated
+  IsProcessorFeaturePresent
   IsValidCodePage
   IsValidLocale
   LCMapStringA
@@ -715,6 +722,45 @@
 
   6. History
 
+  11/16/2009: version 3.4
+
+  þ bugfix: GetFileType() didn't set last error, thus making return value
+    of FILE_TYPE_UNKNOWN ambiguous.
+  þ bugfix: virtual key codes were wrong for numpad-0 - numpad-9 if
+    NUMLOCK was on.
+  þ bugfix: GetDateFormat() and GetTimeFormat() caused buffer overflows.
+  þ bugfix: SetCurrentDirectory() sometimes didn't work.
+  þ bugfix: FormatMessage() max line length handling was wrong.
+  þ bugfix: ack from kbd (0FAh) during LED update wasn't ignored.
+  þ bugfix: WritePrivateProfileString() failed if file didn't exist yet.
+  þ bugfix: GetPrivateProfileSectionNames() returned size 1 too high.
+  þ bugfix: adding a new key with WritePrivateProfileString() did delete
+    all following sections.
+  þ bugfix: Peek-/ReadConsoleInput(): pressed right ALT key has to set
+    status RIGHT_ALT_PRESSED *and* LEFT_CTRL_PRESSED for 100% Windows 
+    compatibility. The latter wasn't implemented.
+  þ bugfix: GetPrivateProfileSectionA() skipped lines which didn't follow
+    the <key>=<value> format.
+  þ GetBinaryTypeW added.
+  þ GetVDMCurrentDirectories, CmdBatNotification added (dummies).
+  þ support for LOCALE_SSHORTDATE implemented.
+  þ GetLocaleInfoW implemented (was previously a dummy).
+  þ switch DKRNL32=8 removed.
+  þ DefineDosDeviceA added (dummy).
+  þ WritePrivateProfileString(): deleting a section/key is now supported.
+  þ GetProcessTimes() now returns some values if process handle is
+    valid.
+  þ GetThreadSelectorEntry() implemented.
+  þ IsProcessorFeaturePresent() activated.
+  þ SetFilePointer(), parameter 'origin': validity check added.
+  þ HeapSize(): small check for released items implemented. It's still
+    unable to catch most error conditions.
+  þ HeapSetInformation() added (stub)
+  þ EncodePointer, DecodePointer added (stubs)
+  þ RtlUnWind: made compatible with SEH of Borland C++.
+  þ GetSystemWindowsDirectoryA/W added.
+  þ FindResourceExW added.
+
   01/20/2009: version 3.3
 
   þ source assembled with JWasm.
@@ -725,9 +771,9 @@
   þ bugfix: source of v3.2 gave assembly errors, STARTUPINFO changed to
     STARTUPINFOA.
   þ DeviceIoControl: support for IOCTL_STORAGE_CHECK_VERIFY
-  
+
   03/02/2008: version 3.2
-  
+
   þ bugfix: IOCTL_DISK_GET_DRIVE_GEOMETRY_EX didn't return the drive
     parameters due to an alignment error.
   þ bugfix: dkrnl's exception handler destroyed content of EAX.
@@ -761,7 +807,7 @@
   þ GetStartupInfoW added.
   þ WaitForSingleObjectEx/WaitForMultipleObjectEx: parameter "Alertable" == 1
     is now supported.
-  
+
   01/11/2008: version 3.1
 
   þ WriteFileEx added.
@@ -1143,7 +1189,7 @@
   þ bugfix: when running on hosts which don't support setting  
     page attributes, VirtualAlloc may not have zeroed the memory.
   þ GetPriorityClass added 
-  þ IsProcessorFeatureAvailable implemented (deactivated)
+  þ IsProcessorFeaturePresent implemented (deactivated)
 
   12/07/2005: version 2.8.34
 

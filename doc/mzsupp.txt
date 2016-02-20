@@ -46,7 +46,7 @@
  - LINK.EXE from Microsoft: there is a limitation of 64 kB size for segments,
    even it is marked as 32-bit. This is true for groups as well.
 
- - AINK.EXE: seems to have problems with externals, so I wasn't able
+ - ALINK.EXE: seems to have problems with externals, so I wasn't able
    to successfully link a binary. Hints about this issue are welcome.
 
  Samples for MZ format are supplied in Samples directory. The support for

@@ -16,8 +16,8 @@ LINK=link16.exe
 #LINK=tlink
 
 $(OUTDIR)\$(NAME).exe: $*.obj Makefile
-    $(LINK) $(LOPTS) $(LIBS)\jmppm32 $* $(MODS),$*.EXE,$*,TEXT\NTLFNHLP $(LIBS)\jmppm32 $(LIBS)\duser32s;
+	$(LINK) $(LOPTS) $(LIBS)\jmppm32 $* $(MODS),$*.EXE,$*,TEXT\NTLFNHLP $(LIBS)\jmppm32 $(LIBS)\duser32s;
 
 $(OUTDIR)\$(NAME).obj: $(NAME).asm
-    $(AS) $(NAME).asm
+	$(AS) $(NAME).asm
 

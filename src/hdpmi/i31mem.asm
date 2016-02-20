@@ -2,7 +2,7 @@
 ;--- implements int 31h, ax=05xx + ax=08xx
 
 		.386
-        
+
 		include hdpmi.inc
 		include external.inc
 

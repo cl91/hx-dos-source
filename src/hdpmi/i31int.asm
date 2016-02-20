@@ -4,10 +4,10 @@
 ;*** DS initialized to FLAT
 
 		.386
-        
+
         include hdpmi.inc
         include external.inc
-        
+
         option proc:private
 
 if (sizeof R3PROC eq 4)
@@ -350,7 +350,7 @@ seteexcp proc public
         bts	 ss:[wExcHdlr],bx
         pop ebx
         clc
-@@:    
+@@:
         ret
         align 4
 seteexcp endp
@@ -363,7 +363,7 @@ seteexcr endp
 
 endif
 
-_TEXT32  ends
+_TEXT32 ends
 
         end
 

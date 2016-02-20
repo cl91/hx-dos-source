@@ -32,6 +32,7 @@ EXPORTS
  getservbyname         =_getservbyname           @55
  getservbyport         =_getservbyport           @56
  gethostname           =_gethostname             @57
+ WSAAsynSelect         =_WSAAsyncSelect          @101
  WSAAsynGetHostByName  =_WSAAsyncGetHostByName   @103
  WSACancelAsyncRequest =_WSACancelAsyncRequest   @108
  WSASetBlockingHook    =_WSASetBlockingHook      @109

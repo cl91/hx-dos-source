@@ -67,8 +67,8 @@ _BSS	ends
 STACK	segment para use16 stack  'STACK'
 STACK	ends
 
-TIBSEG	segment para use16
-TIBSEG	ends
+;TIBSEG	segment para use16
+;TIBSEG	ends
 
 DGROUP	group _TEXT,CCONST,_DATA,_BSS,STACK
 
@@ -116,6 +116,7 @@ DGROUP	group _TEXT,CCONST,_DATA,_BSS,STACK
 ?CHECKCROSSREFS	equ 1	;std=1, 1=check for dll cross references
 ?LOADAPPSASDLLS	equ 1	;std=1, 1=allow apps to be loaded as dlls
 ?SKIPCOMMENTS	equ 1	;std=1, 1=skip sections not marked as r/w/e
+?PEX64ERROR     equ 0   ;std=0, 1=display error for x64 PEs
 
 ;?ADDTOSTACK		equ 2000h	;add this to reserved stack
 ?ADDTOSTACK		equ 10000h	;add this to reserved stack
@@ -140,6 +141,9 @@ szErrPE7	db	"cannot create psp",lf,0
 szErrPE8	db	"cannot load PE file",lf,0
 szErrPE9	db	"relocs stripped, cannot load",lf,0
 szErrPE10	db	"dll init failed",lf,0
+if ?PEX64ERROR
+szErrPE11	db	"no x86 binary",lf,0
+endif
 
 ?NODLLSUFF equ 1
 
@@ -481,17 +485,17 @@ skippath endp
 ;*** search module EDX=handle ***
 
 SearchModuleInList proc stdcall
-		mov 	ecx,cs:[dwMod32]
+	mov ecx,cs:[dwMod32]
 @@:
-		mov 	eax,ecx
-		jecxz	@F
-		cmp 	eax,edx
-		mov 	ecx,[ecx].MZHDR.pNxtMod
-		jnz 	@B
-		ret
+	mov eax,ecx
+	jecxz @F
+	cmp eax,edx
+	mov ecx,[ecx].MZHDR.pNxtMod
+	jnz @B
+	ret
 @@:
-		stc
-        ret
+	stc
+	ret
 SearchModuleInList endp
 
 ;*** look in module list if module is already loaded ***
@@ -581,13 +585,13 @@ nocaps	endp
 ;*** out: NC + esi -> hmodule
 ;*** modifies esi, edi, ebx
 
-LoadPEModule proc	near
+LoadPEModule proc near
 
 		@trace_s <"LoadPEModule entry",lf>
 		push	ds
 		lds 	edx,szExePath
 		mov 	cl,00
-        call	openfile
+		call	openfile
 		pop 	ds
 		jnc 	@F
 		mov 	ax,offset szErrPE2 		  ;file open error
@@ -630,28 +634,28 @@ endif
 		jnz 	error51
 if 1
 		@trace_s <"MZ addr=">
-        @trace_d edx
-        @trace_s <" magic bytes=">
-        @trace_d dword ptr [edx]
-        @trace_s <" ptr PE=">
-        @trace_d dword ptr [edx+3Ch]
-        @trace_s <lf>
-endif		
+		@trace_d edx
+		@trace_s <" magic bytes=">
+		@trace_d dword ptr [edx]
+		@trace_s <" ptr PE=">
+		@trace_d dword ptr [edx+3Ch]
+		@trace_s <lf>
+endif
 		mov 	dword ptr [edx].MZHDR.wCnt, eax	;count + flags init
 		mov 	[edx].MZHDR.dwStack,eax
 		push	edx
 		mov 	cx,word ptr [edx].MZHDR.ofsPEhdr+2
-        mov		dx,word ptr [edx].MZHDR.ofsPEhdr+0
+		mov		dx,word ptr [edx].MZHDR.ofsPEhdr+0
 		mov 	ax,4200h
 		int 	21h
 		pop 	edx
-        jc		error51
+		jc		error51
 if ?USESTACK
 		mov 	ecx,sizeof IMAGE_NT_HEADERS/4
-        xor		eax,eax
-@@:        
-        push	eax
-        loop	@B
+		xor		eax,eax
+@@:
+		push	eax
+		loop	@B
 		mov 	edx, esp
 		mov		cx, sizeof IMAGE_FILE_HEADER+4	;read FileHeader only
 else
@@ -664,38 +668,38 @@ endif
 		jc		error42
 		cmp 	eax,ecx
 		jnz 	error52
-        cmp		[edx].IMAGE_NT_HEADERS.FileHeader.Machine, IMAGE_FILE_MACHINE_I386 
-        jnz		error61
+		cmp		[edx].IMAGE_NT_HEADERS.FileHeader.Machine, IMAGE_FILE_MACHINE_I386 
+		jnz		error62
 if ?USESTACK
 		movzx	ecx,[edx].IMAGE_NT_HEADERS.FileHeader.SizeOfOptionalHeader       
-        add		edx, eax
-        mov		ah,3Fh
-        int		21h
-        jc		error42
-        cmp		eax, ecx
-        jnz		error52
-        mov		edx, esp
-endif        
+		add		edx, eax
+		mov		ah,3Fh
+		int		21h
+		jc		error42
+		cmp		eax, ecx
+		jnz		error52
+		mov		edx, esp
+endif
 if 1
 		@trace_s "PE magic bytes="
-        @trace_d dword ptr [edx]
-        @trace_s <lf>
-endif		
+		@trace_d dword ptr [edx]
+		@trace_s <lf>
+endif
 if ?NOGUIAPPS
 		test	[edx].IMAGE_NT_HEADERS.FileHeader.Characteristics,IMAGE_FILE_DLL
 		jnz 	isdll1
   if ?LOADAPPSASDLLS
 		xor		ecx,ecx		;if an application binary is to load as a dll
 		cmp		cx, rES_	;ignore the entry point
-        jnz		@F
-		or  	[edx].IMAGE_NT_HEADERS.FileHeader.Characteristics,IMAGE_FILE_DLL
-		mov  	[edx].IMAGE_NT_HEADERS.OptionalHeader.AddressOfEntryPoint, ecx
-        jmp		isdll1
-@@:        
+		jnz		@F
+		or		[edx].IMAGE_NT_HEADERS.FileHeader.Characteristics,IMAGE_FILE_DLL
+		mov 	[edx].IMAGE_NT_HEADERS.OptionalHeader.AddressOfEntryPoint, ecx
+		jmp		isdll1
+@@:
   endif
   if ?ALLOWGUIAPPS
-        test	cs:[bEnvFlgs2], ENVFL2_ALLOWGUI
-        jnz     @F
+		test	cs:[bEnvFlgs2], ENVFL2_ALLOWGUI
+		jnz 	@F
   endif  
 		cmp 	[edx].IMAGE_NT_HEADERS.OptionalHeader.Subsystem,IMAGE_SUBSYSTEM_WINDOWS_GUI
 		jz		error61
@@ -703,28 +707,28 @@ if ?NOGUIAPPS
   if 0;?ADD64KBTOSTACK
 ;		inc		word ptr [edx.IMAGE_NT_HEADERS.OptionalHeader.SizeOfStackReserve+2]
   endif
-  
+
 ;--- restrict reserved stack to 128 kB if flag is set  
-  
+
 		test	cs:bEnvFlgs2, ENVFL2_128KBSTACK
 		jz	 	@F
-        mov     eax,20000h
-        cmp     eax,[edx].IMAGE_NT_HEADERS.OptionalHeader.SizeOfStackCommit
-		jc      @F        
-        cmp     eax,[edx].IMAGE_NT_HEADERS.OptionalHeader.SizeOfStackReserve
-		jnc     @F
-        mov     [edx].IMAGE_NT_HEADERS.OptionalHeader.SizeOfStackReserve, eax
-@@:        
+		mov 	eax,20000h
+		cmp 	eax,[edx].IMAGE_NT_HEADERS.OptionalHeader.SizeOfStackCommit
+		jc		@F		  
+		cmp 	eax,[edx].IMAGE_NT_HEADERS.OptionalHeader.SizeOfStackReserve
+		jnc 	@F
+		mov 	[edx].IMAGE_NT_HEADERS.OptionalHeader.SizeOfStackReserve, eax
+@@:
 		@trace_s "pTaskStk="
-        @trace_w cs:[wTDStk]
+		@trace_w cs:[wTDStk]
 		@trace_s " wEnvFlags="
-        @trace_w cs:wEnvFlgs
-        @trace_s <lf>
+		@trace_w cs:wEnvFlgs
+		@trace_s <lf>
 		cmp 	cs:[wTDStk],offset starttaskstk
 		jz		@F
 		test	cs:bEnvFlgs, ENVFL_LOAD1APPONLY
 		jnz 	error61
-@@:        
+@@:
 isdll1:
 endif
 
@@ -738,8 +742,8 @@ if ?USESTACK
 @@:
   endif
   if ?DPMI10
-        test    cs:bEnvFlgs,ENVFL_DONTUSEDPMI1
-        jnz     UseStdAlloc
+		test	cs:bEnvFlgs,ENVFL_DONTUSEDPMI1
+		jnz 	UseStdAlloc
 ;---------------------- some apps have to be loaded at their ImageBase
 ;---------------------- although relocs are NOT stripped!
 		test	[edx.IMAGE_NT_HEADERS.FileHeader.Characteristics],IMAGE_FILE_DLL
@@ -747,28 +751,28 @@ if ?USESTACK
 ;---------------------- for dlls dont use the prefered load address unless
 ;---------------------- relocs are stripped or DPMILDR=1024 is set
 		test	cs:bEnvFlgs2, ENVFL2_USEPREFADDR
-        jnz     @F
-        test    [edx.IMAGE_NT_HEADERS.FileHeader.Characteristics],IMAGE_FILE_RELOCS_STRIPPED
-        jz      UseStdAlloc
-@@:        
-        mov     ebx, [edx.IMAGE_NT_HEADERS.OptionalHeader.ImageBase]
-        mov     ecx, eax
-        mov     edx, 1
-        push    eax
-        mov     ax, 0504h
-        int     31h
-        pop     eax
-        jc      UseStdAlloc
-        mov     xmemhdl, esi
-        mov     edi, ebx
-        jmp     allocok
+		jnz 	@F
+		test	[edx.IMAGE_NT_HEADERS.FileHeader.Characteristics],IMAGE_FILE_RELOCS_STRIPPED
+		jz		UseStdAlloc
+@@:
+		mov 	ebx, [edx.IMAGE_NT_HEADERS.OptionalHeader.ImageBase]
+		mov 	ecx, eax
+		mov 	edx, 1
+		push	eax
+		mov 	ax, 0504h
+		int 	31h
+		pop 	eax
+		jc		UseStdAlloc
+		mov 	xmemhdl, esi
+		mov 	edi, ebx
+		jmp 	allocok
 UseStdAlloc:
   endif
 	if 1
 		@trace_s <"image size=">
-        @trace_d eax
-        @trace_s <lf>
-	endif		
+		@trace_d eax
+		@trace_s <lf>
+	endif
 		push	eax
 		pop 	cx
 		pop 	bx
@@ -782,10 +786,10 @@ UseStdAlloc:
 		pop 	edi
 allocok:
 	if 1
-    	@trace_s <"image memory base=">
-        @trace_d edi
-        @trace_s <lf>
-	endif		
+		@trace_s <"image memory base=">
+		@trace_d edi
+		@trace_s <lf>
+	endif
 ;		mov 	es,cs:[wFlatDS]
 		lea 	esi, [esp+sizeof IMAGE_NT_HEADERS]
 		mov 	ecx, 40h/4			;copy MZ header
@@ -796,36 +800,36 @@ allocok:
 		push	edi
 		rep 	stos dword ptr [edi]
 		pop 	edi
-	endif  
-        mov		edx, edi
+	endif
+		mov		edx, edi
 		mov 	esi, esp
 		mov 	cx, sizeof IMAGE_FILE_HEADER+4
-        add		cx, [esi].IMAGE_NT_HEADERS.FileHeader.SizeOfOptionalHeader
-        shr		ecx, 2
+		add		cx, [esi].IMAGE_NT_HEADERS.FileHeader.SizeOfOptionalHeader
+		shr		ecx, 2
 		rep 	movs dword ptr [edi], [esi]
 		push	es
 		pop 	ds
 		mov 	bx,hFile
 endif	;?USESTACK
 
-    	@trace_s <"reading object table",lf>
+		@trace_s <"reading object table",lf>
 ;--------------------------------- now read object table
 		push	edx
 		movzx	eax, [edx].IMAGE_NT_HEADERS.FileHeader.NumberOfSections
 		mov 	ecx, sizeof IMAGE_SECTION_HEADER
 		mul 	ecx
 		mov 	ecx, eax		;bytes to read
-        mov		edx, edi
+		mov		edx, edi
 		mov 	ah,3Fh			;read object table
 		int 	21h
-        pop		edx
+		pop		edx
 		jc		error43
 		cmp 	eax,ecx
 		jnz 	error53
 
-    	@trace_s <"reading object table done",lf>
+		@trace_s <"reading object table done",lf>
 		lea 	eax, [eax+edi+sizeof MZHDR]
-        sub		eax, edx
+		sub		eax, edx
 		mov 	[edx - sizeof MZHDR].MZHDR.pExeNam, eax 	;is a RVA
 		mov 	[edx - sizeof MZHDR].MZHDR.ofsPEhdr, sizeof MZHDR
 
@@ -837,7 +841,7 @@ ife ?USESTACK
 		test	[edx].IMAGE_NT_HEADERS.FileHeader.Characteristics,IMAGE_FILE_DLL
 		jnz 	@F
 		add 	eax,[edx].IMAGE_NT_HEADERS.OptionalHeader.SizeOfStackReserve
-  		add		eax,?ADDTOSTACK
+		add		eax,?ADDTOSTACK
 @@:
   endif
 		push	eax
@@ -861,10 +865,10 @@ endif
 
 if 1
 		@trace_s <"header in edx=">
-        @trace_d edx
-        @trace_s <lf>
-endif		
-		mov 	edi, eax		
+		@trace_d edx
+		@trace_s <lf>
+endif
+		mov 	edi, eax
 
 		add 	edi, [edx - sizeof MZHDR].MZHDR.pExeNam
 		push	ds
@@ -893,9 +897,9 @@ endif
 		mov 	esi, edx
 if 1
 		@trace_s <"header in esi=">
-        @trace_d esi
-        @trace_s <lf>
-endif		
+		@trace_d esi
+		@trace_s <lf>
+endif
 
 ;----------------------------- read rest of image
 
@@ -912,12 +916,12 @@ endif
 ;--- test if a stand-alone dll is loaded. then it is necessary to
 ;--- allocate a stack even for dlls
 
-        movzx	eax, cs:[wTDStk]
-        cmp		ax, offset starttaskstk
-        jz		@F
-        cmp 	word ptr cs:[eax - sizeof TASK].TASK.dwModul+2,0
-        jz		@F
-        
+		movzx	eax, cs:[wTDStk]
+		cmp		ax, offset starttaskstk
+		jz		@F
+		cmp 	word ptr cs:[eax - sizeof TASK].TASK.dwModul+2,0
+		jz		@F
+
 		test	[esi].IMAGE_NT_HEADERS.FileHeader.Characteristics,IMAGE_FILE_DLL
 		jnz 	isdll
 @@:
@@ -927,53 +931,53 @@ endif
 
 if ?EXTRASTACKHDL
 		mov		edx,esi
-        mov		eax, [esi].IMAGE_NT_HEADERS.OptionalHeader.SizeOfStackReserve
- if ?ADDTOSTACK       
-  		add		eax,?ADDTOSTACK
- endif        
-  		push	eax
-        pop		cx
-        pop		bx
+		mov		eax, [esi].IMAGE_NT_HEADERS.OptionalHeader.SizeOfStackReserve
+ if ?ADDTOSTACK
+		add		eax,?ADDTOSTACK
+ endif
+		push	eax
+		pop		cx
+		pop		bx
 		mov 	ax,0501h
 		int 	31h
 		jc		error1_2
 		mov 	word ptr [edx - sizeof MZHDR+0].MZHDR.hStack,di
-        mov		word ptr [edx - sizeof MZHDR+2].MZHDR.hStack,si
-        mov		esi, edx
-        push	bx
-        push	cx
-        pop		edi
+		mov		word ptr [edx - sizeof MZHDR+2].MZHDR.hStack,si
+		mov		esi, edx
+		push	bx
+		push	cx
+		pop		edi
 		mov 	[edx - sizeof MZHDR].MZHDR.dwStack,edi
   if ?ADDTOSTACK		;uncommit the pages below the "reserved" part
 		push	esi
-        push	es
-        mov		edi,esp
-        mov		esi,[esi - sizeof MZHDR].MZHDR.hStack
-        xor		ebx,ebx
-;        mov		ebx,?ADDTOSTACK-1000h   ;offset in memory block
-        push	ss
-        pop		es
-  if ?ADDTOSTACK gt 2000h      
-        mov		ecx,(?ADDTOSTACK shr 12) - 2
-        .while (ecx)
-        push	0			;page attributes (not committed)
-        dec ecx
-        .endw
-        mov		ecx,(?ADDTOSTACK shr 12) - 2
-        mov		edx, esp	;es:edx=ptr WORD
-        mov		ax,0507h	;esi=handle, ebx=ofs, ecx=pages
-        int		31h
+		push	es
+		mov		edi,esp
+		mov		esi,[esi - sizeof MZHDR].MZHDR.hStack
+		xor		ebx,ebx
+;		 mov	ebx,?ADDTOSTACK-1000h	;offset in memory block
+		push	ss
+		pop		es
+  if ?ADDTOSTACK gt 2000h
+		mov		ecx,(?ADDTOSTACK shr 12) - 2
+		.while (ecx)
+		push	0			;page attributes (not committed)
+		dec ecx
+		.endw
+		mov		ecx,(?ADDTOSTACK shr 12) - 2
+		mov		edx, esp	;es:edx=ptr WORD
+		mov		ax,0507h	;esi=handle, ebx=ofs, ecx=pages
+		int		31h
   else
-  		push	0
-        mov		edx, esp	;es:edx=ptr WORD
+		push	0
+		mov		edx, esp	;es:edx=ptr WORD
   endif
-        mov		ebx,?ADDTOSTACK - 1000h
-        mov		ecx,1
-        mov		ax,0507h	;esi=handle, ebx=ofs, ecx=pages
-        int		31h
-        mov		esp,edi
-        pop		es
-        pop		esi
+		mov		ebx,?ADDTOSTACK - 1000h
+		mov		ecx,1
+		mov		ax,0507h	;esi=handle, ebx=ofs, ecx=pages
+		int		31h
+		mov		esp,edi
+		pop		es
+		pop		esi
   endif
 endif
 
@@ -986,21 +990,21 @@ endif
 		push	ds
 		pushad
 		lea 	eax,[esi-sizeof MZHDR]		;hModule
-        @trace_s <"load PE app, handle=">
+		@trace_s <"load PE app, handle=">
 		@trace_d eax
 		@trace_s lf
 		mov 	ds,cs:[wLdrDS]
 		mov 	si,[wTDStk]
-        mov     [si].TASK.dwModul,eax
+		mov 	[si].TASK.dwModul,eax
 		lea 	eax,[ebp+6] 				;save SS:ESP of caller
-        mov     [si].TASK.dwESP,eax
-        mov     [si].TASK.wSS,ss
-        mov		[si].TASK.wFlags,1			;set "loading"
+		mov 	[si].TASK.dwESP,eax
+		mov 	[si].TASK.wSS,ss
+		mov		[si].TASK.wFlags,1			;set "loading"
 if ?MULTPSP
 		push	es
-        les		edi,szExePath
+		les		edi,szExePath
 		call	CreatePsp
-        pop		es
+		pop		es
 		jc 		error71
 endif
 if ?INT24RES or ?INT23RES
@@ -1008,9 +1012,9 @@ if ?INT24RES or ?INT23RES
 endif
 		push	es
 		mov		es,rES_
-        mov		ebx,rEBX
-        call	SetCmdLine
-        pop		es
+		mov		ebx,rEBX
+		call	SetCmdLine
+		pop		es
 		@trace_s <"task is ">
 		@trace_w si
 		@trace_s <" modul=">
@@ -1047,7 +1051,7 @@ if ?USESTACK
 		jmp 	errorxx
 error1_2:
 		mov 	ax,offset szErrPE1 ;memory error (stack cannot be alloc'ed)
-        jmp		error
+		jmp		error
 else
 		mov 	ax,offset szErrPE1 ;memory error
 		jmp 	error
@@ -1062,6 +1066,11 @@ error42:
 error43:
 		mov 	ax,offset szErrPE4
 		jmp 	error
+error62:
+if ?PEX64ERROR
+		mov 	ax,offset szErrPE11
+		jmp 	error
+endif
 error61:
 		@trace_s <"dpmild32: will skip binary loading (no 80386, GUI or DPMILDR=8)",lf>
 		xor 	ax, ax
@@ -1269,7 +1278,6 @@ endif
 ;*** - set attributes of pages for each section (r/w r/o discard)
 ;*** - call Entry
 ;*** out: esi modulehandle
-;*** fs = TIB
 ;*** C if error, ax=error text
 
 InitPEModule proc
@@ -1522,21 +1530,21 @@ retapp32:
 error_imports_app:
 		@trace_s <"*** InitPEModule, error_imports_app reached! ***",lf>
 		mov		ss,bx
-        mov		esp,edi
+		mov		esp,edi
 		call	error_ax_out
 		mov 	ax, 4C00h + RC_INITAPP
 		int 	21h
 error_dll_initfailed:
 		mov		ax,offset szErrPE10
-        jmp		error2				;immediately exit this dll
+		jmp		error2				;immediately exit this dll
 error_imports_dll:
 		mov 	[esi.IMAGE_NT_HEADERS.OptionalHeader.AddressOfEntryPoint], 0	;dont call entry
 error2:        
 if 1
 		push	ax
-        lea		eax, [esi - sizeof MZHDR]
-        call	FreeModule32
-        pop		ax
+		lea		eax, [esi - sizeof MZHDR]
+		call	FreeModule32
+		pop		ax
 endif        
 error1:					;TIBSel not allocated????
 error:
@@ -1582,8 +1590,8 @@ if ?INT41SUPPORT
 		mov 	word ptr [ebp].D386_Device_Params.DD_sym_name+4,ds
 endif
 		@trace_s <"LoadImage start, header=">
-        @trace_d esi
-        @trace_s <lf>
+		@trace_d esi
+		@trace_s <lf>
 
 		movzx	edi, [esi].IMAGE_NT_HEADERS.FileHeader.SizeOfOptionalHeader
 		lea 	edi,[esi + edi + sizeof IMAGE_FILE_HEADER + 4]
@@ -1606,10 +1614,10 @@ nextsection:
 
 if ?SKIPCOMMENTS
 		test	byte ptr [edi].IMAGE_SECTION_HEADER.Characteristics+3, 0E0h ;is is read/write/exec?
-        jz 		@F
-endif        
+		jz		@F
+endif
 ;-------------------------------------------- section size into ecx
-		call	getsectionsize        
+		call	getsectionsize
 
 		shr 	ecx, 2
 		push	edi
@@ -1619,7 +1627,7 @@ endif
 		xor 	eax, eax
 		rep 	stos dword ptr [edi]
 		pop 	edi
-if 0        
+if 0
 		test	[edi].IMAGE_SECTION_HEADER.Characteristics,IMAGE_SCN_CNT_UNINITIALIZED_DATA
 		jnz 	@F
 else
@@ -1666,7 +1674,7 @@ if ?INT41SUPPORT
 		mov 	si, ST_code_sel
 		mov 	ax, DS_LoadSeg_32
 		int 	Debug_Serv_Int
-        
+
 		inc 	[ebp].D386_Device_Params.DD_logical_seg
 		pop 	esi
 		pop 	ebx
@@ -2362,19 +2370,19 @@ CallProc16 endp
 
 GetNextModuleHandle32 proc uses ds
 
-		mov 	ds,cs:[wFlatDS]
-		mov 	ecx,cs:[dwMod32]
-		and 	edx,edx 		   ;first module?
-		jz		@F
-		call	SearchModuleInList ;search module EDX
+	mov ds,cs:[wFlatDS]
+	mov ecx,cs:[dwMod32]
+	and edx,edx 		   ;first module?
+	jz @F
+	call SearchModuleInList ;search module EDX
 @@:
-		mov 	eax,ecx 		   ;next handle in EAX
-		jecxz	@F
-        movzx   ecx,[eax.MZHDR.wCnt]
-        mov     edx,[eax.MZHDR.hImage]
+	mov eax,ecx 		   ;next handle in EAX
+	jecxz @F
+	movzx ecx,[eax.MZHDR.wCnt]
+	mov edx,[eax.MZHDR.hImage]
 @@:
-        clc
-		ret
+	clc
+	ret
 GetNextModuleHandle32 endp
 
 ;---------------------------------
@@ -2414,35 +2422,35 @@ GetModuleHandle32 endp
 ;--------------------------------- hModule in EDX, returns ^name in EAX
 
 GetModuleFileName proc uses ds bx
-		mov 	ds,cs:[wFlatDS]
-		and 	edx, edx
-		jnz 	@F
-		movzx	eax, cs:[wTDStk]
-        mov		eax, cs:[eax-sizeof TASK].TASK.dwModul
-		jmp 	step2
+	mov ds,cs:[wFlatDS]
+	and edx, edx
+	jnz @F
+	movzx eax, cs:[wTDStk]
+	mov eax, cs:[eax-sizeof TASK].TASK.dwModul
+	jmp step2
 @@:
-		test	edx, 0FFFF0000h
-		jnz 	ispe
-		mov 	bx, dx
-		mov 	ax, 6
-		int 	31h
-		jc		error
-		push	cx
-		push	dx
-		pop 	eax
-		add 	eax,offset NEHDR.szModPath
-		jmp 	exit
+	test edx, 0FFFF0000h
+	jnz ispe
+	mov bx, dx
+	mov ax, 6
+	int 31h
+	jc error
+	push cx
+	push dx
+	pop eax
+	add eax,offset NEHDR.szModPath
+	jmp exit
 ispe:
-		invoke	SearchModuleInList
-		jc		exit
+	invoke SearchModuleInList
+	jc exit
 step2:
-		add 	eax, [eax].MZHDR.pExeNam
+	add eax, [eax].MZHDR.pExeNam
 exit:
-		ret
+	ret
 error:
-		xor 	eax, eax
-        stc
-		ret
+	xor eax, eax
+	stc
+	ret
 
 GetModuleFileName endp
 
@@ -2452,43 +2460,46 @@ GetModuleFileName endp
 
 GetProcAddress32 proc uses ds es
 
-		mov 	ds,cs:[wFlatDS]
-		xor 	eax,eax			;return 00000000 as default
-		pushad
-        push    edx
-        mov     edx, ebx
-        invoke	SearchModuleInList
-        pop     edx
-        jc      error
-		mov 	edi,[ebx].IMAGE_NT_HEADERS.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT*sizeof IMAGE_DATA_DIRECTORY].VirtualAddress+sizeof MZHDR
-		add 	edi,ebx
-		mov 	eax,edx
-		test	eax, 0FFFF0000h
-        jnz		isname
-		sub 	eax,[edi.IMAGE_EXPORT_DIRECTORY.Base]
-        cmp		eax,[edi.IMAGE_EXPORT_DIRECTORY.NumberOfFunctions]
-        jnc 	error
-        jmp		found
+	mov ds,cs:[wFlatDS]
+	xor eax,eax			;return 00000000 as default
+	pushad
+	push edx
+	mov edx, ebx
+	invoke SearchModuleInList
+	pop edx
+	jc error
+	mov edi,[ebx].IMAGE_NT_HEADERS.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT*sizeof IMAGE_DATA_DIRECTORY].VirtualAddress+sizeof MZHDR
+	and edi,edi
+	jz  error		;no export directory?
+	add edi,ebx
+	mov eax,edx
+	test eax, 0FFFF0000h
+	jnz isname
+	sub eax,[edi].IMAGE_EXPORT_DIRECTORY.Base
+	cmp eax,[edi].IMAGE_EXPORT_DIRECTORY.NumberOfFunctions
+	jnc error
+	jmp found
 isname:
-		push	ds
-        pop		es
-		call	SearchExportByName
-		jc		error
-found:  
-		mov 	edx,[edi.IMAGE_EXPORT_DIRECTORY.AddressOfFunctions]
-		add 	edx,ebx
-		shl 	eax,2
-		mov 	eax,[edx+eax]
-		and 	eax,eax
-		jz		error
-		add 	eax,ebx
-		mov 	[esp+1Ch],eax
-        jmp     exit
+	push ds
+	pop es
+	call SearchExportByName
+	jc error
+found:
+	mov edx,[edi].IMAGE_EXPORT_DIRECTORY.AddressOfFunctions
+	add edx,ebx
+	shl eax,2
+	mov eax,[edx+eax]
+	and eax,eax
+	jz error
+	add eax,ebx
+	mov [esp+1Ch],eax
+	jmp exit
 error:
-		stc
+	stc
 exit:        
-		popad
-		ret
+	popad
+	ret
+
 GetProcAddress32 endp
 
 if 0
@@ -2684,14 +2695,14 @@ endif
 FreeDynLoadedModules endp
 
 GetTaskFlags proc
-		movzx	eax, cs:[wTDStk]
-        cmp		ax,offset starttaskstk
-        jz		@F
-        mov		ax, cs:[eax-sizeof TASK].TASK.wFlags
-        ret
+	movzx eax, cs:[wTDStk]
+	cmp ax,offset starttaskstk
+	jz @F
+	mov ax, cs:[eax-sizeof TASK].TASK.wFlags
+	ret
 @@:
-		xor		ax,ax
-        ret
+	xor ax,ax
+	ret
 GetTaskFlags endp        
 
 SetTaskFlags proc
@@ -3246,7 +3257,7 @@ if ?DOS4GMEM
         push	ax
         mov		di, word ptr dw4GHdl+0
         mov		si, word ptr dw4GHdl+2
-        mov		ax,502h
+        mov		ax,0502h
         int		31h
         pop		ax
 @@:        

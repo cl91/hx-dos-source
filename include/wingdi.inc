@@ -631,7 +631,7 @@ endif
 
 if ?INDCALL_ eq 0
 
-        .CODE
+;_TEXT segment
 
 BitBlt                 proto near stdcall :dword, :dword, :dword, :dword, :dword, :dword, :dword, :dword, :dword
 CreateCompatibleBitmap proto near stdcall :dword, :dword, :dword
@@ -675,9 +675,11 @@ SetViewportOrgEx       proto near stdcall :dword, :dword, :dword, :ptr POINT
 SetWindowOrgEx         proto near stdcall :dword, :dword, :dword, :ptr POINT
 TextOutA               proto near stdcall :dword, :dword, :dword, :ptr BYTE, :dword
 
+;_TEXT ends
+
 else
 
-        .DATA
+_DATA segment
 
 externdef stdcall _imp__AddFontResourceA@4:pfunc@4
 externdef stdcall _imp__AnimatePalette@16:pfunc@16
@@ -713,15 +715,17 @@ externdef stdcall _imp__SetViewportOrgEx@16:pfunc@16
 externdef stdcall _imp__SetWindowOrgEx@16:pfunc@16
 externdef stdcall _imp__TextOutA@20:pfunc@20
 
-AddFontResourceA       	equ <_imp__AddFontResourceA@4>
+_DATA ends
+
+AddFontResourceA        equ <_imp__AddFontResourceA@4>
 AnimatePalette          equ <_imp__AnimatePalette@16>
-BitBlt                	equ <_imp__BitBlt@36>
-CreateCompatibleBitmap	equ <_imp__CreateCompatibleBitmap@12>
-CreateCompatibleDC    	equ <_imp__CreateCompatibleDC@4>
+BitBlt                  equ <_imp__BitBlt@36>
+CreateCompatibleBitmap  equ <_imp__CreateCompatibleBitmap@12>
+CreateCompatibleDC      equ <_imp__CreateCompatibleDC@4>
 CreateDCA               equ <_imp__CreateDCA@16>
 CreateDIBitmap          equ <_imp__CreateDIBitmap@24>
 CreatePalette           equ <_imp__CreatePalette@4>
-CreateSolidBrush      	equ <_imp__CreateSolidBrush@4>
+CreateSolidBrush        equ <_imp__CreateSolidBrush@4>
 DeleteDC                equ <_imp__DeleteDC@4>
 DeleteObject            equ <_imp__DeleteObject@4>
 ExtTextOutA             equ <_imp__ExtTextOutA@32>
@@ -734,7 +738,7 @@ GetStockObject          equ <_imp__GetStockObject@4>
 GetSystemPaletteEntries equ <_imp__GetSystemPaletteEntries@16>
 GetTextExtentPoint32A   equ <_imp__GetTextExtentPoint32A@16>
 GetTextMetricsA         equ <_imp__GetTextMetricsA@8>
-PatBlt                	equ <_imp__PatBlt@24>
+PatBlt                  equ <_imp__PatBlt@24>
 RealizePalette          equ <_imp__RealizePalette@4>
 SelectObject            equ <_imp__SelectObject@8>
 SelectPalette           equ <_imp__SelectPalette@12>

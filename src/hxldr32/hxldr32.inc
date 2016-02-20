@@ -1,4 +1,4 @@
 
-?VERSION	equ <"1.11">
+?VERSION	equ <"1.12">
 ?OLDVECOFS	equ 8
 

@@ -1,4 +1,7 @@
 
+# NMAKE makefile to create PATCHPE.EXE
+# uses JWasm
+
 !include <..\dirs>
 
 !ifndef DEBUG
@@ -13,39 +16,48 @@ OUTDIR=RELEASE
 
 PGM=PATCHPE
 
+ALL: $(OUTDIR) $(OUTDIR)\$(PGM).EXE
+
+$(OUTDIR):
+	@mkdir $(OUTDIR)
+
+!if 0
+
+LINK=wlink.exe
+
 !ifndef MASM
 MASM=0
 !endif
 
-# the Digital Mars OMF linker is used here, but
-# the MS OMF linker, TLINK or WLINK should work as well.
-
-#LINK=link16.exe
-LINK=$(DMCDIR)\link.exe
 !if $(MASM)
 ASM=@ml -c -nologo -Sg -Fl$* -Fo$* -I$(INC32DIR)
 !else
 ASM=@jwasm -c -nologo -Sg -Fl$* -Fo$* -I$(INC32DIR)
 !endif
 
-MODS=
-LIBS=
-
-LOPTS=$(XLOPTS)/ONE:NOE/NOE/MAP:FULL/NON/FAR
-
-ALL: $(OUTDIR) $(OUTDIR)\$(PGM).EXE
-
-$(OUTDIR):
-	@mkdir $(OUTDIR)
-
 $(OUTDIR)\$(PGM).EXE: $*.obj makefile
-    $(LINK) $* $(MODS) $(LOPTS),$*.EXE,$*.MAP,$(LIBS);
+	@$(LINK) @<<
+sys dos
+file $*.obj
+name $*.EXE
+op map=$*.MAP
+<<
 !if $(DEBUG)==0
-    @copy $*.EXE ..\..\Bin\*.* >NUL
+	@copy $*.EXE ..\..\Bin\*.* >NUL
 !endif
 
 $(OUTDIR)\$(PGM).obj: $(PGM).asm makefile
-    $(ASM) $(PGM).asm
+	$(ASM) $(PGM).asm
+
+!else
+
+$(OUTDIR)\$(PGM).EXE: $(PGM).asm makefile
+	@jwasm -mz -c -nologo -Sg -Fl$* -Fo$*.EXE -I$(INC32DIR) $(PGM).asm
+!if $(DEBUG)==0
+	@copy $*.EXE ..\..\Bin\*.* >NUL
+!endif
+
+!endif
 
 clean:
 	@del $(OUTDIR)\*.exe

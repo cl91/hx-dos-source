@@ -38,6 +38,7 @@
 .\windowsw.ASM \
 .\WinHelp.ASM \
 .\WinHook.ASM \
+.\WinStat.ASM \
 .\wndclass.ASM \
 .\wndclasW.ASM \
 .\wsprintf.ASM \

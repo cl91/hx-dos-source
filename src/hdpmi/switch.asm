@@ -80,23 +80,23 @@ _TEXT16	segment
 if ?WDEB386
 
 kdinit_rm proc
-		pusha
-		mov		ax,D386_Reinit * 100h + 0
-		mov 	bx, _FLATSEL_
-		mov 	cx, _KDSEL_		;2 selectors for WDEB386
-		mov 	dx, _GDTSEL_	;GDT selector
-		int		D386_RM_Int
-		popa
-		ret
-        align 4
-kdinit_rm endp        
+	pusha
+	mov ax,D386_Reinit * 100h + 0
+	mov bx, _FLATSEL_
+	mov cx, _KDSEL_		;2 selectors for WDEB386
+	mov dx, _GDTSEL_	;GDT selector
+	int D386_RM_Int
+	popa
+	ret
+	align 4
+kdinit_rm endp
 
-kdinit2_rm proc        
-		mov		ah,D386_Real_Mode_Init
-		int		D386_RM_Int
-		ret
-        align   4
-kdinit2_rm endp        
+kdinit2_rm proc
+	mov ah,D386_Real_Mode_Init
+	int D386_RM_Int
+	ret
+	align 4
+kdinit2_rm endp
 
 endif
 
@@ -104,31 +104,31 @@ endif
 ;--- out: esp=taskseg._Esp0
 
 _rawjmp_pm_setsegm proc public
-		mov		cs:[v86iret.rDS],ds
-		mov		cs:[v86iret.rES],es
-		mov		cs:[v86iret.rFS],fs
-		mov		cs:[v86iret.rGS],gs
+	mov cs:[v86iret.rDS],ds
+	mov cs:[v86iret.rES],es
+	mov cs:[v86iret.rFS],fs
+	mov cs:[v86iret.rGS],gs
 _rawjmp_pm_setsegm endp	;fall throu
 
 ;*** raw jump to pm, segment registers undefined
 
 _rawjmp_pm proc near public
 
-		pop 	word ptr cs:[dwRetAdr2]
-		mov 	cs:[taskseg._Eax],eax
-;		@stroutrm <"entry rawjmp_pm",lf>
-		pushf
-		pop 	ax
-		and 	ah,8Fh			;mask out IOPL and NT
-		or		ah,?PMIOPL
-		mov 	word ptr cs:[taskseg._Efl],ax
+	pop word ptr cs:[dwRetAdr2]
+	mov cs:[taskseg._Eax],eax
+;	@stroutrm <"entry rawjmp_pm",lf>
+	pushf
+	pop ax
+	and ah,8Fh			;mask out IOPL and NT
+	or ah,?PMIOPL
+	mov word ptr cs:[taskseg._Efl],ax
 rawjmp_pm_patch::
-		mov 	cs:[taskseg._Esi],esi
-;		mov 	esi,cs:[avs]
-		mov 	esi,0
-linadvs label byte        
-		mov 	ax,0DE0Ch
-		int 	67h 			;modifies eax,esi,ds,es,fs,gs
+	mov cs:[taskseg._Esi],esi
+;	mov esi,cs:[avs]
+	mov esi,0
+linadvs label byte
+	mov ax,0DE0Ch
+	int 67h 			;modifies eax,esi,ds,es,fs,gs
 
 _diff_pm = $ - offset rawjmp_pm_patch
 
@@ -136,134 +136,134 @@ RAWJMP_PM_PATCHVALUE = 0EBh+100h*(_diff_pm - 2)
 
 if ?WDEB386
 kdpatch1::
-		call	kdinit_rm
+	call kdinit_rm
 endif
 if ?SAVERMCR3
-		mov		eax,cr3
-		mov		cs:[dwOldCR3],eax
+	mov eax,cr3
+	mov cs:[dwOldCR3],eax
 endif
 if ?SAVERMIDTR
-		@sidt	cs:[nullidt]
-endif		 
+	@sidt cs:[nullidt]
+endif
 if ?SAVERMGDTR
-		@sgdt	cs:[rmgdt]
-endif		 
+	@sgdt cs:[rmgdt]
+endif
 ife ?LATELGDT
-		@lgdt	cs:[pdGDT]
+	@lgdt cs:[pdGDT]
 endif
 if ?SINGLESETCR3 eq 0
 if ?CMPCR3
-		mov 	eax,cr3
-		cmp 	eax,cs:[v86topm._cr3]
-		jz		@F
+	mov eax,cr3
+	cmp eax,cs:[v86topm._cr3]
+	jz @F
 endif
-		mov 	eax,cs:[v86topm._cr3]
-		mov 	cr3,eax
+	mov eax,cs:[v86topm._cr3]
+	mov cr3,eax
 @@:
 endif
 if ?CR0COPY
-		mov 	eax,cr0
-        or		eax,CR0_PG or CR0_PE
+	mov 	eax,cr0
+	or		eax,CR0_PG or CR0_PE
 else
-		mov 	eax,cs:[dwCR0]
-endif        
-		mov 	cr0,eax
+	mov 	eax,cs:[dwCR0]
+endif
+	mov 	cr0,eax
 if ?LATELGDT        
-		@lgdt	cs:[pdGDT]
-endif        
+	@lgdt	cs:[pdGDT]
+endif
 if 0
-		db		66h, 0eah
-        dd		offset xms_pmentry
+	db 66h, 0eah
+	dd offset xms_pmentry
 else
-		db		0eah
-		dw		LOWWORD(offset xms_pmentry)
-endif        
-		dw		_CSSEL_
-		align 4
-        
+	db 0eah
+	dw LOWWORD(offset xms_pmentry)
+endif
+	dw _CSSEL_
+	align 4
+
 _rawjmp_pm endp
 
-_TEXT16	ends
+_TEXT16 ends
 
-_TEXT32	segment
+_TEXT32 segment
 
 xms_pmentry proc
-        mov		ax,_SSSEL_
-        mov		ss,eax
-		mov 	esp, ss:[taskseg._Esp0]
-		lidt	ss:[pdIDT]		;set IDTR
+	mov ax,_SSSEL_
+	mov ss,eax
+	mov esp, ss:[taskseg._Esp0]
+	lidt ss:[pdIDT]		;set IDTR
 
-		mov 	al,_LDTSEL_
-		lldt	ax				;set LDTR
+	mov al,_LDTSEL_
+	lldt ax				;set LDTR
 
-		mov 	eax, ss:[dwTSSdesc]
-		mov 	ss:[eax].DESCRPTR.attrib,89h ;TSS available
-		mov 	ax,_TSSSEL_
-		ltr 	ax				;set TR
+	mov eax, ss:[dwTSSdesc]
+	mov ss:[eax].DESCRPTR.attrib,89h ;TSS available
+	mov ax,_TSSSEL_
+	ltr ax				;set TR
 
-		push	ss:[taskseg._Efl]
-		mov 	eax,ss:[taskseg._Eax]
-		popfd
-		jmp 	ss:[dwRetAdr2]
-        align	4
-        
+	push ss:[taskseg._Efl]
+	mov eax,ss:[taskseg._Eax]
+	popfd
+	jmp ss:[dwRetAdr2]
+	align 4
+
 xms_pmentry endp
 
 ;--- protected mode entry if running as VCPI client and HDPMI=1
 
 if ?GUARDPAGE0
 
-		assume DS:GROUP16
+	assume DS:GROUP16
 
 vcpi_pmentry2 proc public
-		mov		ax,_SSSEL_
-        mov		ds,eax
-        mov		ss,eax
-		mov 	esp,[taskseg._Esp0]
-		mov 	esi,[taskseg._Esi]
+	mov ax,_SSSEL_
+	mov ds,eax
+	mov ss,eax
+	mov esp,[taskseg._Esp0]
+	mov esi,[taskseg._Esi]
 ife ?CR0COPY
-        mov		eax,dwCR0
-        mov		cr0, eax
+	mov eax,dwCR0
+	mov cr0, eax
 endif        
-		mov 	eax,[pg0ptr]
-		and 	byte ptr [eax],not ?GPBIT	;reset PTE 'user' bit
-		push	[taskseg._Efl]
-		mov 	eax,[taskseg._Eax]
-		popfd
-		jmp 	[dwRetAdr2]
-		align 4
+	mov eax,[pg0ptr]
+	and byte ptr [eax],not ?GPBIT	;reset PTE 'user' bit
+	push [taskseg._Efl]
+	mov eax,[taskseg._Eax]
+	popfd
+	jmp [dwRetAdr2]
+	align 4
 vcpi_pmentry2 endp
 endif
 
 ;--- protected mode entry if running as VCPI client and not HDPMI=1
 
 vcpi_pmentry proc public
-		mov		ax,_SSSEL_
-        mov		ss,eax
-		mov 	esp,ss:[taskseg._Esp0]
-		mov 	esi,ss:[taskseg._Esi]
+	mov ax,_SSSEL_
+	mov ss,eax
+	mov esp,ss:[taskseg._Esp0]
+	mov esi,ss:[taskseg._Esi]
 ife ?CR0COPY
-        mov		eax,ss:dwCR0
-        mov		cr0, eax
+	mov eax,ss:dwCR0
+	mov cr0, eax
 endif        
-		push	ss:[taskseg._Efl]
-		mov 	eax,ss:[taskseg._Eax]
-		popfd
-		jmp 	ss:[dwRetAdr2]
-        align	4
+	push ss:[taskseg._Efl]
+	mov eax,ss:[taskseg._Eax]
+	popfd
+	jmp ss:[dwRetAdr2]
+	align 4
 vcpi_pmentry endp
 
-		@ResetTrace
+	@ResetTrace
 
 if 0
 
 ;*** save protected mode segment registers and ring 3 SS:ESP
 
 setpmstate proc public
-		@setpmstate
-    	ret
-        align	4
-setpmstate endp        
+	@setpmstate
+	ret
+	align 4
+setpmstate endp
 endif
 
 ;--- normal jump to real-mode
@@ -274,30 +274,30 @@ endif
 ;--- - restore real-mode segment registers
 
 _gotorm proc public
-;		pop 	ss:[wRetAdrRm]
-		@setpmstate
+;	pop ss:[wRetAdrRm]
+	@setpmstate
 ;------------------------------ push wHostStack + set new values
 if ?FIXTSSESP
-		push	ss:[dwHostStack]
-        mov		ss:[dwHostStack],esp
+	push ss:[dwHostStack]
+	mov ss:[dwHostStack],esp
 else
-		push	ss:[taskseg._Esp0]		;now a DWORD is pushed
-        mov		ss:[taskseg._Esp0], esp
+	push ss:[taskseg._Esp0]		;now a DWORD is pushed
+	mov ss:[taskseg._Esp0], esp
  if ?SETEXCHS        
-		lea		esp,[esp-sizeof R3FAULT32]
-		mov 	ss:[dwHostStackExc], esp
+	lea esp,[esp-sizeof R3FAULT32]
+	mov ss:[dwHostStackExc], esp
  endif        
 endif
 
 if ?RMSCNT
-		inc		ss:[bRMScnt]	;modifies flags (carry untouched)!	
+	inc ss:[bRMScnt]	;modifies flags (carry untouched)!	
 endif
-		
-		@rawjmp_rm _gotorm_rm	;rawjmp rm, no stack switch
-        align	4
+
+	@rawjmp_rm _gotorm_rm	;rawjmp rm, no stack switch
+	align 4
 _gotorm endp
 
-_TEXT32	ends
+_TEXT32 ends
 
 _TEXT16	segment
 
@@ -363,8 +363,8 @@ endif
 		mov 	esp,offset v86iret
 		mov 	ax,0DE0Ch
 		call	fword ptr ss:[vcpicall]	;changes eax
-        int		3						;should never return
-        align	4
+		int		3						;should never return
+		align	4
 
 nullidt PDESCR <3FFh,0>			;pseudo descriptor IDT real mode
 
@@ -400,16 +400,16 @@ endif
 ;--- to conventional memory, then disable paging and protected mode
 
 if ?MOVEHIGHHLP
-		db		0eah
-		dd		offset rawjmp_rm_xms
-		dw		_CSGROUP16_
+		db 0eah
+		dd offset rawjmp_rm_xms
+		dw _CSGROUP16_
 else
-		mov 	eax,cr0
-		and 	eax,not (CR0_PE or CR0_TS or CR0_PG)
-		mov 	cr0,eax
-		db		0eah
-		dd		offset rawjmp_rm_xms
-		dw		seg rawjmp_rm_xms
+		mov eax,cr0
+		and eax,not (CR0_PE or CR0_TS or CR0_PG)
+		mov cr0,eax
+		db 0eah
+		dd offset rawjmp_rm_xms
+		dw seg rawjmp_rm_xms
 endif
 
 size_rawjmp_rm_novcpi equ $ - offset rawjmp_rm_novcpi

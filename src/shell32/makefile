@@ -49,7 +49,7 @@ LIBS=dkrnl32.lib
 .SUFFIXES: .asm .obj
 
 .asm{$(OUTDIR)}.obj:
-    $(ASM) $<
+	$(ASM) $<
 
 ALL: $(OUTDIR) $(OUTDIR)\$(NAME).DLL
 
@@ -57,25 +57,27 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).lib $(OUTDIR)\$(NAME).obj $(NAME).def
-    $(LINKBIN) @<<
+	@$(LINKBIN) @<<
 $(OUTDIR)\$(NAME).obj $(OUTDIR)\$(LIBNAME).LIB $(LIBS)
 $(LOPTS) $(LOPTD)
 /DEF:$(NAME).def /OUT:$*.DLL
 <<
 !if $(DEBUG)==0
-    copy $*.DLL ..\..\bin\*.* >NUL
+	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR
-    copy $*.DLL $(DLL32DIR)\*.*
+	@copy $*.DLL $(DLL32DIR)\*.* >NUL
 !endif
 # do not name the library SHELL32.LIB
-    copy $*.LIB $(LIBCOFF)\DSHELL32.LIB >NUL
-#   copy $(OUTDIR)\$(LIBNAME).LIB $(LIBCOFF)\*.*
-!endif    
+	@copy $*.LIB $(LIBCOFF)\DSHELL32.LIB >NUL
+#	@copy $(OUTDIR)\$(LIBNAME).LIB $(LIBCOFF)\*.* >NUL
+!endif
+
+WLIBMODS=$(SRCMODS:.\=+)
 
 $(OUTDIR)\$(LIBNAME).lib: $(OBJMODS)
 	@cd $(OUTDIR)
-    $(LIBBIN) /NOLOGO @<<
-$(SRCMODS:.ASM=.OBJ) /OUT:$(LIBNAME).lib
+	@$(LIBBIN) @<<
+$(LIBNAME).lib $(WLIBMODS:.ASM=.OBJ)
 <<
 	@cd ..
 

@@ -1,37 +1,35 @@
 
-        .386
+	.386
 if ?FLAT
-        .MODEL FLAT, stdcall
+	.MODEL FLAT, stdcall
 else
-        .MODEL SMALL, stdcall
+	.MODEL SMALL, stdcall
 endif
-		option casemap:none
+	option casemap:none
 
-		include winbase.inc
-        include dkrnl32.inc
-        include macros.inc
+	include winbase.inc
+	include dkrnl32.inc
+	include macros.inc
 
-
-        .CODE
+	.CODE
 
 SetEndOfFile proc uses ebx handle:dword
 
-		mov		ebx,handle
-		xor		ecx,ecx
-		mov		ah,40h
-		int		21h
-		jc		error
-		@mov	eax,1
-exit:        
-		@strace <"SetEndOfFile(", handle, ")=", eax>
-        ret
+	mov ebx,handle
+	xor ecx,ecx
+	mov ah,40h
+	int 21h
+	jc error
+	@mov eax,1
+exit:
+	@strace <"SetEndOfFile(", handle, ")=", eax>
+	ret
 error:
-		movzx	eax,ax
-        invoke	SetLastError, eax
-        xor		eax,eax
-        jmp		exit
-        
+	movzx eax,ax
+	invoke SetLastError, eax
+	xor eax,eax
+	jmp exit
+
 SetEndOfFile endp
 
-        END
-
+	END

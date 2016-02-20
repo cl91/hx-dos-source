@@ -1,7 +1,9 @@
 .\ALLCCONS.ASM \
 .\APIX.ASM \
 .\ATOMS.ASM \
+.\ATOMSW.ASM \
 .\ATTRIBS.ASM \
+.\ATTRIBSW.ASM \
 .\BACKUP.ASM \
 .\BEEP.ASM \
 .\BOOST.ASM \
@@ -35,11 +37,12 @@
 .\DISKX.ASM \
 .\DISTHRLC.ASM \
 .\DOSDATE.ASM \
+.\DosDev.ASM \
 .\DOSMEM.ASM \
 .\DUPLICAT.ASM \
 .\dw2a.ASM \
+.\EcDcPtr.ASM \
 .\EnumRes.ASM \
-.\errmode.ASM \
 .\Event.ASM \
 .\EventW.ASM \
 .\EXCEPT.ASM \
@@ -52,6 +55,7 @@
 .\FILLCONS.ASM \
 .\FillMem.ASM \
 .\FindRes.ASM \
+.\FindResW.ASM \
 .\FLUSHFB.ASM \
 .\FLUSHINC.ASM \
 .\FNDCHGNT.ASM \
@@ -112,6 +116,7 @@
 .\HALLOC.ASM \
 .\HCREATE.ASM \
 .\HDESTROY.ASM \
+.\HeapInfo.ASM \
 .\HeapLock.ASM \
 .\Heapval.ASM \
 .\heapwalk.ASM \
@@ -177,7 +182,6 @@
 .\PROCWSS.ASM \
 .\PROFILE.ASM \
 .\ProfInt.ASM \
-.\QDosDev.ASM \
 .\QPerfCnt.ASM \
 .\QueueAPC.ASM \
 .\RDWR16.ASM \
@@ -223,6 +227,7 @@
 .\tls.ASM \
 .\TOOLHELP.ASM \
 .\VALLOC.ASM \
+.\VDM.ASM \
 .\VIRTUAL.ASM \
 .\VPROTECT.ASM \
 .\VQUERY.ASM \

@@ -1,9 +1,10 @@
 
-# Makefile for NMAKE. creates HXLdr32.EXE
-# tools:
-# - JWasm/Masm
-# - LINK.EXE: 32-bit MS coff linker
-# - LINK16.EXE: 16-bit MS omf linker
+# Makefile for NMAKE. creates HXLdr32.EXE and HXDosLd.EXE
+# HXLdr32 uses a special stub, HXLdrStb.exe, which does the true work.
+# tools used:
+# - HXLdr32:  JWasm + WLink
+# - HXLdrStb: JWasm
+# - HXDosLd:  JWasm
 
 !include <..\dirs>
 
@@ -20,56 +21,42 @@ AOPTD=
 !endif
 
 NAME=HXLDR32
-MZNAME=hxldrmz
-PENAME=hxldrpe
-#LINK16=link16
-LINK16=$(LINK16BIN)
-LINK=$(LINKBIN)
+STUBNAME=HXLDRSTB
 
 ALL: $(OUTDIR) $(OUTDIR)\$(NAME).exe $(OUTDIR)\HXDOSLD.EXE
 
 $(OUTDIR):
 	@mkdir $(OUTDIR)
 
-$(OUTDIR)\$(NAME).EXE: $(OUTDIR)\$(MZNAME).exe $(OUTDIR)\$(PENAME).obj makefile
-    $(LINK) @<<
-$(OUTDIR)\$(PENAME).obj $(LIBCOFF)\dkrnl32.lib
-/OUT:$*.EXE
-/SUBSYSTEM:CONSOLE /STUB:$(OUTDIR)\$(MZNAME).exe
-/HEAP:0x0,0x0 /STACK:0x1000,0x1000 /SECTION:.text,ERW
-/FIXED /MAP
+$(OUTDIR)\$(NAME).EXE: $(OUTDIR)\$(STUBNAME).exe $(OUTDIR)\$(NAME).obj makefile
+#	@$(LINKBIN) @<<
+#/NOLOGO $(OUTDIR)\$(NAME).obj $(LIBCOFF)\dkrnl32.lib
+#/OUT:$*.EXE
+#/SUBSYSTEM:CONSOLE /STUB:$(OUTDIR)\$(STUBNAME).exe
+#/HEAP:0x0,0x0 /STACK:0x1000,0x1000 /SECTION:.text,ERW
+#/FIXED /MAP
+#<<
+	@wlink @<<
+format windows nt runtime console
+file $* lib $(LIBCOFF)\dkrnl32.lib
+name $*.EXE
+op q, norelocs, stub=$(OUTDIR)\$(STUBNAME).exe, map=$*.map
 <<
 !if $(DEBUG)==0
-    @copy $*.EXE ..\..\Bin\*.* >NUL
+	@copy $*.EXE ..\..\Bin\*.* >NUL
 !ifdef TOOLSDIR
-    @copy $*.EXE $(TOOLSDIR)\*.*
+	@copy $*.EXE $(TOOLSDIR)\*.* >NUL
 !endif
 !endif
 
-$(OUTDIR)\$(PENAME).obj: $(PENAME).asm $(NAME).inc makefile
-    $(ASM) -nologo -c -coff -Sg -Fl$* -Fo$* -I$(INC32DIR) $(PENAME).asm
+$(OUTDIR)\$(NAME).obj: $(NAME).asm $(NAME).inc makefile
+	@$(ASM) -nologo -c -Sg -Fl$* -Fo$* -I$(INC32DIR) $(NAME).asm
 
-# hxldrmz.exe will be a MZ stub. It cannot be linked with OPTLINK,
-# because OPTLINK doesn't know the /KNOWEAX option!
+$(OUTDIR)\$(STUBNAME).exe: $(STUBNAME).asm $(NAME).inc makefile
+	@$(ASM) -nologo -c -mz -Fl$* -Fo$*.EXE -Sg $(AOPTD) -D?32BIT=1 -I$(INC32DIR) $(STUBNAME).asm
 
-$(OUTDIR)\$(MZNAME).exe: $(OUTDIR)\$(MZNAME).obj makefile
-   @link16 $(OUTDIR)\$(MZNAME).obj /KNOWEAS/NON/MAP:FULL/ST:1024,$*,$*;
-   @..\..\Bin\SHRMZHDR.EXE $*.EXE
-
-$(OUTDIR)\$(MZNAME).obj: $(MZNAME).asm $(NAME).inc makefile
-    $(ASM) -nologo -c -Fl$* -Fo$* -Sg $(AOPTD) -D?32BIT=1 -I$(INC32DIR) $(MZNAME).asm
-
-$(OUTDIR)\HXDOSLD.EXE: $(OUTDIR)\HXDOSLD.OBJ makefile
-	$(DMCDIR)\link $*.OBJ,$*.EXE,$*.map /NON/NOD/NOE;
-!if $(DEBUG)==0
-    @copy $*.EXE ..\..\Bin\*.* >NUL
-!ifdef TOOLSDIR
-    @copy $*.EXE $(TOOLSDIR)\*.*
-!endif
-!endif
-
-$(OUTDIR)\HXDOSLD.obj: HXDOSLD.asm makefile
-    $(ASM) -c -Fl$* -Fo$* $(AOPTD) HXDOSLD.asm
+$(OUTDIR)\HXDOSLD.EXE: HXDOSLD.asm makefile
+	@$(ASM) -nologo -c -mz -Fl$* -Fo$*.EXE $(AOPTD) HXDOSLD.asm
 
 clean:
 	@del $(OUTDIR)\*.obj

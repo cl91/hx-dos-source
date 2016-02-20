@@ -712,6 +712,24 @@ IMAGE_RESOURCE_DATA_ENTRY STRUCT
     Reserved     dd ?
 IMAGE_RESOURCE_DATA_ENTRY ENDS
 
+;--- used by GetThreadSelectorEntry
+
+LDT_ENTRY struct 
+LimitLow	WORD ?
+BaseLow		WORD ?
+union HighWord_
+struct Bytes
+BaseMid		BYTE ?
+Flags1		BYTE ?
+Flags2		BYTE ?
+BaseHi		BYTE ?
+ends
+;struct Bits
+;r0  Bits_R0 <>
+;ends
+ends
+LDT_ENTRY ends
+
 ;--- Thread Information Block
 ;--- this structure isnt really defined in winnt.h
 ;--- we used the one supplied by Matt Pietrek in a MSDN article

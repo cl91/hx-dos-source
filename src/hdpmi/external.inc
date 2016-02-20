@@ -151,7 +151,7 @@ _getcldata32 proto
 
 @proto intr33
 @proto mouse33_reset
-@proto mouse33_exit
+;@proto mouse33_exit
 
 ;--- int41api.asm
 
@@ -279,7 +279,7 @@ _DATA16 segment
 externdef rawjmp_rm_vector:dword
 externdef ivthooktab:byte
 externdef dwHost16:PF16
-externdef pminit:fword
+externdef dbgpminit:fword
 externdef dwFeatures:dword
 externdef int15hk:IVTHOOK
 externdef wEMShandle:word

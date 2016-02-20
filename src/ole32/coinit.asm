@@ -55,6 +55,15 @@ CoInitializeEx proc public pvReserved:DWORD, pcoInit:ptr
 
 CoInitializeEx endp
 
+CoInitializeSecurity proc public pVoid:ptr, cAuthSvc:dword, asAuthSvc:ptr, pReserved:ptr, dwAuthnLevel:dword, dwTmpLevel:dword, pAuthList:ptr, dwCapabilities:dword, pReserved3:ptr
+
+	mov eax, S_OK
+	@strace <"CoInitializeSecurity(", pVoid, ", ", cAuthSvc, ", ... )=", eax>
+	ret
+	align 4
+
+CoInitializeSecurity endp
+
 CoUninitialize proc public
 
 		invoke TlsGetValue, g_TlsSlot

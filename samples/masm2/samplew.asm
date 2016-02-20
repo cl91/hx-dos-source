@@ -13,39 +13,38 @@ externdef _ExitProcess@4:near
 
 	.CONST
 
-szString    db 13,10,"hello, world.",13,10
+szString	db 13,10,"hello, world.",13,10
 LSTRING		equ $ - szString
 
-        .CODE
+	.CODE
 
-main    proc
+main proc
 
 local   dwWritten:dword
 local   hConsole:dword
 
-		push STD_OUTPUT_HANDLE
-        call _GetStdHandle@4
-        mov  ebx,eax
+	push STD_OUTPUT_HANDLE
+	call _GetStdHandle@4
+	mov  ebx,eax
 
-		push 0
-        lea  eax, dwWritten
-        push eax
-        push LSTRING
-        push offset szString
-        push ebx
-        call _WriteConsoleA@20
+	push 0
+	lea  eax, dwWritten
+	push eax
+	push LSTRING
+	push offset szString
+	push ebx
+	call _WriteConsoleA@20
 
-        xor     eax,eax
-        ret
-main    endp
+	xor eax,eax
+	ret
+main endp
 
 ;--- entry
 
 _mainCRTStartup  proc
-        call main
-        push eax
-        call _ExitProcess@4
+	call main
+	push eax
+	call _ExitProcess@4
 _mainCRTStartup endp
 
-        END _mainCRTStartup
-
+	END _mainCRTStartup

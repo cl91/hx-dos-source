@@ -24,7 +24,7 @@ VariantCopy					PROTO stdcall :ptr VARIANT,:ptr VARIANT
 VariantCopyInd				PROTO stdcall :ptr VARIANT,:ptr VARIANT
 VariantInit					PROTO stdcall :ptr VARIANT
 VariantTimeToDosDateTime	PROTO stdcall :DWORD,:DWORD,:DWORD,:DWORD
-VariantTimeToSystemTime		PROTO stdcall :DWORD,:DWORD,:DWORD
+VariantTimeToSystemTime		PROTO stdcall :REAL8,:DWORD
 
 BstrFromVector PROTO :DWORD,:DWORD
 ClearCustData PROTO :DWORD

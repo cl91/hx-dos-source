@@ -1,9 +1,9 @@
-  
+
   A. Win32 Apps Compatibility List
 
   This is a list of Win32 (console) apps successfully tested to run with HX
 
-  Binary         Version Comment 
+  Binary         Version Comment
   -------------------------------------------------
   7z.exe         4       7-Zip packer/unpacker
   Arj32.exe      3.10    file compressor
@@ -29,7 +29,7 @@
                  11.00   MS VC 5
                  12.00   MS VC 6
                  13.00   MS Visual Studio.NET 2002
-                 13.10   MS Visual C++ Toolkit 2003, a FREE compiler [1]
+                 13.10   MS Visual C++ Toolkit 2003 [1]
   Cvtres.exe     5.0     MS linker help tool
                  7.00
   Dao.exe        4.0B    Golden Hawk CD Disc At Once write tool [5]
@@ -37,6 +37,7 @@
   Dosbox.exe     0.65    PC emulator with focus on old DOS games [1][3][6]
                  0.70
                  0.72
+                 0.73
   Dmc.exe        8.4     Digital Mars C++ compiler
   Dumpbin.exe    5.12    MS tool to display PE binaries
                  7.00
@@ -61,14 +62,19 @@
   K.exe          0.30    Kinesics text editor
   Kzip.exe       ?.?     PKZIP clone by Ken Silverman
   Ldw.exe        2.9.5   LD, Free Pascal
-  Lib.exe        3.4     MS OMF 16-bit librarian  
-  Lib.exe        5.12    MS COFF 32-bit
+  Lib.exe        3.4     MS OMF 16-bit librarian
+  Lib.exe        5.12    MS COFF 32-bit librarian
                  7.00
+                 9.00
   Link.exe       5.60    MS 16-bit OMF linker
   Link.exe       5.12    MS 32-bit COFF linker [2]
+                 6.00
                  7.00
                  7.10
+                 8.00
+                 9.00
   Lzasm.exe      0.47    Assembler
+  MakeCab.exe    5.1.26  creates .CAB archives [3]
   Mc.exe         4.1.36  Midnight Commander
   MinGW          3.2.3   GNU GCC C++ compiler, G77 Fortran compiler,
                  3.3.1   G++ C++ compiler [1]
@@ -76,10 +82,12 @@
   MinGW          2.13.90 AS assembler, LD linker
                  2.15.94
                  2.16.91
-  Ml.exe         6.14    MS MASM
+  Ml.exe         6.14    MS Masm, assembler
                  6.15
                  7.00
                  8.00
+                 9.00
+  Ml64.exe       8.00    MS Masm, x64 assembler
   MPlayer.exe    4.1.2   video player [1][3][6][8],
                  4.2.0   needs cmdline options "-ao win32 -vo gl".
                          (http://oss.netfarm.it/mplayer-win32.php)
@@ -91,6 +99,7 @@
   Pngout.exe     ?.?     PNG file size optimizer by Ken Silverman
   PellesC        2.90    Pelles C compiler (POCC.EXE), linker (POLINK.EXE),
                  4.50    librarian (POLIB.EXE), resource compiler (PORC.EXE).
+                 5.00
   PoAsm          1.00.35 Pelles assembler
                  5.00
   Psftp.exe      0.58    SFTP client [4]
@@ -116,10 +125,12 @@
   Untgz32.exe    0.95
   Unzip.exe      5.4     Info-ZIP
                  5.52
+                 6.0
   Upx.exe        2.0     packer for executables
   Vim.exe        5.8.9   editor from MSYS 1.0.10 [1]
   Vp.exe         2.1.279 Virtual Pascal IDE, except debugger
   Vpc.exe        2.1.279 Virtual Pascal command line compiler
+  Wget.exe       1.11.4  GNU WGet [3][4]
   Ws.exe         1.22    Wordster. WordStar-like editor by P. Houle
   Xc.exe         2.51    XDS Modula-2 compiler
   Xcopy32.exe            Windows 98 file copy program [1]
@@ -135,16 +146,16 @@
        value is 255). In case an app exceeds this limitation, you may
        get strange error messages, so to avoid problems I would suggest
        to set at least FILES=80.
-       
+
   [3]: needs HX GUI.
-       
+
   [4]: requires a packet driver to be installed.
-  
+
   [5]: needs a DOS ASPI driver and WNASPI32.DLL from Windows 9x.
        View Doc\DKRNL32.TXT for details about HX's ASPI support.
 
   [6]: requires OPENGL32.DLL (+GLU32.DLL) from Windows 9x.
-  
+
   [7]: environment variable DPMILDR=16 must be set.
 
   [8]: to start the binary it might be needed to enter
@@ -154,11 +165,11 @@
 
   Furthermore, some of the programs in this list may need MS C runtime dlls 
   (MSVCRT.DLL, MSVCRx0.DLL, CRTDLL.DLL).
-  
+
 
   B. Nested Execution of Win32 Apps in DOS
 
-   Nested execution of Win32 apps with HX may require some additional 
+   Nested execution of Win32 apps with HX may require some additional
   configuration steps. This is because very often the apps cannot share
   an address space due to missing relocation information in the binaries,
   which are needed to load them at any address. The HX tools provide the
@@ -175,7 +186,7 @@
 
   If multiple address spaces are not supported by the DPMI host, but a
   version of the calling app is available *with* relocation info, one can
-  possibly rebase this first app by utility REBASE.EXE (Win32 SDK). Thus 
+  possibly rebase this first app by utility REBASE.EXE (Win32 SDK). Thus
   the standard image base address 400000h remains free for the called app.
 
   Please note that it is sometimes not obvious that a nested execution
@@ -184,9 +195,9 @@
   (COFF) will launch an instance of itself (!) if an export file has to
   be build.
 
-  DosEmu regretably doesn't support multiple address spaces. Setting 
+  DosEmu regretably doesn't support multiple address spaces. Setting
   DPMILDR=8 will be useless in this environment.
-  
+
 
   Japheth
-  
+

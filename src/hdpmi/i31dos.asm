@@ -2,10 +2,10 @@
 ;--- implements int 31h, ax=01xxh (dos memory)
 
 		.386
-        
+
         include hdpmi.inc
         include external.inc
-        
+
         option proc:private
 
 @seg	_TEXT32
@@ -81,7 +81,7 @@ freedos proc public
         jz		@F
         xor		eax,eax
         mov		clientDS, eax
-@@:        
+@@:
         popad
         clc
         ret
@@ -134,19 +134,19 @@ endif
         call    selector_resize		;resize selector DX, new size EAX
         jc      resizedos_err4		;might fail for 16-bit clients
         @strout <"resize dos: selectors adjusted",lf>
-ife ?32BIT        
+ife ?32BIT
         lar		eax, clientDS
         jz		@F
         xor		eax,eax
         mov		clientDS, eax
-@@:        
+@@:
 endif
         popad
         clc
         ret
 resizedos_err4:
 		popad
-		mov		ax,8011h			;"descriptor unavailable"	
+		mov ax,8011h			;"descriptor unavailable"	
         @strout <"resize dos: error 8011",lf>
         ret
 resizedos_err3:
@@ -154,15 +154,15 @@ resizedos_err3:
 ;--- resized to the max size possible. It might be good to reset it now to
 ;--- its original size, but this is NOT done by other hosts (Win9x).
         @strout <"resize dos: error %X, BX=%X",lf>,ax,bx
-		mov		[esp].PUSHADS.rBX, bx
-		mov		[esp].PUSHADS.rAX, ax
+		mov [esp].PUSHADS.rBX, bx
+		mov [esp].PUSHADS.rAX, ax
 		popad
         ret
 resizedos_err2:
 resizedos_err:
         @strout <"resize dos: error 8022",lf>
 		popad
-        mov     ax,8022h
+        mov ax,8022h
         stc
         ret
         align 4

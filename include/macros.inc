@@ -4,35 +4,44 @@ ifndef CStr
 ;--- CStr() define a string in .CONST
 ;--- or in .CONST$2 if .CONST is the current section
 
-CStr macro string:req, name
-local sym
-
-ifidni @CurSeg,<CONST>
+CStr macro y:req, name
+local sym,xxx
+xxx textequ @CurSeg
+ifidni xxx,<CONST>
 CONST$2 segment dword public 'CONST'
 else
-ifdef CONST
-CONST   segment
-else
-CONST   segment dword public 'CONST'
+ if @Model
+	.const
+ else
+CONST segment dword public 'CONST'
+ endif
 endif
-endif
-
 ifnb <name>
-  ifidni <string>,<"">
+  ifidni <y>,<"">
     name db 0
   else
-    name db string,0
+    name db y,0
   endif
 else
-  ifidni <string>,<"">
+  ifidni <y>,<"">
     sym db 0
   else
-    sym db string,0
+    sym db y,0
   endif
 endif
-
-@CurSeg ends
-
+ifidni xxx,<CONST>
+CONST$2 ends
+else
+ if @Model
+   ifidni xxx,<_TEXT>
+     .code
+   else
+     .data
+   endif
+ else
+CONST ends
+ endif
+endif
 ifnb <name>
 	exitm <offset name>
 else

@@ -10,15 +10,20 @@ EXPORTS
   DragQueryPoint
   ExtractIconA
   ExtractIconExA
+  FindExecutableA
   SHBrowseForFolderA
   SHFileOperationA
   SHGetDesktopFolder
   SHGetFileInfoA
   SHGetFileInfoW
+  SHGetFolderPathA
+  SHGetFolderPathW
   SHGetMalloc
   SHGetPathFromIDListA
   SHGetPathFromIDListW
   SHGetSpecialFolderLocation
+  SHGetSpecialFolderPathA
   ShellExecuteA
+  ShellExecuteExA
   Shell_NotifyIcon
   Shell_NotifyIconA

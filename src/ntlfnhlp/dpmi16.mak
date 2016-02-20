@@ -43,7 +43,7 @@ ASM=@jwasm.exe $(ASMOPT)
 .SUFFIXES: .asm .obj
 
 .asm{$(OUTDIR)}.obj:
-    $(ASM) $<
+	$(ASM) $<
 
 ALL: $(OUTDIR) $(OUTDIR)\$(NAME).lib
 
@@ -52,12 +52,12 @@ $(OUTDIR):
 
 $(OUTDIR)\$(NAME).lib: $(OBJMODS)
 	@cd $(OUTDIR)
-    @del $(NAME).lib
-    wlib.exe -q -n $(NAME).lib @<<
+	@del $(NAME).lib
+	$(LIB16BIN) $(NAME).lib @<<
 $(OBJNAMES:.\=+)
 <<
 	@cd ..
 !if $(DEBUG)==0
 #	copy $*.lib $(LIBOMF)\*.*
 	copy $(OUTDIR)\*.obj ..\DKRNL32\DPMI16\*.*
-!endif    
+!endif

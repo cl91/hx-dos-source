@@ -1,10 +1,13 @@
 
+# creates DOSX.EXE
+# tools used:
+# - JWasm
+# - WLink
 
 !include <..\dirs>
 
 OUTDIR=RELEASE
 
-LIB=$(LIBOMF)
 AOPTS= -c -nologo -Fo$* -Fl$* -Sg
 
 !ifndef MASM
@@ -25,8 +28,12 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\DOSX.EXE: $*.obj makefile
-#   @link16 $* $(MODS) $(LOPTS),$*,$*,$(LIBS);
-	@\dm\bin\link $* $(MODS) $(LOPTS),$*,$*,$(LIBS);
+	@wlink @<<
+format dos
+file $*.OBJ
+name $*.EXE
+op map=$*.MAP
+<<
 	@copy $*.EXE ..\..\Unsupp\*.*
 	@copy DOSX.TXT ..\..\Unsupp\*.*
 

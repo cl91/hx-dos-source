@@ -127,6 +127,7 @@
 
   6. History
   
+  11/16/2009, V2.16: HDLD16.BIN updated.
   01/20/2009, V2.15: stub HDLD16.BIN added.
   03/02/2008, V2.14: Support for OW updated.
   01/11/2008, V2.13: -

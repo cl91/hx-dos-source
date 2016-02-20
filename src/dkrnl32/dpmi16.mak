@@ -1,7 +1,7 @@
 
 # this will assemble all sources to be compatible with a 16-bit DPMI client,
 # which has a 16-bit stack only. Win32 emulation for 16bit clients is 
-# *not* supported by HX DOS extender, it is implemented just for conveniance.
+# *not* supported by HX DOS extender, it is implemented just for convenience.
 # it may work as long as code and data doesn't exceed 64 kB.
 
 # to create enter "nmake /f dpmi16.mak"
@@ -64,7 +64,7 @@ LIBTOOLOMF=$(DMCDIR)\lib.exe
 .SUFFIXES: .asm .obj
 
 .asm{$(OUTDIR)}.obj:
-    $(ASM) $<
+	$(ASM) $<
 
 ALL: $(OUTDIR) $(OUTDIR)\$(NAME).LIB
 
@@ -73,9 +73,9 @@ $(OUTDIR):
     
 $(OUTDIR)\$(NAME).LIB: $(OBJMODS)
 	@cd $(OUTDIR)
-    if exist $(NAME).LIB del $(NAME).LIB
-    wlib.exe -q -n $(NAME).LIB @<<
-$(OBJNAMES) $(OTHERMODS)
+	if exist $(NAME).LIB del $(NAME).LIB
+	$(LIB16BIN) $(NAME).LIB @<<
+$(OBJNAMES:\.=+) $(OTHERMODS:\.=+)
 <<
 	@cd ..
 !if $(DEBUG)==0

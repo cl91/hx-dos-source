@@ -56,7 +56,7 @@ ASM=@jwasm.exe -zlc -zld $(ASMOPT)
 .SUFFIXES: .asm .obj
 
 .asm{$(OUTDIR)}.obj:
-    $(ASM) $<
+	$(ASM) $<
 
 ALL: $(OUTDIR) $(OUTDIR)\$(NAME).LIB
 
@@ -65,8 +65,7 @@ $(OUTDIR):
     
 $(OUTDIR)\$(NAME).LIB: $(OBJMODS) $(CRTMODS)
 	@cd $(OUTDIR)
-    @if exist $(NAME).lib del $(NAME).LIB
-    wlib -q -n $(NAME).LIB @<<
+	@$(LIB16BIN) $(NAME).LIB @<<
 $(OBJNAMES:.\=+) $(CRTNAMES:.\=+..\LIBOMF\)
 <<
 	@cd ..

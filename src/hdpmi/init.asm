@@ -384,58 +384,65 @@ getcpu  proc near
 		ret
 getcpu  endp
 
-;*** wdeb386 kernel debugger init real mode
-;--- no return value
+;*** kernel debugger (wdeb386/386swat) init real mode
 ;--- IDT must be in conventional memory
+;--- no return value
 
 if ?386SWAT
 
 initdebugger1_rm proc
-		push	ds
-        xor		eax, eax
-        mov		ds, ax
-        cmp		eax, ds:[67h*4]
-        pop		ds
-        jz		nokerneldebugger
-        mov		ax,0DEF0h
-        int		67h
-        cmp		ah,00
-        jnz		nokerneldebugger
-		or		fDebug,FDEBUG_KDPRESENT
+	push ds
+	xor eax, eax
+	mov ds, ax
+	cmp eax, ds:[67h*4]
+	pop ds
+	jz nokerneldebugger
+	mov ax,0DEF0h
+	int 67h
+	cmp ah,00
+	jnz nokerneldebugger
+	or fDebug,FDEBUG_KDPRESENT
 if ?INTRM2PM
-		mov		word ptr _gotopmEx,90FAh	;deactivate RM2PM int
+	mov word ptr _gotopmEx,90FAh	;deactivate RM2PM int
 endif
 nokerneldebugger:
-		ret
+	ret
 initdebugger1_rm endp
 
-initdebugger2_rm proc
-		test	fDebug,FDEBUG_KDPRESENT
-		jz		done
-        push	cs
-        pop		es
-        mov		bx,_KDSEL_
-        lea		di,[bx+offset curGDT]
-        mov		ax,0DEF2h
-        int		67h
-		mov 	dword ptr [pminit+0],edx
-		mov 	word ptr [pminit+4],bx
+;--- modifies AX, BX, EDX, DI, ES
 
-        push	es
-        push	cs
-        pop		es
-		xor		bx,bx		;interrupt number
-        mov		di,offset curIDT
-@@:        
-		mov		ax,0DEF3h
-        int		67h
-        add		di,8
-        inc		bx
-        cmp		bx,20h
-        jb		@B
-        pop		es
-done:        
-		ret
+initdebugger2_rm proc
+	test fDebug,FDEBUG_KDPRESENT
+	jz done
+	push cs
+	pop es
+	mov bx,_KDSEL_             ;BX=initial selector
+	lea di,[bx+offset curGDT]  ;ES:DI=debugger GDT entries
+	mov ax,0DEF2h
+	int 67h
+	and ah,ah
+	jnz err
+	mov dword ptr [dbgpminit+0],edx ;BX:EDX=protected-mode entry
+	mov word ptr [dbgpminit+4],bx
+
+	push es
+	push cs
+	pop es
+	xor bx,bx		;interrupt number
+	mov di,offset curIDT
+@@:
+	mov ax,0DEF3h
+	int 67h
+	add di,8
+	inc bx
+	cmp bx,20h
+	jb @B
+	pop es
+done:
+	ret
+err:
+	and fDebug, not FDEBUG_KDPRESENT
+	ret
 initdebugger2_rm endp
 
 endif
@@ -444,51 +451,51 @@ if ?WDEB386
 
 initdebugger_rm proc
 
-		push	ds
-        xor		eax, eax
-        mov		ds, ax
-        cmp		eax, ds:[D386_RM_Int*4]
-        pop		ds
-        jz		nokerneldebugger
-		mov 	ah,D386_Identify
-		@stroutrm <"int 68 Identify (ax=%X)",lf>,ax
-		int 	D386_RM_Int
-		@stroutrm <"int 68 ret, ax=%X",lf>,ax
-		cmp 	ax,D386_Id			;0F386h?
-		jnz 	nokerneldebugger
-		@stroutrm <"WDEB386 present",lf>
+	push ds
+	xor eax, eax
+	mov ds, ax
+	cmp eax, ds:[D386_RM_Int*4]
+	pop ds
+	jz nokerneldebugger
+	mov ah,D386_Identify
+	@stroutrm <"int 68 Identify (ax=%X)",lf>,ax
+	int D386_RM_Int
+	@stroutrm <"int 68 ret, ax=%X",lf>,ax
+	cmp ax,D386_Id			;0F386h?
+	jnz nokerneldebugger
+	@stroutrm <"WDEB386 present",lf>
 if ?USEDEBUGOUTPUT
-		or		fDebug,FDEBUG_KDPRESENT or FDEBUG_OUTPFORKD
+	or fDebug,FDEBUG_KDPRESENT or FDEBUG_OUTPFORKD
 else
-		or		fDebug,FDEBUG_KDPRESENT
+	or fDebug,FDEBUG_KDPRESENT
 endif
 if ?INTRM2PM
-		mov		word ptr _gotopmEx,90FAh	;deactivate RM2PM int
+	mov word ptr _gotopmEx,90FAh	;deactivate RM2PM int
 endif
 ;------------------------------------ prepare kernel debugger for PM
 
-		mov 	ax,D386_Prepare_PMode * 100h + 00h
-		mov 	cx, _KDSEL_
-		mov 	bx, _FLATSEL_
-		mov 	dx, _GDTSEL_
-		push	cs
-		pop 	es
-		mov 	si,offset curGDT
-		mov 	di,offset curIDT
-		@stroutrm <"int 68 Prepare PMode, ax=%X,bx=%X,cx=%X,dx=%X,es:di=%X:%X,ds:si=%X:%X",lf>,ax,bx,cx,dx,es,di,ds,si
-		int 	D386_RM_Int
-		mov 	dword ptr [pminit+0],edi
-		mov 	word ptr [pminit+4],es
-		@stroutrm <"int 68 ret, es:edi=%X:%lX,ds=%X",lf>,es,edi,ds
-		ret
+	mov ax,D386_Prepare_PMode * 100h + 00h
+	mov cx, _KDSEL_
+	mov bx, _FLATSEL_
+	mov dx, _GDTSEL_
+	push cs
+	pop es
+	mov si,offset curGDT
+	mov di,offset curIDT
+	@stroutrm <"int 68 Prepare PMode, ax=%X,bx=%X,cx=%X,dx=%X,es:di=%X:%X,ds:si=%X:%X",lf>,ax,bx,cx,dx,es,di,ds,si
+	int D386_RM_Int
+	mov dword ptr [dbgpminit+0],edi
+	mov word ptr [dbgpminit+4],es
+	@stroutrm <"int 68 ret, es:edi=%X:%lX,ds=%X",lf>,es,edi,ds
+	ret
 nokerneldebugger:
-		mov		ax,8B66h		;MOV AX,AX or MOV EAX,EAX
-        mov		cl,0C0h
-		mov		word ptr kdpatch1+0,ax
-		mov		byte ptr kdpatch1+2,cl
-        mov		word ptr kdpatch2+0,ax
-		mov		byte ptr kdpatch2+2,cl
-		ret
+	mov ax,8B66h		;MOV AX,AX or MOV EAX,EAX
+	mov cl,0C0h
+	mov word ptr kdpatch1+0,ax
+	mov byte ptr kdpatch1+2,cl
+	mov word ptr kdpatch2+0,ax
+	mov byte ptr kdpatch2+2,cl
+	ret
 initdebugger_rm endp
 
 endif
@@ -500,25 +507,25 @@ _ITEXT32 segment
 
 if ?WDEB386
 
-initdebugger_pm	proc 
-		assume	DS:GROUP16
-		test	fDebug,FDEBUG_KDPRESENT
-		jz		done
-		pushad
-		mov 	edi,[pdIDT.dwBase]
-		mov 	al,PMINIT_INIT_IDT
-		@strout <"calling debugger pm proc,ax=%X,es:edi=%X:%lX",lf>,ax,es,edi
-		call	fword ptr [pminit]
-		mov 	ax,DS_DebLoaded
-		@strout <"int 41h call,ax=%X",lf>,ax
-		int 	Debug_Serv_Int
-		@strout <"int 41h ret,ax=%X (is F386?)",lf>,ax	;should return F386 in AX
-		mov		ax,0f001h
-		int		Debug_Serv_Int
-		popad
+initdebugger_pm proc 
+	assume DS:GROUP16
+	test fDebug,FDEBUG_KDPRESENT
+	jz done
+	pushad
+	mov edi,[pdIDT.dwBase]
+	mov al,PMINIT_INIT_IDT
+	@strout <"calling debugger pm proc,ax=%X,es:edi=%X:%lX",lf>,ax,es,edi
+	call fword ptr [dbgpminit]
+	mov ax,DS_DebLoaded
+	@strout <"int 41h call,ax=%X",lf>,ax
+	int Debug_Serv_Int
+	@strout <"int 41h ret,ax=%X (is F386?)",lf>,ax	;should return F386 in AX
+	mov ax,0f001h
+	int Debug_Serv_Int
+	popad
 done:
-		ret
-initdebugger_pm	endp
+	ret
+initdebugger_pm endp
 
 endif        
 
@@ -752,10 +759,10 @@ if ?WATCHDOG
 endif
 if ?DTAINHOSTPSP
 		mov		ax, wHostPSP
-        movzx	eax,ax
-        add		ax,8
-        shl		eax, 4
-        mov		dwHostDTA, eax
+		movzx	eax,ax
+		add		ax,8
+		shl		eax, 4
+		mov		dwHostDTA, eax
 endif
         
 		@stroutrm <"initsvr_rm: set rm vectors",lf>
@@ -805,7 +812,7 @@ _initsvr_pm proc
 		mov 	gs,eax
 		@strout <"initsvr_pm: ...",lf>
 if ?WDEB386
-		call	initdebugger_pm
+		call initdebugger_pm
 endif
 		@strout <"initsvr_pm: call pm_initserver",lf>
 		call	pm_createvm			;preserves all registers
@@ -1353,9 +1360,9 @@ display_string endp
 
 if ?CR0_NE
 disablene:
-		or 		bFPUAnd, CR0_NE
-		and		bFPUOr, not CR0_NE
-        ret
+		or bFPUAnd, CR0_NE
+		and bFPUOr, not CR0_NE
+		ret
 endif
 
 		@ResetTrace
@@ -1366,175 +1373,175 @@ if _LTRACE_
 endif
 		@stroutrm <"hdpmi startup code, CS=%X",lf>,cs
 		cld
-		push   cs
-		pop    ds
+		push cs
+		pop ds
 if 1
 		pushf
-        pushf
-        pop ax
-		or  ah,70h			;a 80386 will have bit 15 cleared
+		pushf
+		pop ax
+		or ah,70h			;a 80386 will have bit 15 cleared
 		push ax				;if bits 12-14 are 0, it is a 80286
 		popf				;or a bad emulation
 		pushf
 		pop ax
 		popf
 		and ah,0f0h
-        js no386			;bit 15 set? then its a 8086/80186
+		js no386			;bit 15 set? then its a 8086/80186
 		jnz is386
 no386:
  ife ?STUB
 		mov dx,offset text9
-        call display_string
+		call display_string
 		mov ax,4C00h + EXIT_NO_80386
-        int 21h
+		int 21h
  else
 		mov ax, EXIT_NO_80386
-        retf
+		retf
  endif
 is386:
 endif
 ife ?STUB
 ;--- free unused dos mem 
-		mov    bx,ss
-        mov    cx,es
-        sub    bx,cx
-        mov    cx,sp
-        shr    cx,4
-        add    bx,cx
+		mov bx,ss
+		mov cx,es
+		sub bx,cx
+		mov cx,sp
+		shr cx,4
+		add bx,cx
  ife ?STACKLAST
   ife ?DELAYLOAD
-		mov    cx,LOWWORD(offset endof32bit)
-        shr    cx, 4
-        add    bx,cx
-  endif      
+		mov cx,LOWWORD(offset endof32bit)
+		shr cx, 4
+		add bx,cx
+  endif
  endif
-        mov    ah,4Ah
-        int    21h
+		mov ah,4Ah
+		int 21h
 endif
-        mov	   wHostPSP, es
+		mov wHostPSP, es
 if ?STUB
 		mov word ptr ds:[0],"DH"
 		mov byte ptr ds:[2],"P"
 		or [fMode2],FM2_TLBLATE
-endif        
-		push   es
-		call   scanforhdpmistring	;assumes es=PSP
-        pop    es
+endif
+		push es
+		call scanforhdpmistring	;assumes es=PSP
+		pop es
 
-        mov    ax,cs
-        mov    v86iret.rCS, ax	;GROUP16
-        mov    v86iret.rSS, ax	;GROUP16
-        mov    wHostSeg, ax		;GROUP16
-        mov    wPatchDgrp1, ax	;GROUP16
-        mov    wPatchDgrp2, ax	;GROUP16
+		mov ax,cs
+		mov v86iret.rCS, ax	;GROUP16
+		mov v86iret.rSS, ax	;GROUP16
+		mov wHostSeg, ax		;GROUP16
+		mov wPatchDgrp1, ax	;GROUP16
+		mov wPatchDgrp2, ax	;GROUP16
 ife ?DELAYLOAD
-        mov    dx, offset endof16bit
-        shr    dx, 4
-        add    ax, dx
-        mov    wHostSeg32, ax
+		mov dx, offset endof16bit
+		shr dx, 4
+		add ax, dx
+		mov wHostSeg32, ax
 endif
 
-ife ?STUB        
-		mov	   si,80h
-        db 26h
-		lodsb
-		mov    cl,al
-nextchar:		 
-		and    cl,cl
-		jz	   scanok
-		db 26h			;es prefix
-		lodsb
-		dec    cl
-		cmp    al,'-'
-		jz	   isoption
-		cmp    al,'/'
-		jz	   isoption
-		cmp    al,' '
-		jbe    nextchar
-		jmp    ishelp
-isoption:
-		and    cl,cl
-		jz	   ishelp
+ife ?STUB
+		mov si,80h
 		db 26h
 		lodsb
-		dec	   cl
-		or	   al,20h
+		mov cl,al
+nextchar:
+		and cl,cl
+		jz scanok
+		db 26h			;es prefix
+		lodsb
+		dec cl
+		cmp al,'-'
+		jz isoption
+		cmp al,'/'
+		jz isoption
+		cmp al,' '
+		jbe nextchar
+		jmp ishelp
+isoption:
+		and cl,cl
+		jz ishelp
+		db 26h
+		lodsb
+		dec cl
+		or al,20h
 
 ?USEOPTTAB equ 0
 
 if ?USEOPTTAB
-		mov    di, offset opttab
-nextopt:        
-        cmp    al,[di].OPTENTRY.bOption
-        jnz    @F
-        movzx  ax,[di].OPTENTRY.bProc
-        add	   ax, offset opttab
-        call   ax
-        jmp    nextchar
+		mov di, offset opttab
+nextopt:
+		cmp al,[di].OPTENTRY.bOption
+		jnz @F
+		movzx ax,[di].OPTENTRY.bProc
+		add ax, offset opttab
+		call ax
+		jmp nextchar
 @@:
-		add    di,sizeof OPTENTRY
-        cmp    [di].OPTENTRY.bOption,-1
-        jnz    nextopt
+		add di,sizeof OPTENTRY
+		cmp [di].OPTENTRY.bOption,-1
+		jnz nextopt
 else
-        push   offset nextchar
+		push offset nextchar
 if ?NOINVLPG
-		cmp    al,'g'
-		jz	   noinvlpg
+		cmp al,'g'
+		jz noinvlpg
 endif
-		cmp    al,'i'
-		jz	   hideivthooks
-		cmp    al,'m'
-		jz	   ismem10disable
-		cmp    al,'l'
-		jz	   tlbinlowdos
+		cmp al,'i'
+		jz hideivthooks
+		cmp al,'m'
+		jz ismem10disable
+		cmp al,'l'
+		jz tlbinlowdos
 if ?RESIDENT
-		cmp    al,'r'
-		jz	   isresident
-		cmp    al,'u'
-		jz	   isuninstall
+		cmp al,'r'
+		jz isresident
+		cmp al,'u'
+		jz isuninstall
   if ?SUPPDISABLE
-		cmp    al,'d'
-		jz	   disableserver
-		cmp    al,'e'
-		jz	   enableserver
-  endif		 
+		cmp al,'d'
+		jz disableserver
+		cmp al,'e'
+		jz enableserver
+  endif
   if ?TLBLATE
-		cmp    al,'b'
-		jz	   tlblate
+		cmp al,'b'
+		jz tlblate
   endif
 endif
 if ?LOADHIGH
-		cmp    al,'p'
-        jz     loadhigh
+		cmp al,'p'
+        jz loadhigh
 endif
-		cmp    al,'s'
-		jz	   safemode
+		cmp al,'s'
+		jz safemode
 if ?CR0_NE
-		cmp    al,'t'
-		jz	   disablene
+		cmp al,'t'
+		jz disablene
 endif
 if ?VM
-		cmp    al,'a'
-		jz	   vmsupp
-endif		 
+		cmp al,'a'
+		jz vmsupp
+endif
 if ?VCPIPREF
-		cmp    al,'v'
-		jz	   vcpipref
+		cmp al,'v'
+		jz vcpipref
 endif
 if ?INT15XMS
-		cmp    al,'y'
-		jz	   int15xms
+		cmp al,'y'
+		jz int15xms
 endif
 if ?MEMBUFF
-		cmp    al,'n'
-		jz	   membuff
+		cmp al,'n'
+		jz membuff
 endif
 if ?FORCETEXTMODE
-		cmp    al,'k'
-		jz	   setforcetext
+		cmp al,'k'
+		jz setforcetext
 endif
 endif
-		jmp    ishelp
+		jmp ishelp
 
 if ?USEOPTTAB
 
@@ -1554,7 +1561,7 @@ if ?RESIDENT
   if ?SUPPDISABLE 	   
 		@OPTENTRY 'd', disableserver
 		@OPTENTRY 'e', enableserver
-  endif		 
+  endif
   if ?TLBLATE
 		@OPTENTRY 'b', tlblate
   endif
@@ -1564,11 +1571,11 @@ if ?VM
 endif
 if ?NOINVLPG
 		@OPTENTRY 'g', noinvlpg
-endif        
+endif
 		@OPTENTRY 'i', hideivthooks
 if ?FORCETEXTMODE        
 		@OPTENTRY 'k', setforcetext
-endif        
+endif
 		@OPTENTRY 'l', tlbinlowdos
 		@OPTENTRY 'm', ismem10disable
 if ?MEMBUFF
@@ -1583,87 +1590,87 @@ if ?CR0_NE
 endif
 if ?VCPIPREF
 		@OPTENTRY 'v', vcpipref
-endif   
+endif
 if ?INT15XMS
 		@OPTENTRY 'y', int15xms
-endif   
+endif
 		db -1
 endif
-        
+
 ismem10disable:
-		or		bEnvFlags2, ENVF2_NOMEM10
-        retn
-if ?FORCETEXTMODE        
+		or bEnvFlags2, ENVF2_NOMEM10
+		retn
+if ?FORCETEXTMODE
 setforcetext:
-		or		fMode2, FM2_FORCETEXT
-        retn
-endif        
+		or fMode2, FM2_FORCETEXT
+		retn
+endif
 hideivthooks:
-		or		bEnvFlags, ENVF_GUARDPAGE0
-        retn
+		or bEnvFlags, ENVF_GUARDPAGE0
+		retn
 if ?NOINVLPG
 noinvlpg:
-		or		fMode2, FM2_NOINVLPG
-        retn
-endif        
+		or fMode2, FM2_NOINVLPG
+		retn
+endif
 tlbinlowdos:
-		or		bEnvFlags, ENVF_TLBLOW
-        retn
+		or bEnvFlags, ENVF_TLBLOW
+		retn
 if ?VM
 vmsupp:
-		or		bEnvFlags, ENVF_VM
-        retn
+		or bEnvFlags, ENVF_VM
+		retn
 endif
 if ?VCPIPREF
 vcpipref:
-		or		fMode2, FM2_VCPI
-        retn
-endif        
+		or fMode2, FM2_VCPI
+		retn
+endif
 if ?INT15XMS
 int15xms:
-		or		fMode2, FM2_INT15XMS
-        retn
-endif        
+		or fMode2, FM2_INT15XMS
+		retn
+endif
 if ?MEMBUFF
 membuff:
-		or		fMode2, FM2_MEMBUFF
-        retn
-endif        
-safemode:
-		or		bEnvFlags2, ENVF2_SYSPROT
+		or fMode2, FM2_MEMBUFF
 		retn
-if ?RESIDENT		
+endif
+safemode:
+		or bEnvFlags2, ENVF2_SYSPROT
+		retn
+if ?RESIDENT
 isresident:
-		call	IsHDPMIRunning
-		mov		dx, offset error5
-		jnc		errorexit
-		or		fMode, FM_RESIDENT
-        retn
+		call IsHDPMIRunning
+		mov dx, offset error5
+		jnc errorexit
+		or fMode, FM_RESIDENT
+		retn
   if ?TLBLATE
 tlblate:
-;;  	or		fMode, FM_TLBMCB
-		or		fMode2, FM2_TLBLATE
-        retn
+;;		or fMode, FM_TLBMCB
+		or fMode2, FM2_TLBLATE
+		retn
   endif
   if ?SUPPDISABLE
 disableserver:
-		call	IsHDPMIRunning			;C=not running
-		mov		dx, offset error1
-		jc		errorexit		
-		mov		es, ax					;set ES to running instance
-		assume	es:GROUP16
-		or		es:[fMode],FM_DISABLED
-		mov		dx, offset error9
-		jmp		errorexit	
+		call IsHDPMIRunning			;C=not running
+		mov dx, offset error1
+		jc errorexit
+		mov es, ax					;set ES to running instance
+		assume es:GROUP16
+		or es:[fMode],FM_DISABLED
+		mov dx, offset error9
+		jmp errorexit	
 enableserver:
-		call	IsHDPMIDisabled			;C=no disabled instance found
-		mov		dx, offset error10
-		jc		errorexit
-		mov		es, ax					;set ES to running instance
-		assume	es:GROUP16
-		and 	es:[fMode],not FM_DISABLED
-		mov		dx, offset error11
-		jmp		errorexit	
+		call IsHDPMIDisabled			;C=no disabled instance found
+		mov dx, offset error10
+		jc errorexit
+		mov es, ax					;set ES to running instance
+		assume es:GROUP16
+		and es:[fMode],not FM_DISABLED
+		mov dx, offset error11
+		jmp errorexit
   endif
   if ?LOADHIGH
 loadhigh:
@@ -1671,135 +1678,135 @@ loadhigh:
 		retn
   endif
 isuninstall:
-		call	IsHDPMIRunning
-		mov		dx, offset error1
-		jc		errorexit
-		mov		es, ax
-		assume	es:GROUP16
-if _LTRACE_ 	   
-		movzx	ax,es:[cApps]
+		call IsHDPMIRunning
+		mov dx, offset error1
+		jc errorexit
+		mov es, ax
+		assume es:GROUP16
+if _LTRACE_
+		movzx ax,es:[cApps]
 		@stroutrm <"currently active clients %X",lf>,ax
-endif		 
-		cmp 	byte ptr es:[cApps],0
-		mov 	dx,offset error2
-		jnz 	errorexit				;instance is busy
-		push	ds
-		push	0
-		pop		ds
-		mov		ax,es
-		cmp		ax,ds:[2Fh*4+2]			;get SEG(int 2f)
-		pop		ds
-		mov 	dx,offset error7
-		jnz		errorexit
-		and 	es:[fMode], not FM_RESIDENT
-		mov 	ax,1687h
-		int 	2fh						;get PM entry
-		push	es
-		push	di
-        mov		bp,sp
-if 0		
-		mov 	bx,si
-		mov 	ah,48h
-		int 	21h
-		mov		dx,offset text4
-		jc		errorexit
-		mov 	es,bx
+endif
+		cmp byte ptr es:[cApps],0
+		mov dx,offset error2
+		jnz errorexit				;instance is busy
+		push ds
+		push 0
+		pop ds
+		mov ax,es
+		cmp ax,ds:[2Fh*4+2]			;get SEG(int 2f)
+		pop ds
+		mov dx,offset error7
+		jnz errorexit
+		and es:[fMode], not FM_RESIDENT
+		mov ax,1687h
+		int 2fh						;get PM entry
+		push es
+		push di
+		mov bp,sp
+if 0
+		mov bx,si
+		mov ah,48h
+		int 21h
+		mov dx,offset text4
+		jc errorexit
+		mov es,bx
 else
-		push	ds				;just use GROUP16 for RMS here!
-		pop		es				;this should still work for all cases
+		push ds				;just use GROUP16 for RMS here!
+		pop es				;this should still work for all cases
 endif
 		@stroutrm <"RMS=%X",lf>,es
-		assume	es:nothing
-		mov 	ax,?32BIT
-		call	dword ptr [bp]
-;		 mov	dx,offset error8	;memory error (doesn't matter, HDPMI	
-;		 jc 	errorexit			;should be uninstalled nevertheless)
-		mov    edx,offset error3	;'HDPMI uninstalled'
-        call   display_string
-		mov    ax,4c00h				;return with rc=00
-		int    21h
+		assume es:nothing
+		mov ax,?32BIT
+		call dword ptr [bp]
+;		 mov dx,offset error8	;memory error (doesn't matter, HDPMI	
+;		 jc errorexit			;should be uninstalled nevertheless)
+		mov edx,offset error3	;'HDPMI uninstalled'
+		call display_string
+		mov ax,4c00h				;return with rc=00
+		int 21h
 endif ;?RESIDENT
 
 ishelp:
-		mov    dx,offset error4		;HDPMI version
+		mov dx,offset error4		;HDPMI version
 errorexit:							;<--- error 
-		call   display_string
-@@:        
-		mov    ax,4C00h + EXIT_CMDLINE_INVALID
-		int    21h
+		call display_string
+@@:
+		mov ax,4C00h + EXIT_CMDLINE_INVALID
+		int 21h
         
 endif	;?STUB
 
 scanok:
-		call   _initserver_rm
+		call _initserver_rm
 if ?STUB
 ;--- return resident size (paragraphs) in DX
-        call   getendpara
+		call getendpara
 		mov ah,0
 		retf
 else
-		mov    ah,4Ch
-		jc	   done
+		mov ah,4Ch
+		jc done
 		@stroutrm <"start: _initserver_rm returned ok, ax=%X",lf>, ax
 
-		push   ax	;save exit code
-		test   [fMode],FM_RESIDENT
-		jz	   @F
-		mov    dx,offset error6	;"HDPMI now resident"
-        call   display_string
+		push ax	;save exit code
+		test [fMode],FM_RESIDENT
+		jz @F
+		mov dx,offset error6	;"HDPMI now resident"
+		call display_string
 @@:
 
 ;--- close all files before going resident. this is NOT redundant
 ;--- because HDPMI's PSP will not be closed by an int 21, ah=4Ch
 
-        mov    es,wHostPSP
-        assume es:SEG16
-		mov    bx,word ptr es:[32h]	;size file handle table
+		mov es,wHostPSP
+		assume es:SEG16
+		mov bx,word ptr es:[32h]	;size file handle table
 @@:
-		dec	   bx	
-        js     @F
-		mov    ah,3Eh
-		int    21h
-		jmp	   @B
-@@:     
-		xor    cx, cx
-		xchg   cx, es:[2Ch]
-        mov    es, cx
-		mov    ah,49h
-		int	   21h
+		dec bx
+		js @F
+		mov ah,3Eh
+		int 21h
+		jmp @B
+@@:
+		xor cx, cx
+		xchg cx, es:[2Ch]
+		mov es, cx
+		mov ah,49h
+		int 21h
 
   if ?DELAYLOAD
-		mov    es, wHostSeg32
-        mov    ah,49h
-        int    21h
+		mov es, wHostSeg32
+		mov ah,49h
+		int 21h
   endif
 
-        call   getendpara
-  if 0        
-        test   fHost, FH_HDPMI	;do we own the TLB?
-        jnz    @F
-        test   fMode, FM_TLBMCB	;is TLB an extra MCB?
-        jnz    @F
+		call getendpara
+  if 0
+		test fHost, FH_HDPMI	;do we own the TLB?
+		jnz @F
+		test fMode, FM_TLBMCB	;is TLB an extra MCB?
+		jnz @F
   else
-		mov    ax,cs
-        add    ax,dx
-		cmp    ax, wSegTLB
-        jnz    @F
+		mov ax,cs
+		add ax,dx
+		cmp ax, wSegTLB
+		jnz @F
   endif
-        add    dx,?TLBSIZE/16
-        
+		add dx,?TLBSIZE/16
+
 ;--- the TLB is just behind the 16-bit code. This worked in any case
 ;--- before ?DELAYLOAD, but this is now the default. So just ensure 
 ;--- that the memory segment can be enlarged. If no, alloc a new MCB
 ;--- as TLB
-        
-@@:        
-        add    dx,10h
-		pop    ax				;restore exit code
-		mov    ah,31h
+
+@@:
+		add dx,10h
+		pop ax				;restore exit code
+		mov ah,31h
 done:
-		int    21h
-endif        
+		int 21h
+endif
 mystart endp
 
 _ITEXT16 ends

@@ -15,7 +15,7 @@
    - MOVEHIGH.ASM  move parts of host high
    - HEAP.ASM      host's heap 
  
- þ memory manager
+ þ memory management
  
    - PAGEMGR.ASM   physical memory, address space, committed memory
  
@@ -43,7 +43,7 @@
    - VXD.ASM       (16bit only)
    
  The source is not always easy to understand. It is old and was originally
- written with MASM 5.1. It's about 20.000 lines of code.
+ written with MASM 5.1. It's about 25.000 lines of code.
  
  
  2. Memory Layout

@@ -61,13 +61,12 @@ $(OUTDIR):
 
 $(OUTDIR)\$(NAME).LIB: $(OBJMODS) $(OUTDIR)\winmm.obj
 	@cd $(OUTDIR)
-    @if exist $(NAME).lib del $(NAME).lib
-    wlib.exe -q -n $(NAME).LIB @<<
+	@$(LIB16BIN) $(NAME).LIB @<<
 $(OBJNAMES:.\=+)
 <<
 	@cd ..
 !if $(DEBUG)==0
-#	copy $*.LIB $(LIBOMF)\*.*
+#	@copy $*.LIB $(LIBOMF)\*.* >NUL
 !endif    
 
 $(OBJMODS): winmm.inc

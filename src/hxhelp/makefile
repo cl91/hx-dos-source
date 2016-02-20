@@ -8,7 +8,7 @@
 # hxhelp.exe in MZ file format.
 
 # the HX.TRP file is generated in HX.TRP subdirectory
-# it expects d:\WATCOM\TRP_SRC tree to exist!
+# it expects \WATCOM\TRP_SRC tree to exist!
 # since that source is protected by copyrights, it is not included here!
 
 !include <..\dirs>
@@ -35,45 +35,58 @@ ASMOPT=-c -coff -nologo -D?FLAT=1 -D?DEBUGLEVEL=$(DEBUG) -Sg -Fl$* -Fo$* -I..\..
 !ifndef MASM
 MASM=0
 !endif
+
 !if $(MASM)
-ASM=ml.exe
+ASM=@ml.exe
 !else
-ASM=jwasm.exe
+ASM=@jwasm.exe
 !endif
 
 $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).EXE: $(OUTDIR)\hxhelp.obj Makefile $(OUTDIR)\privprof.obj
-    $(LINKBIN) @<<
-$*.obj $(OUTDIR)\privprof.obj   
-/base:0x3E0000
-/fixed:no
-/heap:0x0
-/map
-/out:$*.EXE 
-/subsystem:console
-/stack:0x2000
-/stub:..\..\bin\dpmist32.bin
+#	$(LINKBIN) @<<
+#$*.obj $(OUTDIR)\privprof.obj
+#/base:0x3E0000
+#/fixed:no
+#/heap:0x0
+#/map
+#/out:$*.EXE 
+#/subsystem:console
+#/stack:0x2000
+#/stub:..\..\bin\dpmist32.bin
+#<<
+	@jwlink @<<
+format windows nt
+runtime console
+file $*.obj, $(OUTDIR)\privprof.obj
+name $*.EXE
+op q
+op offset=0x3E0000
+op stack=0x2000
+op heap=0x1000
+op map=$*.MAP
+op stub=..\..\bin\dpmist32.bin
 <<
-	..\..\Bin\patchPE $*.EXE
-    copy $*.EXE $(OWPATH)\binw
-    copy $*.EXE ..\..\OWSUPP\WDSUPP
+	@..\..\Bin\patchPE $*.EXE
+	@copy $*.EXE $(OWPATH)\binw >NUL
+	@copy $*.EXE ..\..\OWSUPP\WDSUPP >NUL
 !else    
 
 OUTDIR=OMF
 ASMOPT=
 
 $(OUTDIR)\$(NAME).EXE: $(OUTDIR)\hxhelp.obj Makefile $(OUTDIR)\privprof.obj
-    $(LINK16BIN) /MAP ..\..\lib\jmppm32.obj $*.obj $(OUTDIR)\privprof.obj,$*.exe,$*.map,..\..\lib\jmppm32.lib; 
-    copy $*.exe $(OWPATH)\binw
+	@$(LINK16BIN) /MAP ..\..\lib\jmppm32.obj $*.obj $(OUTDIR)\privprof.obj,$*.exe,$*.map,..\..\lib\jmppm32.lib; 
+	@copy $*.exe $(OWPATH)\binw
 !endif
 
 $(OUTDIR)\$(NAME).obj: $(NAME).asm hxhelp.inc rmdbghlp.inc version.inc Makefile
-    $(ASM) $(ASMOPT) $(NAME).asm
+	$(ASM) $(ASMOPT) $(NAME).asm
 
 $(OUTDIR)\privprof.obj: privprof.asm Makefile
-    $(ASM) $(ASMOPT) privprof.asm
+	$(ASM) $(ASMOPT) privprof.asm
 
 clean:
     @del $(OUTDIR)\*.obj

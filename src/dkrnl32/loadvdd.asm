@@ -19,6 +19,8 @@ HXVDD equ 1
 
 if HXVDD
 
+	option dotname
+
 .BASE$XA SEGMENT dword public 'DATA'
         DD offset HXUnloadVDD
 .BASE$XA ENDS

@@ -19,45 +19,55 @@ endif
 
 HeapLock proc public heap:dword
 
-        mov     eax,heap
-        test	byte ptr [eax].HEAPDESC.flags, HEAP_NO_SERIALIZE
-        jnz     @F
-        invoke  WaitForSingleObject,[eax].HEAPDESC.semaphor,INFINITE
-@@:        
-		@strace	<"HeapLock(", heap, ")=", eax>
-        ret
-        align 4
+	mov eax,heap
+	test byte ptr [eax].HEAPDESC.flags, HEAP_NO_SERIALIZE
+	jnz @F
+	invoke WaitForSingleObject,[eax].HEAPDESC.semaphor,INFINITE
+@@:
+	@strace	<"HeapLock(", heap, ")=", eax>
+	ret
+	align 4
 HeapLock endp
 
 HeapUnlock proc public heap:dword
 
-        mov     eax,heap
-        test	byte ptr [eax].HEAPDESC.flags, HEAP_NO_SERIALIZE
-        jnz     @F
-        invoke  ReleaseSemaphore,[eax].HEAPDESC.semaphor,1,0
-@@:        
-		@strace	<"HeapUnlock(", heap, ")=", eax>
-        ret
-        align 4
+	mov eax,heap
+	test byte ptr [eax].HEAPDESC.flags, HEAP_NO_SERIALIZE
+	jnz @F
+	invoke ReleaseSemaphore,[eax].HEAPDESC.semaphor,1,0
+@@:
+	@strace <"HeapUnlock(", heap, ")=", eax>
+	ret
+	align 4
 HeapUnlock endp
 
 HeapCompact proc public heap:dword, flags:dword
-        xor     eax,eax
-		@strace	<"HeapCompact(", heap, ", ", flags, ")=", eax>
-        ret
-        align 4
+	xor eax,eax
+	@strace <"HeapCompact(", heap, ", ", flags, ")=", eax>
+	ret
+	align 4
 HeapCompact endp
 
+;--- HeapSize is to return -1 on errors
+
 HeapSize proc public heap:dword, flags:dword, pMem:dword
-        mov     ecx,pMem
-        mov     eax,[ecx-4]
+
+	mov ecx,pMem
+	mov eax,[ecx-4]
+	test al,1	;free flag set?
+	jnz error
 if ?EXTCHK
-		sub		eax,4
+	sub eax,4
 endif
-		@strace	<"HeapSize(", heap, ", ", flags, ", ", pMem, ")=", eax>
-        ret
-        align 4
+@@:
+	@strace <"HeapSize(", heap, ", ", flags, ", ", pMem, ")=", eax>
+	ret
+error:
+	push -1
+	pop eax
+	jmp @B
+	align 4
 HeapSize endp
 
-        end
+	end
 

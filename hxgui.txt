@@ -192,6 +192,7 @@
     MSACM32.DLL     dummy
     SHELL32.DLL     (almost) dummy
     WINMM.DLL       wave/midi sound output / timers
+    WINSPOOL.DRV    dummy
     WSOCK32.DLL     WinSocket emulation (uses WatTCP/Watt-32)
     WS2_32.DLL      WinSocket 2 emulation, routes most calls to WSOCK32.DLL
     
@@ -217,6 +218,9 @@
 
   8. History
   
+  11/16/2009, V2.16: WSOCK32 V1.7.
+                     Sample WSTEST updated.
+                     WINSPOOL.DRV added.
   01/20/2009, V2.15: JWasm used to translate assembly modules.
   03/02/2008, V2.14: -
   01/11/2008, V2.13: WINMM V2.12
@@ -284,7 +288,7 @@
   in subdirectory DOC.
 
 
-  9. Copyright
+  9. License
 
   HXGUI is part of HX DOS extender. This extender is freeware and may be
   used for any purpose. The binaries found in HXGUI can be freely distributed
@@ -294,5 +298,5 @@
   want to distribute WSOCK32.DLL, please read the copyright regarding WatTCP
   in Doc\WSOCK32.TXT.
 
-  Japheth   (Web: http://www.japheth.de, Email: mail@japheth.de)
+  Japheth   ( http://www.japheth.de )
 

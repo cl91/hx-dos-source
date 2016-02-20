@@ -59,7 +59,7 @@ LIBS=dkrnl32.lib dgdi32.lib
 .SUFFIXES: .asm .obj
 
 .asm{$(OUTDIR)}.obj:
-    $(ASM) $<
+	$(ASM) $<
 
 ALL: $(OUTDIR) $(OUTDIR)\$(NAME).DLL
 
@@ -67,32 +67,33 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).lib $(OUTDIR)\$(NAME).obj $(NAME).def $(OUTDIR)\$(NAME).res Makefile
-    @erase $*.DLL >NUL
-    $(LINKBIN) @<<
+	@$(LINKBIN) @<<
 $(OUTDIR)\$(NAME).obj $(OUTDIR)\$(NAME).RES $(OUTDIR)\$(LIBNAME).LIB $(LIBS)
 $(LOPTS) $(LOPTD)
 /DEF:$(NAME).DEF /OUT:$*.DLL
 <<
 !if $(DEBUG)==0
-    @copy $*.DLL ..\..\bin\*.* >NUL
+	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR
-    @copy $*.DLL $(DLL32DIR)\*.*
+	@copy $*.DLL $(DLL32DIR)\*.* >NUL
 !endif
-    @copy $*.lib $(LIBCOFF)\*.* >NUL
-    @copy $(OUTDIR)\$(LIBNAME).lib $(LIBCOFF)\*.* >NUL
+	@copy $*.lib $(LIBCOFF)\*.* >NUL
+	@copy $(OUTDIR)\$(LIBNAME).lib $(LIBCOFF)\*.* >NUL
 !endif
+
+WLIBMODS=$(SRCMODS:.\=+)
 
 $(OUTDIR)\$(LIBNAME).LIB: $(OBJMODS) Makefile
 	@cd $(OUTDIR)
-    $(LIBBIN) @<<
-$(SRCMODS:.ASM=.OBJ) ..\LIBCOFF\libc32u.lib /OUT:$(LIBNAME).LIB
+	@$(LIBBIN) @<<
+$(LIBNAME).LIB $(WLIBMODS:.ASM=.OBJ) +..\LIBCOFF\libc32u.lib 
 <<
 	@cd ..
 
 $(OBJMODS): duser32.inc
 
 $(OUTDIR)\$(NAME).RES: $(NAME).rc
-	$(RCBIN) -fo$(OUTDIR)\$(NAME).RES $(NAME).rc
+	@$(RCBIN) -q -r -bt=nt -zm -fo=$(OUTDIR)\$(NAME).RES $(NAME).rc
 
 clean:
 	@del $(OUTDIR)\*.obj

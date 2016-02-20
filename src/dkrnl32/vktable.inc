@@ -71,7 +71,8 @@ vktable label byte
     db VK_END								;4F    == End   (+ numpad1)
     db VK_DOWN								;50    == CsrDn (+ numpad2) 
     db VK_NEXT								;51    == PgDn  (+ numpad3)
-    db VK_INSERT, VK_DELETE					;52-53
+    db VK_INSERT							;52    == Isrt (+ numpad-0)
+    db VK_DELETE							;53    == Del (+ numpad-.)
     db 0, 0, 0								;54-56 == F1-F3 + Shift
     db VK_F11, VK_F12						;57-58 == F11-F12       
     db 0, 0									;59-5A

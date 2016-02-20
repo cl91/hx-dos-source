@@ -985,7 +985,7 @@ endif
         jz exit
 		mov ebx, eax
         push [ebx].WNDOBJ.dwStyle
-        mov	edx, nCmdShow
+        mov edx, nCmdShow
         .if (!edx)						;== SW_HIDE
         	.if ([ebx].WNDOBJ.dwStyle & WS_VISIBLE)
             	invoke SendMessage, ebx, WM_SHOWWINDOW, 0, 0
@@ -1025,10 +1025,31 @@ exit:
 ifdef _DEBUG
 		lea edx, [esp+4*4]
 endif
-		@strace	<"ShowWindow(", hWnd, ", ", nCmdShow, ")=", eax, " [esp=", edx, "]">
+		@strace <"ShowWindow(", hWnd, ", ", nCmdShow, ")=", eax, " [esp=", edx, "]">
 		ret
-        align 4
+		align 4
 ShowWindow endp
+
+ShowWindowAsync proc public uses ebx hWnd:dword,nCmdShow:dword
+	mov eax, hWnd
+	and eax, eax
+	jz exit
+	mov ebx, eax
+	test [ebx].WNDOBJ.dwStyle, WS_VISIBLE
+	setnz al
+	movzx eax,al
+	push eax
+	mov edx, nCmdShow
+	and edx, edx
+	setnz dl
+	movzx edx,dl
+	invoke PostMessage, ebx, WM_SHOWWINDOW, edx, 0
+	pop eax
+exit:
+	@strace <"ShowWindowAsync(", hWnd, ", ", nCmdShow, ")=", eax>
+	ret
+	align 4
+ShowWindowAsync endp
 
 DefWindowProcA proc public uses ebx hWnd:dword,message:dword,wParam:dword,lParam:dword
 
@@ -1488,253 +1509,259 @@ CallWindowProcA proc public lpPrevWndProc:LPFNWNDPROC, hWnd:HWND, msg:DWORD, wPa
 CallWindowProcA endp
 
 GetFocus proc public
-		mov eax, g_hwndFocus
-		@strace	<"GetFocus()=", eax>
-        ret
-        align 4
-GetFocus endp        
+	mov eax, g_hwndFocus
+	@strace	<"GetFocus()=", eax>
+	ret
+	align 4
+GetFocus endp
 
 SetFocus proc public uses ebx hWnd:HWND
-		mov eax, hWnd
-        .if (g_hwndFocus && (eax != g_hwndFocus))
-        	push eax
-        	invoke SendMessage, g_hwndFocus, WM_KILLFOCUS, hWnd, 0
-            pop eax
-        .endif
-		xchg eax, g_hwndFocus
-        push eax
-        .if (hWnd)
-	       	invoke SendMessage, hWnd, WM_SETFOCUS, eax, 0
-if 1        
-	        .if (1)
-				invoke GetDC, hWnd
-                mov ebx, eax
-	    	    invoke GetDeviceCaps, ebx, RASTERCAPS
-                push eax
-                invoke ReleaseDC, hWnd, ebx
-                pop eax
-	    	    .if (eax & RC_PALETTE)
-			       	invoke SendMessage, hWnd, WM_QUERYNEWPALETTE, 0, 0
-    		        .if (eax)
-				       	invoke SendMessage, HWND_BROADCAST, WM_PALETTECHANGED, hWnd, 0
-		            .endif
-        	    .endif
-	        .endif
-endif        
-        .endif
-        pop eax
-		@strace	<"SetFocus(", hWnd, ")=", eax>
-        ret
-        align 4
-SetFocus endp        
+	mov eax, hWnd
+	.if (g_hwndFocus && (eax != g_hwndFocus))
+		push eax
+		invoke SendMessage, g_hwndFocus, WM_KILLFOCUS, hWnd, 0
+		pop eax
+	.endif
+	xchg eax, g_hwndFocus
+	push eax
+	.if (hWnd)
+		invoke SendMessage, hWnd, WM_SETFOCUS, eax, 0
+if 1
+		.if (1)
+			invoke GetDC, hWnd
+			mov ebx, eax
+			invoke GetDeviceCaps, ebx, RASTERCAPS
+			push eax
+			invoke ReleaseDC, hWnd, ebx
+			pop eax
+			.if (eax & RC_PALETTE)
+				invoke SendMessage, hWnd, WM_QUERYNEWPALETTE, 0, 0
+				.if (eax)
+					invoke SendMessage, HWND_BROADCAST, WM_PALETTECHANGED, hWnd, 0
+				.endif
+			.endif
+		.endif
+endif
+	.endif
+	pop eax
+	@strace	<"SetFocus(", hWnd, ")=", eax>
+	ret
+	align 4
+SetFocus endp
 
 SetCapture proc public hWnd:HANDLE
-        mov eax, hWnd
-        xchg eax, g_hwndCapture
-		@strace	<"SetCapture(", hWnd, ")=", eax>
-		ret
-        align 4
+	mov eax, hWnd
+	xchg eax, g_hwndCapture
+	@strace	<"SetCapture(", hWnd, ")=", eax>
+	ret
+	align 4
 SetCapture endp
 
 GetCapture proc public
-        mov eax, g_hwndCapture
-		@strace	<"GetCapture()=", eax>
-		ret
-        align 4
+	mov eax, g_hwndCapture
+	@strace	<"GetCapture()=", eax>
+	ret
+	align 4
 GetCapture endp
 
 ReleaseCapture proc public
-        xor eax, eax
-        xchg eax, g_hwndCapture
-		@strace	<"ReleaseCapture()=", eax>
-		ret
-        align 4
+	xor eax, eax
+	xchg eax, g_hwndCapture
+	@strace	<"ReleaseCapture()=", eax>
+	ret
+	align 4
 ReleaseCapture endp
 
 AdjustWindowRect proc public pRect:ptr RECT, dwStyle:DWORD, bMenu:DWORD
-        @mov eax, 1	;just do nothing, no system areas to be considered
-		@strace	<"AdjustWindowRect(", pRect, ", ", dwStyle, ", ", bMenu, ")=", eax>
-		ret
-        align 4
+	@mov eax, 1	;just do nothing, no system areas to be considered
+	@strace	<"AdjustWindowRect(", pRect, ", ", dwStyle, ", ", bMenu, ")=", eax>
+	ret
+	align 4
 AdjustWindowRect endp
 
 AdjustWindowRectEx proc public pRect:ptr RECT, dwStyle:DWORD, bMenu:DWORD, dwExStyle:DWORD
-        @mov eax, 1
-		@strace	<"AdjustWindowRectEx(", pRect, ", ", dwStyle, ", ", bMenu, ", ", dwExStyle, ")=", eax>
-		ret
-        align 4
+	@mov eax, 1
+	@strace	<"AdjustWindowRectEx(", pRect, ", ", dwStyle, ", ", bMenu, ", ", dwExStyle, ")=", eax>
+	ret
+	align 4
 AdjustWindowRectEx endp
 
 ;--- hwndFrom may be NULL (== HWND_DESKTOP)
 
 MapWindowPoints proc public uses ebx esi edi hwndFrom:DWORD, hwndTo:DWORD, lpPoints:ptr POINT, cbPoints:DWORD
 
-        mov ecx, cbPoints
-        mov esi, lpPoints
-        mov edi, hwndFrom
-        mov ebx, hwndTo
-        xor eax, eax
-        xor edx, edx
-        .if (edi)
-           	mov edx, [edi].WNDOBJ.rc.left
-           	mov eax, [edi].WNDOBJ.rc.top
-        .endif
-        .if (ebx)
-	        sub edx, [ebx].WNDOBJ.rc.left
-    	    sub eax, [ebx].WNDOBJ.rc.top
-        .endif
-        
-        .while (ecx)
-        	add [esi+0], edx
-            add [esi+4], eax
-            add esi, 2*4
-            dec ecx
-        .endw
-        
-        shl eax, 16
-        mov ax, dx
-        
-		@strace	<"MapWindowPoints(", hwndFrom , ", ", hwndTo, ", ", lpPoints, ", ", cbPoints, ")=", eax>
-		ret
-        align 4
+	mov ecx, cbPoints
+	mov esi, lpPoints
+	mov edi, hwndFrom
+	mov ebx, hwndTo
+	xor eax, eax
+	xor edx, edx
+	.if (edi)
+		mov edx, [edi].WNDOBJ.rc.left
+		mov eax, [edi].WNDOBJ.rc.top
+	.endif
+	.if (ebx)
+		sub edx, [ebx].WNDOBJ.rc.left
+		sub eax, [ebx].WNDOBJ.rc.top
+	.endif
+
+	.while (ecx)
+		add [esi+0], edx
+		add [esi+4], eax
+		add esi, 2*4
+		dec ecx
+	.endw
+
+	shl eax, 16
+	mov ax, dx
+
+	@strace	<"MapWindowPoints(", hwndFrom , ", ", hwndTo, ", ", lpPoints, ", ", cbPoints, ")=", eax>
+	ret
+	align 4
 MapWindowPoints endp
 
 GetAncestor proc public hwnd:DWORD, dwFlags:DWORD
-		xor eax, eax
-		@strace	<"GetAncestor(", hwnd , ", ", dwFlags, ")=", eax>
-        ret
-        align 4
-GetAncestor endp        
+	xor eax, eax
+	@strace	<"GetAncestor(", hwnd , ", ", dwFlags, ")=", eax>
+	ret
+	align 4
+GetAncestor endp
 
 RemovePaintMsg proto stdcall :DWORD
 
 UpdateWindow proc public hwnd:HWND
-		xor eax, eax
-		mov ecx, hwnd
-        jecxz exit
-        .if ([ecx].WNDOBJ.bUpdate)
-        	invoke RemovePaintMsg, hwnd
-			invoke SendMessage, hwnd, WM_PAINT, 0, 0
-        .endif
-        @mov eax,1
-exit:        
-		@strace	<"UpdateWindow(", hwnd , ")=", eax>
-		ret
-        align 4
+	xor eax, eax
+	mov ecx, hwnd
+	jecxz exit
+	.if ([ecx].WNDOBJ.bUpdate)
+		invoke RemovePaintMsg, hwnd
+		invoke SendMessage, hwnd, WM_PAINT, 0, 0
+	.endif
+	@mov eax,1
+exit:
+	@strace	<"UpdateWindow(", hwnd , ")=", eax>
+	ret
+	align 4
 UpdateWindow endp
 
 MoveWindow proc public hwnd:HWND, X:dword, Y:dword, nWidth:dword, nHeight:dword, bRepaint:dword
-		mov ecx, hwnd
-        .if (!bRepaint)
-        	mov edx, SWP_NOREDRAW
-        .endif
-        or edx, SWP_NOZORDER or SWP_NOACTIVATE
-        invoke SetWindowPos, hwnd, 0, X, Y, nWidth, nHeight, edx
-		@strace	<"MoveWindow(", hwnd , ", ", X, ", ", Y, ", ", nWidth, ", ", nHeight, ", ", bRepaint, ")=", eax>
-		ret
-        align 4
+	mov ecx, hwnd
+	.if (!bRepaint)
+		mov edx, SWP_NOREDRAW
+	.endif
+	or edx, SWP_NOZORDER or SWP_NOACTIVATE
+	invoke SetWindowPos, hwnd, 0, X, Y, nWidth, nHeight, edx
+	@strace	<"MoveWindow(", hwnd , ", ", X, ", ", Y, ", ", nWidth, ", ", nHeight, ", ", bRepaint, ")=", eax>
+	ret
+	align 4
 MoveWindow endp
 
 SetWindowPlacement proc public uses ebx hwnd:HWND, lpwndpl:ptr WINDOWPLACEMENT
-		mov eax, hwnd
-        mov edx, lpwndpl
-        .if (eax)
-        	mov ebx,eax
-	        invoke CopyRect, addr [ebx].WNDOBJ.rc, addr [edx].WINDOWPLACEMENT.rcNormalPosition
-        .endif
-		@strace	<"SetWindowPlacement(", hwnd , ", ", lpwndpl, ")=", eax>
-		ret
-        align 4
+	mov eax, hwnd
+	mov edx, lpwndpl
+	.if (eax)
+		mov ebx,eax
+		invoke CopyRect, addr [ebx].WNDOBJ.rc, addr [edx].WINDOWPLACEMENT.rcNormalPosition
+	.endif
+	@strace	<"SetWindowPlacement(", hwnd , ", ", lpwndpl, ")=", eax>
+	ret
+	align 4
 SetWindowPlacement endp
 
 GetWindowPlacement proc public uses ebx hwnd:HWND, lpwndpl:ptr WINDOWPLACEMENT
-		mov ebx, hwnd
-        mov edx, lpwndpl
-        xor ecx, ecx
-        mov [edx].WINDOWPLACEMENT.flags, ecx
-        mov [edx].WINDOWPLACEMENT.showCmd, ecx
-        
-        mov [edx].WINDOWPLACEMENT.ptMinPosition.x, ecx
-        mov [edx].WINDOWPLACEMENT.ptMinPosition.y, ecx
-        mov [edx].WINDOWPLACEMENT.ptMaxPosition.x, ecx
-        mov [edx].WINDOWPLACEMENT.ptMaxPosition.y, ecx
-        
-        invoke CopyRect, addr [edx].WINDOWPLACEMENT.rcNormalPosition, addr [ebx].WNDOBJ.rc
-		@strace	<"GetWindowPlacement(", hwnd , ", ", lpwndpl, ")=", eax>
-		ret
-        align 4
+
+	mov ebx, hwnd
+	mov edx, lpwndpl
+	xor ecx, ecx
+	mov eax, ecx
+	cmp ebx, eax
+	jz exit
+	mov [edx].WINDOWPLACEMENT.flags, ecx
+	mov [edx].WINDOWPLACEMENT.showCmd, ecx
+
+	mov [edx].WINDOWPLACEMENT.ptMinPosition.x, ecx
+	mov [edx].WINDOWPLACEMENT.ptMinPosition.y, ecx
+	mov [edx].WINDOWPLACEMENT.ptMaxPosition.x, ecx
+	mov [edx].WINDOWPLACEMENT.ptMaxPosition.y, ecx
+
+	invoke CopyRect, addr [edx].WINDOWPLACEMENT.rcNormalPosition, addr [ebx].WNDOBJ.rc
+exit:
+	@strace	<"GetWindowPlacement(", hwnd , ", ", lpwndpl, ")=", eax>
+	ret
+	align 4
+
 GetWindowPlacement endp
 
 ;--- returns 1 if window was disabled, else 0
 
 EnableWindow proc public hwnd:HWND, bEnable:dword
 
-		cmp bEnable, edx
-        setnz dl
-        mov ecx, hwnd
-        test [ecx].WNDOBJ.dwStyle, WS_DISABLED
-        setnz al
-        .if (dl)
-	        and [ecx].WNDOBJ.dwStyle, not WS_DISABLED
-        .else
-	        or  [ecx].WNDOBJ.dwStyle, WS_DISABLED
-        .endif
-        mov ah,al
-        or ah,dl
-        .if (ZERO?)	;zero if window is changing to disabled state
-        	push eax
-            invoke SendMessage, ecx, WM_CANCELMODE, 0, 0
-            pop eax
-        .endif
-        movzx eax,al
-		@strace	<"EnableWindow(", hwnd , ", ", bEnable, ")=", eax>
-		ret
-        align 4
+	cmp bEnable, edx
+	setnz dl
+	mov ecx, hwnd
+	test [ecx].WNDOBJ.dwStyle, WS_DISABLED
+	setnz al
+	.if (dl)
+		and [ecx].WNDOBJ.dwStyle, not WS_DISABLED
+	.else
+		or	[ecx].WNDOBJ.dwStyle, WS_DISABLED
+	.endif
+	mov ah,al
+	or ah,dl
+	.if (ZERO?)	;zero if window is changing to disabled state
+		push eax
+		invoke SendMessage, ecx, WM_CANCELMODE, 0, 0
+		pop eax
+	.endif
+	movzx eax,al
+	@strace	<"EnableWindow(", hwnd , ", ", bEnable, ")=", eax>
+	ret
+	align 4
 EnableWindow endp
 
 IsWindowEnabled proc public hwnd:HWND
-		mov ecx, hwnd
-        xor eax, eax
-        test [ecx].WNDOBJ.dwStyle, WS_DISABLED
-        setz al
-		@strace	<"IsWindowEnabled(", hwnd , ")=", eax>
-		ret
-        align 4
+	mov ecx, hwnd
+	xor eax, eax
+	test [ecx].WNDOBJ.dwStyle, WS_DISABLED
+	setz al
+	@strace	<"IsWindowEnabled(", hwnd , ")=", eax>
+	ret
+	align 4
 IsWindowEnabled endp
 
 CloseWindow proc public hwnd:HWND
-		xor eax, eax
-		@strace	<"CloseWindow(", hwnd , ")=", eax>
-		ret
-        align 4
+	xor eax, eax
+	@strace	<"CloseWindow(", hwnd , ")=", eax>
+	ret
+	align 4
 CloseWindow endp
 
 GetUpdateRect proc public uses ebx hwnd:HWND, lpRect:ptr RECT, bErase:DWORD
-		mov ebx, hwnd
-        movzx eax, [ebx].WNDOBJ.bUpdate
-        mov edx, lpRect
-        .if (edx)
-        	push eax
-	        .if (eax)
-		       	invoke CopyRect, edx, addr [ebx].WNDOBJ.rc
-                .if (bErase)
-		   	       	invoke GetDC, ebx
-    		   	    push eax
-	   		    	invoke SendMessage, ebx, WM_ERASEBKGND, eax, 0
-   		    	    .if (eax)
-       		    	    mov [ebx].WNDOBJ.bErase, 0
-		            .endif
-   			        pop eax
-       			    invoke ReleaseDC, ebx, eax
-                .endif
-	        .else
-		       	invoke SetRectEmpty, edx
-            .endif
-            pop eax
-        .endif
-		@strace	<"GetUpdateRect(", hwnd , ", ", lpRect, ", ", bErase, ")=", eax>
-		ret
-        align 4
+	mov ebx, hwnd
+	movzx eax, [ebx].WNDOBJ.bUpdate
+	mov edx, lpRect
+	.if (edx)
+		push eax
+		.if (eax)
+			invoke CopyRect, edx, addr [ebx].WNDOBJ.rc
+			.if (bErase)
+				invoke GetDC, ebx
+				push eax
+				invoke SendMessage, ebx, WM_ERASEBKGND, eax, 0
+				.if (eax)
+					mov [ebx].WNDOBJ.bErase, 0
+				.endif
+				pop eax
+				invoke ReleaseDC, ebx, eax
+			.endif
+		.else
+			invoke SetRectEmpty, edx
+		.endif
+		pop eax
+	.endif
+	@strace	<"GetUpdateRect(", hwnd , ", ", lpRect, ", ", bErase, ")=", eax>
+	ret
+	align 4
 GetUpdateRect endp
 
 FindWindowA proc public uses ebx esi lpClassName:ptr BYTE, lpWindowName:ptr BYTE
@@ -1742,132 +1769,132 @@ FindWindowA proc public uses ebx esi lpClassName:ptr BYTE, lpWindowName:ptr BYTE
 local	cntCmp:dword
 local	szName[MAX_PATH]:byte
 
-		mov esi, g_pWindows
-        xor ebx, ebx
-        xor ecx, ecx
-        cmp lpClassName, 1
-        adc ebx, ecx
-        cmp lpWindowName, 1
-        adc ebx, ecx
-        mov cntCmp, ebx
-        and ebx, ebx
-        jz found
-        .while (esi)
-        	mov ebx, cntCmp
-            mov edx, lpClassName
-        	.if (edx)
-                mov ecx, [esi].WNDOBJ.pWndClass
-            	test edx, 0FFFF0000h
-                .if (ZERO?)
-                	.if (edx == [ecx].WNDCLASS.lpszClassName)
-                    	dec ebx
-                        jz found
-                    .endif
-                .else
-                	invoke GetAtomNameA, [ecx].WNDCLASS.lpszClassName, addr szName, sizeof szName
-		            invoke lstrcmpi, lpClassName, addr szName
-                    and eax, eax
-                    .if (ZERO?)
-                    	dec ebx
-                        jz found
-                    .endif
-                .endif
-            .endif
-        	.if (lpWindowName)
-            	invoke lstrcmpi, lpWindowName, [esi].WNDOBJ.pszText
-                .if (!eax)
-                	dec ebx
-                    jz found
-				.endif                
-            .endif
-        	mov esi, [esi].WNDOBJ.pNext
-        .endw
+	mov esi, g_pWindows
+	xor ebx, ebx
+	xor ecx, ecx
+	cmp lpClassName, 1
+	adc ebx, ecx
+	cmp lpWindowName, 1
+	adc ebx, ecx
+	mov cntCmp, ebx
+	and ebx, ebx
+	jz found
+	.while (esi)
+		mov ebx, cntCmp
+		mov edx, lpClassName
+		.if (edx)
+			mov ecx, [esi].WNDOBJ.pWndClass
+			test edx, 0FFFF0000h
+			.if (ZERO?)
+				.if (edx == [ecx].WNDCLASS.lpszClassName)
+					dec ebx
+					jz found
+				.endif
+			.else
+				invoke GetAtomNameA, [ecx].WNDCLASS.lpszClassName, addr szName, sizeof szName
+				invoke lstrcmpi, lpClassName, addr szName
+				and eax, eax
+				.if (ZERO?)
+					dec ebx
+					jz found
+				.endif
+			.endif
+		.endif
+		.if (lpWindowName)
+			invoke lstrcmpi, lpWindowName, [esi].WNDOBJ.pszText
+			.if (!eax)
+				dec ebx
+				jz found
+			.endif
+		.endif
+		mov esi, [esi].WNDOBJ.pNext
+	.endw
 found:
-		mov eax, esi
-ifdef _DEBUG        
-		mov ecx, lpClassName
-        and ecx, ecx
-        jnz @F
-        mov ecx, CStr("NULL")
-@@:        
-		mov edx, lpWindowName
-        and edx, edx
-        jnz @F
-        mov edx, CStr("NULL")
-@@:        
-		@strace	<"FindWindowA(", &ecx , ", ", &edx, ")=", eax>
-endif        
-		ret
-        align 4
+	mov eax, esi
+ifdef _DEBUG
+	mov ecx, lpClassName
+	and ecx, ecx
+	jnz @F
+	mov ecx, CStr("NULL")
+@@:
+	mov edx, lpWindowName
+	and edx, edx
+	jnz @F
+	mov edx, CStr("NULL")
+@@:
+	@strace	<"FindWindowA(", &ecx , ", ", &edx, ")=", eax>
+endif
+	ret
+	align 4
 FindWindowA endp
 
 FindWindowExA proc public hwndParent:DWORD, hwndChildAfter:DWORD, lpClassName:ptr BYTE, lpWindowName:ptr BYTE
-		xor eax, eax
-        .if ((!hwndParent) && (!hwndChildAfter))
-        	invoke FindWindowA, lpClassName, lpWindowName
-        .endif
-		@strace	<"FindWindowExA(", hwndParent, ", ", hwndChildAfter, ", ", lpClassName , ", ", lpWindowName, ")=", eax>
-		ret
-        align 4
+	xor eax, eax
+	.if ((!hwndParent) && (!hwndChildAfter))
+		invoke FindWindowA, lpClassName, lpWindowName
+	.endif
+	@strace	<"FindWindowExA(", hwndParent, ", ", hwndChildAfter, ", ", lpClassName , ", ", lpWindowName, ")=", eax>
+	ret
+	align 4
 FindWindowExA endp
 
 GetLastActivePopup proc public hwndParent:DWORD
-		xor eax, eax
-		@strace	<"GetLastActivePopup(", hwndParent, ")=", eax, " *** unsupp ***">
-		ret
-        align 4
+	xor eax, eax
+	@strace	<"GetLastActivePopup(", hwndParent, ")=", eax, " *** unsupp ***">
+	ret
+	align 4
 GetLastActivePopup endp
 
 ShowOwnedPopups proc public hwndParent:DWORD, fShow:DWORD
-		xor eax, eax
-		@strace	<"ShowOwnedPopups(", hwndParent, ", ", fShow, ")=", eax, " *** unsupp ***">
-		ret
-        align 4
+	xor eax, eax
+	@strace	<"ShowOwnedPopups(", hwndParent, ", ", fShow, ")=", eax, " *** unsupp ***">
+	ret
+	align 4
 ShowOwnedPopups endp
 
 RedrawWindow proc public hwnd:DWORD, lprcUpdate:ptr, hrgnUpdate:DWORD, flags:DWORD
-		xor eax, eax
-       	.if (hrgnUpdate)
-        	invoke InvalidateRect, hwnd, 0, 1
-        .elseif (lprcUpdate)
-        	invoke InvalidateRect, hwnd, 0, 1
-        .else
-        	invoke InvalidateRect, hwnd, 0, 1
-        .endif
-		@strace	<"RedrawWindow(", hwnd, ", ", lprcUpdate, ", ", hrgnUpdate, ", ", flags, ")=", eax, " *** unsupp ***">
-		ret
-        align 4
+	xor eax, eax
+	.if (hrgnUpdate)
+		invoke InvalidateRect, hwnd, 0, 1
+	.elseif (lprcUpdate)
+		invoke InvalidateRect, hwnd, 0, 1
+	.else
+		invoke InvalidateRect, hwnd, 0, 1
+	.endif
+	@strace	<"RedrawWindow(", hwnd, ", ", lprcUpdate, ", ", hrgnUpdate, ", ", flags, ")=", eax, " *** unsupp ***">
+	ret
+	align 4
 RedrawWindow endp
 
 GetTitleBarInfo proc public hwnd:DWORD, lpBar:ptr
-		xor eax, eax
-		@strace	<"GetTitleBarInfo(", hwnd, ", ", lpBar, ")=", eax, " *** unsupp ***">
-		ret
-        align 4
+	xor eax, eax
+	@strace	<"GetTitleBarInfo(", hwnd, ", ", lpBar, ")=", eax, " *** unsupp ***">
+	ret
+	align 4
 GetTitleBarInfo endp
 
 BringWindowToTop proc public hwnd:DWORD
-		invoke SetWindowPos, hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE or SWP_NOSIZE  or SWP_NOACTIVATE
-		@strace	<"BringWindowToTop(", hwnd, ")=", eax>
-		ret
-        align 4
+	invoke SetWindowPos, hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE or SWP_NOSIZE  or SWP_NOACTIVATE
+	@strace	<"BringWindowToTop(", hwnd, ")=", eax>
+	ret
+	align 4
 BringWindowToTop endp
 
 GetWindowRgn proc public uses ebx hwnd:DWORD, hRgn:ptr
-		mov eax, ERROR
-		mov ebx, hwnd
-        .if (ebx && ([ebx].WNDOBJ.dwType == USER_TYPE_HWND))
-            .if (1)
-               	invoke SetRectRgn, hRgn, [ebx].WNDOBJ.rc.left, [ebx].WNDOBJ.rc.top,\
-                   	[ebx].WNDOBJ.rc.right, [ebx].WNDOBJ.rc.bottom
-                mov eax, SIMPLEREGION
-            .else
-				mov eax, ERROR
-            .endif
-        .endif
-		@strace	<"GetWindowRgn(", hwnd, ", ", hRgn, ")=", eax>
-		ret
-        align 4
+	mov eax, ERROR
+	mov ebx, hwnd
+	.if (ebx && ([ebx].WNDOBJ.dwType == USER_TYPE_HWND))
+		.if (1)
+			invoke SetRectRgn, hRgn, [ebx].WNDOBJ.rc.left, [ebx].WNDOBJ.rc.top,\
+				[ebx].WNDOBJ.rc.right, [ebx].WNDOBJ.rc.bottom
+			mov eax, SIMPLEREGION
+		.else
+			mov eax, ERROR
+		.endif
+	.endif
+	@strace	<"GetWindowRgn(", hwnd, ", ", hRgn, ")=", eax>
+	ret
+	align 4
 GetWindowRgn endp
 
 SetWindowRgn proc public uses ebx hwnd:DWORD, hRgn:ptr, bRedraw:DWORD
@@ -1875,75 +1902,111 @@ SetWindowRgn proc public uses ebx hwnd:DWORD, hRgn:ptr, bRedraw:DWORD
 local	rc:RECT
 local	rgndata:RGNDATA
 
-		xor eax, eax
-		mov ebx, hwnd
-        .if (ebx && ([ebx].WNDOBJ.dwType == USER_TYPE_HWND))
-        	.if ([ebx].WNDOBJ.hRgn)
-	           	invoke DeleteObject, [ebx].WNDOBJ.hRgn
-            .endif
-            mov ecx, hRgn
-        	mov [ebx].WNDOBJ.hRgn, ecx
-            .if (1)
-            	invoke GetRegionData, hRgn, sizeof RGNDATAHEADER + sizeof RECT, addr rgndata
-                mov eax, rgndata.rdh.rcBound.left
-                mov edx, rgndata.rdh.rcBound.top
-                mov [ebx].WNDOBJ.rc.left, eax
-                mov [ebx].WNDOBJ.rc.top, edx
-                mov eax, rgndata.rdh.rcBound.right
-                mov edx, rgndata.rdh.rcBound.bottom
-                mov [ebx].WNDOBJ.rc.right, eax
-                mov [ebx].WNDOBJ.rc.bottom, edx
-            .endif
-            @mov eax, 1
-        .endif
-		@strace	<"SetWindowRgn(", hwnd, ", ", hRgn, ", ", bRedraw, ")=", eax>
-		ret
-        align 4
+	xor eax, eax
+	mov ebx, hwnd
+	.if (ebx && ([ebx].WNDOBJ.dwType == USER_TYPE_HWND))
+		.if ([ebx].WNDOBJ.hRgn)
+			invoke DeleteObject, [ebx].WNDOBJ.hRgn
+		.endif
+		mov ecx, hRgn
+		mov [ebx].WNDOBJ.hRgn, ecx
+		.if (1)
+			invoke GetRegionData, hRgn, sizeof RGNDATAHEADER + sizeof RECT, addr rgndata
+			mov eax, rgndata.rdh.rcBound.left
+			mov edx, rgndata.rdh.rcBound.top
+			mov [ebx].WNDOBJ.rc.left, eax
+			mov [ebx].WNDOBJ.rc.top, edx
+			mov eax, rgndata.rdh.rcBound.right
+			mov edx, rgndata.rdh.rcBound.bottom
+			mov [ebx].WNDOBJ.rc.right, eax
+			mov [ebx].WNDOBJ.rc.bottom, edx
+		.endif
+		@mov eax, 1
+	.endif
+	@strace	<"SetWindowRgn(", hwnd, ", ", hRgn, ", ", bRedraw, ")=", eax>
+	ret
+	align 4
 SetWindowRgn endp
 
 ScrollWindowEx proc public hwnd:dword, dx_:dword, dy_:dword, prcScroll:ptr, prcClip:ptr, hrgnUpdate:ptr, prcUpdate:ptr, flags:dword
-		xor eax, eax
-		@strace	<"SrollWindowEx(", hwnd, ", ", dx_, ", ", dy_, ", ", prcScroll, ", ", prcClip, ", ", hrgnUpdate, ", ", prcUpdate, ", ", flags, ")=", eax, " *** unsupp ***">
-		ret
-        align 4
+	xor eax, eax
+	@strace	<"SrollWindowEx(", hwnd, ", ", dx_, ", ", dy_, ", ", prcScroll, ", ", prcClip, ", ", hrgnUpdate, ", ", prcUpdate, ", ", flags, ")=", eax, " *** unsupp ***">
+	ret
+	align 4
 ScrollWindowEx endp
 
 LockWindowUpdate proc public hwnd:DWORD
-		@serialize_enter
-		mov ecx,hwnd
-		xor eax, eax
-        mov edx, g_hwndLock
-		.if (ecx)
-			.if ((!edx) && ([ecx].WNDOBJ.dwType == USER_TYPE_HWND))
-				mov g_hwndLock, ecx
-				inc eax
-			.endif
-		.elseif (edx)
+	@serialize_enter
+	mov ecx,hwnd
+	xor eax, eax
+	mov edx, g_hwndLock
+	.if (ecx)
+		.if ((!edx) && ([ecx].WNDOBJ.dwType == USER_TYPE_HWND))
 			mov g_hwndLock, ecx
 			inc eax
 		.endif
-		@serialize_exit
-		@strace	<"LockWindowUpdate(", hwnd, ")=", eax>
-		ret
-        align 4
+	.elseif (edx)
+		mov g_hwndLock, ecx
+		inc eax
+	.endif
+	@serialize_exit
+	@strace	<"LockWindowUpdate(", hwnd, ")=", eax>
+	ret
+	align 4
 LockWindowUpdate endp
 
 DrawMenuBar proc public hwnd:DWORD
 
-		xor eax, eax
-		@strace	<"DrawMenuBar(", hwnd, ")=", eax, "*** unsupp ***">
-		ret
-        align 4
+	xor eax, eax
+	@strace	<"DrawMenuBar(", hwnd, ")=", eax, "*** unsupp ***">
+	ret
+	align 4
 DrawMenuBar endp
 
 ;--- OpenIcon restores a minimized window
 
 OpenIcon proc public hwnd:DWORD
-		invoke ShowWindow, hwnd, SW_RESTORE
-		@strace	<"OpenIcon(", hwnd, ")=", eax>
-		ret
-        align 4
+	invoke ShowWindow, hwnd, SW_RESTORE
+	@strace	<"OpenIcon(", hwnd, ")=", eax>
+	ret
+	align 4
 OpenIcon endp
 
-		end
+;--- DrawAnimatedRects is a eye candy, pretty useless
+
+DrawAnimatedRects proc public hwnd:DWORD, idAni:DWORD, lprcFrom:ptr RECT, lprcTo:ptr RECT
+	xor eax, eax
+	@strace	<"DrawAnimatedRects(", hwnd, ",", idAni, ", ", lprcFrom, ", ", lprcTo, ")=", eax>
+	ret
+	align 4
+DrawAnimatedRects endp
+
+;--- 
+
+GetWindowInfo proc public uses ebx edi hwnd:DWORD, pwi:ptr WINDOWINFO
+	xor eax, eax
+	mov ebx, hwnd
+	.if ( ebx && [ebx].WNDOBJ.dwType == USER_TYPE_HWND )
+		mov edi, pwi
+		invoke CopyRect, addr [edi].WINDOWINFO.rcWindow, addr [ebx].WNDOBJ.rc
+		invoke CopyRect, addr [edi].WINDOWINFO.rcClient, addr [ebx].WNDOBJ.rc
+		mov eax, [ebx].WNDOBJ.dwStyle
+		mov ecx, 0
+		mov edx, 0
+		mov [edi].WINDOWINFO.dwStyle, eax
+		mov [edi].WINDOWINFO.dwExStyle, ecx
+		mov [edi].WINDOWINFO.dwWindowStatus, edx
+		mov [edi].WINDOWINFO.cxWindowBorders, 0
+		mov [edi].WINDOWINFO.cyWindowBorders, 0
+		mov eax, [ebx].WNDOBJ.pWndClass
+		mov eax, [eax].WNDCLASS.lpszClassName
+		mov [edi].WINDOWINFO.atomWindowType, ax
+		mov [edi].WINDOWINFO.wCreatorVersion, 0
+	.endif
+	@strace	<"GetWindowInfo(", hwnd, ",", pwi, ")=", eax>
+	ret
+	align 4
+GetWindowInfo endp
+
+	end
 

@@ -16,12 +16,16 @@
   DragQueryPoint                y
   ExtractIconA                  y
   ExtractIconExA                y
+  FindExecutableA               y
   ShellExecuteA
+  ShellExecuteExA               y
   SHBrowseForFolderA            y
   SHFileOperationA
   SHGetDesktopFolder            y 
   SHGetFileInfoA                y
   SHGetFileInfoW                y
+  SHGetFolderPathA              y
+  SHGetFolderPathW              y
   SHGetMalloc                   y
   SHGetPathFromIDListA          y
   SHGetPathFromIDListW          y
@@ -30,6 +34,11 @@
 
  3. History
 
+ 11/16/2009:  V1.7
+ 
+ þ added ShellExecuteExA, FindExecutableA, SHGetFolderPathA,
+   SHGetFolderPathW, SHGetSpecialFolderPathA (dummies).
+ 
  01/20/2009:  V1.6
  
  þ source assembled with JWasm.

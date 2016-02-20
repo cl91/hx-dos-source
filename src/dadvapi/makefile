@@ -40,9 +40,9 @@ MASM=0
 
 ASMOPT= -c -nologo -coff -D?FLAT=1 -Fl$* -Fo$* -Sg $(AOPTD) -D_ADVAPI32_=1 -I$(INC32DIR)
 !if $(MASM)
-ASM=@ml.exe $(ASMOPT) 
+ASM=@ml.exe $(ASMOPT)
 !else
-ASM=@jwasm.exe $(ASMOPT) 
+ASM=@jwasm.exe $(ASMOPT)
 !endif
 
 LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL /NODEFAULTLIB /LIBPATH:$(LIBCOFF) /OPT:NOWIN98
@@ -54,7 +54,7 @@ LIBS=dkrnl32.lib
 .SUFFIXES: .asm .obj
 
 .asm{$(OUTDIR)}.obj:
-    $(ASM) $<
+	$(ASM) $<
 
 ALL: $(OUTDIR) $(OUTDIR)\$(NAME).DLL
 
@@ -62,24 +62,38 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).LIB $(OUTDIR)\$(NAME).obj $(NAME).def
-    $(LINKBIN) @<<
+	@$(LINKBIN) @<<
 $(OUTDIR)\$(NAME).obj $(OUTDIR)\$(LIBNAME).LIB $(LIBS)
 $(LOPTS) $(LOPTD)
 /DEF:$(NAME).def /merge:.BASE=.data /OUT:$*.DLL
 <<
+#	@jwlink @<<
+#format windows nt dll 
+#file $(OUTDIR)\$(NAME).obj
+#lib  $(OUTDIR)\$(LIBNAME).lib
+#libpath $(LIBCOFF)
+#lib { $(LIBS) }
+#name $*.DLL
+#op map=$(OUTDIR)\$(NAME).map
+#op implib=$(OUTDIR)\$(NAME).lib
+#op NOSTDCALL
+#@$(NAME).exp
+#<<
 !if $(DEBUG)==0
-    copy $*.DLL ..\..\bin\*.* >NUL
+	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR    
-    copy $*.DLL $(DLL32DIR)\*.*
+	@copy $*.DLL $(DLL32DIR)\*.* >NUL
 !endif    
-    copy $*.LIB $(LIBCOFF)\*.*
-    copy $(OUTDIR)\$(LIBNAME).LIB $(LIBCOFF)\*.*
-!endif    
+	@copy $*.LIB $(LIBCOFF)\*.* >NUL
+	@copy $(OUTDIR)\$(LIBNAME).LIB $(LIBCOFF)\*.* >NUL
+!endif
+
+WLIBMODS=$(SRCMODS:.\=+)
 
 $(OUTDIR)\$(LIBNAME).lib: $(OBJMODS)
 	@cd $(OUTDIR)
-    $(LIBBIN) @<<
-$(SRCMODS:.ASM=.OBJ) /OUT:$(LIBNAME).lib
+	@$(LIBBIN) -ii -ic @<<
+$(LIBNAME).lib $(WLIBMODS:.ASM=.OBJ)
 <<
 	@cd ..
 

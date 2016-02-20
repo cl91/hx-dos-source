@@ -329,7 +329,8 @@ waveOutWrite       proto :dword, :ptr WAVEHDR, :dword
 
 else
 
-        .DATA
+;	.DATA
+_DATA segment
 
 externdef stdcall _imp__waveOutClose@4:pfunc@4
 externdef stdcall _imp__waveOutGetDevCapsA@12:pfunc@12
@@ -342,7 +343,9 @@ externdef stdcall _imp__waveOutReset@4:pfunc@4
 externdef stdcall _imp__waveOutRestart@4:pfunc@4
 externdef stdcall _imp__waveOutUnprepareHeader@12:pfunc@12
 externdef stdcall _imp__waveOutWrite@12:pfunc@12
-        
+
+_DATA ends
+
 waveOutClose         equ <_imp__waveOutClose@4>
 waveOutGetDevCapsA   equ <_imp__waveOutGetDevCapsA@12>
 waveOutGetNumDevs    equ <_imp__waveOutGetNumDevs@0>
