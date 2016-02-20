@@ -4,7 +4,7 @@
 # for a binary with debug info enter:
 #   nmake /f samplem.mak debug=1
 
-# uses MASM + MS link
+# uses Masm/JWasm + MS link
 
 !ifdef DEBUG
 AOPTDM=-Zi
@@ -22,10 +22,18 @@ STUB=..\..\bin\dpmist32.bin
 #STUB=..\..\bin\dpmild32.bin
 #STUB=..\..\bin\hdld32.bin
 
-AS=ml.exe
-ASMOPT= -c -coff -Fo$*.obj $(AOPTDM)
-LINK=polink.exe
-LPARAM=$*.obj /NOLOGO /OUT:$*.exe /SUBSYSTEM:CONSOLE /STUB:$(STUB) /FIXED:NO /HEAP:0 /STACK:0x1000 $(LOPTDM)
+!ifndef MASM
+MASM=0
+!endif
+
+!if $(MASM)
+ASM=ml.exe -c -coff -Fo$*.obj $(AOPTDM)
+!else
+ASM=jwasm.exe -Fo$*.obj $(AOPTDM)
+!endif
+
+LINK=link.exe
+LPARAM=$*.obj /NOLOGO /OUT:$*.exe /SUBSYSTEM:CONSOLE /STUB:$(STUB) /FIXED:NO /HEAP:0 /STACK:0x1000 /OPT:NOWIN98 $(LOPTDM) /Entry:main
 
 # patchPE is used here to ensure app is executed as DPMI client
 
@@ -36,5 +44,5 @@ $(LPARAM)
     ..\..\Bin\patchPE $*.exe
 
 $(NAME)M.obj: $(NAME).asm $*.mak
-    $(AS) $(ASMOPT) $(NAME).asm
+    $(ASM) $(NAME).asm
 

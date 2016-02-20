@@ -506,8 +506,8 @@ IMAGE_SYMBOL struct
 union N
 ShortName   BYTE 8 dup (?)
 struct Name_  
-Short1  DWORD   ?	;     // if 0, use LongName
-Long1   DWORD   ?    ;     // offset into string table
+Short_  DWORD   ?	;     // if 0, use LongName
+Long    DWORD   ?    ;     // offset into string table
 ends
 LongName DWORD 2 dup (?)
 ends
@@ -612,8 +612,8 @@ Characteristics 		dd ?
 TimeDateStamp			dd ?
 MajorVersion			dw ?
 MinorVersion			dw ?
-nName					dd ?	;name of module
-nBase					dd ?	;base of ordinal
+Name_					dd ?	;name of module
+Base					dd ?	;base of ordinal
 NumberOfFunctions		dd ?	;number of entries in EAT table
 NumberOfNames			dd ?	;number of entries in name/ordinals table
 AddressOfFunctions		dd ?	;RVA "export address table" (EAT)
@@ -634,7 +634,7 @@ IMAGE_IMPORT_DESCRIPTOR  ends
 
 IMAGE_IMPORT_BY_NAME   struct         ;element of hintname array
 Hint      dw ?           ;index to start search
-Name      db 1 dup (?)
+Name_     db 1 dup (?)
 IMAGE_IMPORT_BY_NAME   ends
 
 IMAGE_TLS_DIRECTORY struct
@@ -684,32 +684,32 @@ IMAGE_RESOURCE_DIRECTORY STRUCT
 IMAGE_RESOURCE_DIRECTORY ENDS
 
 IMAGE_RESOURCE_DIRECTORY_ENTRY STRUCT
-    union
-        rName	RECORD NameIsString:1,NameOffset:31
-        Name_ dd ?
-        Id dw ?
-    ends
-    union
-        OffsetToData dd ?
-		  rDirectory	RECORD DataIsDirectory:1,OffsetToDirectory:31
-    ends
+  union
+    rName       RECORD NameIsString:1,NameOffset:31
+    Name_ dd ?
+    Id dw ?
+  ends
+  union
+    OffsetToData dd ?
+    rDirectory	RECORD DataIsDirectory:1,OffsetToDirectory:31
+  ends
 IMAGE_RESOURCE_DIRECTORY_ENTRY ENDS
 
 IMAGE_RESOURCE_DIRECTORY_STRING STRUCT
-    Length1 dw      ?
+    Length_ dw      ?
     NameString db   ?
 IMAGE_RESOURCE_DIRECTORY_STRING ENDS
 
 IMAGE_RESOURCE_DIR_STRING_U STRUCT
-    Length1 dw      ?
+    Length_ dw      ?
     NameString dw   ?
 IMAGE_RESOURCE_DIR_STRING_U ENDS
 
 IMAGE_RESOURCE_DATA_ENTRY STRUCT
     OffsetToData dd ?
-    Size1 dd        ?
-    CodePage dd     ?
-    Reserved dd     ?
+    Size_        dd ?
+    CodePage     dd ?
+    Reserved     dd ?
 IMAGE_RESOURCE_DATA_ENTRY ENDS
 
 ;--- Thread Information Block

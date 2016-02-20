@@ -22,9 +22,9 @@ $(LIBS),
     cd ..
 
 $(OUTDIR)\$(NAME).obj: $(NAME).asm
-    ml -c -Fl$* -Fo$* $(NAME).asm
+    jwasm.exe -c -Fl$* -Fo$* $(NAME).asm
 
 $(OUTDIR)\dosrallc.obj: dosrallc.asm
-    ml -c -Fl$* -Fo$* dosrallc.asm
+    jwasm.exe -c -Fl$* -Fo$* dosrallc.asm
 
 clean:

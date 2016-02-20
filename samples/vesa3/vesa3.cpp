@@ -92,6 +92,9 @@ int main(int cArgs, char * * pArgs)
     void * pSaveBuff;
     void * pSaveBuff2;
 
+#ifdef _VESA32_
+    VesaInit(); /* call if the vesa code is linked statically */
+#endif
     // search a VESA 16bpp video mode
 
 	if (!(iMode = SearchVesaMode(COLS,ROWS,16))) {
@@ -151,6 +154,9 @@ int main(int cArgs, char * * pArgs)
             free(pSaveBuff2);
         }
     }
+#ifdef _VESA32_
+    VesaExit(); /* call if the vesa code is linked statically */
+#endif
 	return 0;
 }
 

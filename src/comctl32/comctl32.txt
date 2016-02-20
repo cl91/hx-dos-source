@@ -1,0 +1,22 @@
+
+ 1. About
+ 
+ COMCTL32 currently is a dummy dll 
+ 
+
+ 2. Supported Functions
+
+  Name                     Dummy
+ ----------------------------------
+
+ 3. History
+
+ 2005/10/10:  V1.0
+ 
+ 4. Copyright
+ 
+ COMCTL32 is freeware.
+ 
+ Japheth
+
+ 

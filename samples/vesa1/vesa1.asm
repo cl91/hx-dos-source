@@ -386,7 +386,13 @@ endif
 fill64k endp
 
 mainCRTStartup proc c
+ifdef _VESA32_
+		call VesaInit
+endif        
         call main
+ifdef _VESA32_
+		call VesaExit
+endif
         mov  ah,4Ch
         int  21h
 mainCRTStartup endp

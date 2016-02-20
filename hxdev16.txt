@@ -76,11 +76,9 @@
 
  - BIN subdirectory:
  
-   + DPMIST16.BIN: MZ stub to be used by the linker. The stub will try
-     to run HX's NE loader DPMILD16.EXE. The loader is searched in all
-     directories of the PATH environment variable.
-   + DPMILD16.BIN: Alternate MZ stub to be used by the linker. Unlike the
-     standard MZ stub DPMIST16.BIN this stub contains HX's NE loader.
+   + DPMIST16.BIN, DPMILD16.BIN, HDLD16.BIN: MZ stubs to be used by the
+     linker. DPMIST16.BIN will search for DPMILD16.EXE, DPMILD16.BIN will
+     search for HDPMI16.EXE. HDLD16.BIN needs no external modules.
    + PATCHNE.EXE: tool to set some flags in a NE header. Might also be
      used to replace the MZ stub of a NE binary.
    + USER.DLL, RTM.DLL: required for Borland PowerPack compatibility.
@@ -129,6 +127,7 @@
 
   6. History
   
+  01/20/2009, V2.15: stub HDLD16.BIN added.
   03/02/2008, V2.14: Support for OW updated.
   01/11/2008, V2.13: -
   07/15/2007, V2.12: Sample9 added.
@@ -163,7 +162,7 @@
   
   7. Copyright
  
-  The HX DOS extender is freeware. Copyright Japheth 1993-2008.
+  The HX DOS extender is freeware. Copyright Japheth 1993-2009.
   Files in BIN may be shipped with any application.
   
   Japheth

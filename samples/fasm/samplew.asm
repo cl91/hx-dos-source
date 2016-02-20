@@ -8,26 +8,27 @@ section '.data' data readable writeable
 
 dwWritten dd 0
 szText db 'hello world',13,10
+sizeText = $ - szText
 
 extrn '__imp__ExitProcess@4' as ExitProcess:dword
 extrn '__imp__WriteConsoleA@20' as WriteConsole:dword
 extrn '__imp__GetStdHandle@4' as GetStdHandle:dword
 
-section '.text' code
+STD_OUTPUT_HANDLE	equ -11
 
-public _start
+section '.text' code executable readable
 
-_start:
+public _mainCRTStartup
 
-	push	-11				;STD_OUTPUT_HANDLE
+_mainCRTStartup:
+
+	push	STD_OUTPUT_HANDLE
     call	[GetStdHandle]
-    mov		ebx, eax
     push	0
 	push	dwWritten
-    mov		ecx,13
-	push	ecx
+	push	sizeText
 	push	szText
-	push	ebx
+	push	eax
 	call	[WriteConsole]
 	push	0
 	call	[ExitProcess]

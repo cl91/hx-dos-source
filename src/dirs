@@ -1,0 +1,44 @@
+
+# adjust all paths to your enviroment before trying to run nmake
+#
+# meaning is:
+# LIBCOFF: directory where COFF libraries will be read from/copied to
+# LIBOMF:  directory where OMF libraries will be read from/copied to
+# INC32DIR: directory where JWasm/Masm will search its include files
+# INC16DIR: not used currently
+
+# please note: the names of LIBCOFF and LIBOMF should be different
+# in any case, because files may have equal names
+
+# DMCDIR:  directory where Digital Mars Optlink can be found
+# OWDIR:  Open Watcom installation directory. Required for WSOCK32
+
+# ASM:       Masm v6 compatible assembler (default JWasm)
+# LINKBIN:   32 bit COFF linker
+# LIBBIN:    32 bit COFF librarian (default PoLib)
+# RCBIN:     32 bit COFF resource compiler (default PoRC)
+# LINK16BIN: OMF linker
+# LIB16BIN:  OMF librarian (default OW's WLib)
+
+# optional:
+# DLL32DIR: additional dir where created dlls will be copied to
+# TOOLSDIR: additional dir where created exes will be copied to
+
+LIBCOFF=..\..\Lib
+LIBOMF=..\..\LibOMF
+INC32DIR=..\..\Include
+INC16DIR=.
+
+DMCDIR=\DM\Bin
+OWDIR=\Watcom
+
+ASM=jwasm.exe
+LINKBIN=link.exe /OPT:NOWIN98
+LIBBIN=\PellesC\Bin\polib.exe
+RCBIN=\PellesC\Bin\porc.exe
+LINK16BIN=$(DMCDIR)\link.exe
+#LINK16BIN=link16.exe
+LIB16BIN=wlib.exe -q -n
+
+#DLL32DIR=
+#TOOLSDIR=

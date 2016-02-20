@@ -95,6 +95,9 @@ int __stdcall SetVesaPaletteEntries(int iStart, int iCnt, VESAPALETTEENTRY * pEn
 int __stdcall VesaMouseInit(void);
 int __stdcall VesaMouseExit(void);
 
+int __stdcall VesaInit(void); /* if code is linked statically */
+int __stdcall VesaExit(void); /* if code is linked statically */
+
 #ifdef __cplusplus
 };
 #endif

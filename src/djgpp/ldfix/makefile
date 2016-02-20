@@ -30,11 +30,21 @@ AOPTD=
 
 !include <..\..\dirs>
 
+!ifndef MASM
+MASM=0
+!endif
+
 !if $(MZAPP)
 
 LOPTD=
 
-ASM = ml -c -nologo -Sg -Fl$* -Fo$* -D?FLAT=0 -D_ML $(AOPTD) -I..\$(INC32DIR)
+ASMOPT=-c -nologo -Sg -Fl$* -Fo$* -D?FLAT=0 -D_ML $(AOPTD) -I..\$(INC32DIR)
+!if $(MASM)
+ASM = @ml.exe $(ASMOPT)
+!else
+ASM = @jwasm.exe $(ASMOPT)
+!endif
+
 !if 0
 LIBS=jmppm32.lib dkrnl32s.lib duser32s.lib libc32.lib
 LOPT=/MAP:FULL/NON/NOE/NOD/ONE:NOE/NOLOGO $(LOPTD)
@@ -55,7 +65,13 @@ LOPTD=/DEBUG
 LOPTD=
 !endif
 
-ASM = ml -c -nologo -Sg -Fl$* -Fo$* -D?FLAT=1 -coff $(AOPTD) -I..\$(INC32DIR)
+ASMOPT2=-c -nologo -Sg -Fl$* -Fo$* -D?FLAT=1 -coff $(AOPTD) -I..\$(INC32DIR)
+!if $(MASM)
+ASM = @ml.exe $(ASMOPT2)
+!else
+ASM = @jwasm.exe $(ASMOPT2)
+!endif
+
 !if $(USEDLL)
 CRTLIB=crtdll.lib
 !else
@@ -74,8 +90,8 @@ $(MODS),$*,$*,$(LIBS) $(LOPT);
 <<
 !else
 $(OUTDIR)\$(name).EXE: $*.obj makefile
-	set LIB=\lib\asm32
-    $(LINK) $* $(LIBS) $(LOPT)
+#   set LIB=\lib\coff
+    $(LINK) $*.obj /LIBPATH:..\..\..\Lib $(LOPT) $(LIBS) 
 #!if $(DEBUG)==0
 #	@copy $*.EXE ..\..\bin\*.* >NUL
 #!ifdef TOOLSDIR

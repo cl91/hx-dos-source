@@ -21,34 +21,42 @@
   Name      Language  Comment
   ----------------------------------------------------------------------
   Masm1     MASM      hello world app (DOS).
-                      - SampleM.mak, MASM
-                      - SampleP.mak, PoASM
-                      - SampleW.mak, WASM
+                      - SampleM.mak, JWasm/Masm
+                      - SampleP.mak, PoAsm
+                      - SampleW.mak, Wasm
 
-  Masm2     MASM      hello world app (Win32 console).
-                      - SampleM.mak, MASM
-                      - SampleP.mak, PoASM
+  Masm2     MASM      hello world app (Win32 API).
+                      - SampleM.mak, JWasm/Masm (Win32)
+                      - SampleMS.mak, JWasm/Masm (DOS, Win32 linked statically)
+                      - SampleP.mak, PoAsm (Win32)
+                      - SampleW.mak, Wasm (Win32)
+                      - SampleWS.mak, Wasm (DOS, Win32 linked statically)
 
-  Masm3     MASM      Hello world app (Win32 console).
-                      - SampleM.mak (MASM, Win32)
-                      - SampleMS.mak (MASM, DOS, Win32 linked statically)
+  Masm3     MASM      Memory allocation test (Win32 API).
+                      - SampleM.mak (JWasm/Masm, Win32)
+                      - SampleMS.mak (JWasm/Masm, DOS, Win32 linked statically)
                       
   Nasm      NASM      Simple hello world for NASM. Uses DOS API. 
 
-  Fasm      FASM      SampleW (Win32 console)
-                      SampleD (DOS)
-
+  Fasm      FASM      SampleD  (DOS)
+                      SampleW  (Win32 console)
+                      SampleWS (DOS, Win32 linked statically)
+                      
   LZAsm     LZAsm     a "hello, world" for LZAsm. Uses Win32 console API.
 
   GAS       GAS       hello world app. Uses Win32 console API.
                       - Sample.mak:  uses AS + LD
 
-  MSC       C         simple hello world sample. Use these makefiles 
+  MSC1      C         simple hello world sample. Use these makefiles 
                       to create:
                       - SampleM.mak for MSC (Win32)
                       - SampleMS.mak for MSC (DOS, Win32 linked statically)
                       - SampleP.mak for PellesC (Win32)
 
+  MSC2      C         thread sample for MSC.
+                      - ThreadW.mak for MSC (Win32)
+                      - ThreadWS.mak for MSC (DOS, Win32 linked statically)
+  
   OW1       C         simple hello world sample for Open Watcom.
                       - SampleD.mak (DOS, "system hxdos")
                       - SampleW.mak (Win32, "system hxnt")
@@ -94,12 +102,13 @@
 
   Vesa1     MASM      a simple app using VESA graphics mode with linear frame
                       buffer (LFB). Uses DOS API. May not work in NT/2K/XP DOS
-                      boxes.
+                      boxes. Makefile for JWasm/Masm is included.
 
   Vesa2     MASM      another app using VESA graphics mode with linear frame
                       buffer (LFB). It has been converted from a DirectDraw 
                       sample written by X-Calibre. Uses DOS API. ALT-X will
-                      terminate. May not work in NT/2K/XP DOS boxes.
+                      terminate. Makefile for JWasm/Masm is included. The
+                      sample may not work in NT/2K/XP DOS boxes.
 
   Vesa3     C++       a sample using VESA32.DLL. Use vesa3.mak to build it.
                       May not work in NT/2K/XP DOS boxes.
@@ -121,7 +130,7 @@
                       full set of Win32 include files. These may be downloaded
                       from http://www.japheth.de/Download/Win32inc.zip.
 
-  Dynloada  MASM      a sample demonstrating how to use the loader API to
+  Dynload   MASM      a sample demonstrating how to use the loader API to
                       load a dll, get a function's address and at last free
                       the dll. Uses DOS API.
 
@@ -131,33 +140,27 @@
   TextOut   C++       A DirectDraw sample. It will display a text in
                       fullscreen mode.
 
-  Thread    MASM      A sample showing threads in HX.
-
-
- b). MZ File Format Samples
-
-  Name      Language  Comment
-  ----------------------------------------------------------------------
-  Hello     MASM      Hello world app. Use 
-                      - helloMZ.mak to create binary hellomz.exe (MASM).
-                        For creating a stand-alone MZ binary read the
-                        comments in helloMZ.mak
-                      - helloW.mak to create binary hellow.exe (WASM)
-
-  Fasm      FASM      SampleMZ: DOS sample.
+  Thread    MASM      A sample showing threads in HX. Makefile for 
+                      JWasm/Masm is included.
 
   TsrSmple  MASM      makes a DPMI TSR program, which will hook keyboard
                       interrupt and display a small rectangle on the upper
                       right corner of the screen on every keypress. Very
                       simple and cannot be removed from memory once it is
-                      installed.
+                      installed. Makefile for JWasm/Masm is included.
 
 
- c). NE File Format Samples
+ b). MZ and NE File Format Samples
 
   Name      Language  Comment
   ----------------------------------------------------------------------
+  Hello     MASM      Hello world app. Use 
+                      - helloMZ.mak to create binary hellomz.exe (Masm/
+                        JWasm) in MZ file format. For creating a stand-alone
+                        MZ binary read the comments in helloMZ.mak
+                      - helloNE.mak to create the binary hellone.exe (Masm/
+                        JWasm) in NE file format.
+                      - helloW.mak to create binary hellow.exe (Wasm)
 
-  Hello     MASM      hello world app. Uses DOS API. Use helloNE.mak to
-                      create the binary hellone.exe.
+  Fasm      FASM      SampleMZ: DOS sample in MZ format.
 

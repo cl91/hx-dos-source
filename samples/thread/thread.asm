@@ -3,14 +3,18 @@
 ;--- main thread is waiting for user input with
 ;--- GetNumberOfConsoleInputEvents + ReadConsoleInput
 
-;--- this sample uses win32inc MASM includes
+;--- this sample uses win32inc Masm includes
 
         .386
         .MODEL FLAT, stdcall
         option casemap:none
 
 WIN32_LEAN_AND_MEAN equ 1
+		.nolist
+        .nocref
         include windows.inc
+        .cref
+        .list
 
 CStr macro y:req
 local sym

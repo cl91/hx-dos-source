@@ -1,0 +1,93 @@
+
+# this will create NTLFNHLP.DLL
+#
+# the assembled modules will be copied to ..\DKRNL32\RELEASE
+# because currently they are statically linked to DKRNL32.DLL
+#
+# adjust paths in file "..\dirs" first!
+# to create a debug version use "nmake debug=1"
+# output will be in subdir RELEASE or DEBUG, format
+# of object modules is COFF format, true flat
+
+!include <..\dirs>
+
+!ifndef DEBUG
+DEBUG=0
+!endif
+
+!if $(DEBUG)
+AOPTD=-D_DEBUG
+OUTDIR=DEBUG
+!else
+AOPTD=
+OUTDIR=RELEASE
+!endif
+
+SRCMODS = \
+!include modules.inc
+
+OBJMODS = $(SRCMODS:.ASM=.OBJ)
+!if $(DEBUG)
+OBJMODS = $(OBJMODS:.\=DEBUG\)
+!else
+OBJMODS = $(OBJMODS:.\=RELEASE\)
+!endif
+
+!ifndef MASM
+MASM=0
+!endif
+
+.SUFFIXES: .asm .obj
+
+.asm{$(OUTDIR)}.obj:
+    $(ASM) $<
+
+ASMOPT= -c -nologo -coff -D?FLAT=1 -Fl$* -Fo$* -Cp -Sg $(AOPTD) -I$(INC32DIR)
+!if $(MASM)
+ASM=@ml.exe $(ASMOPT)
+!else
+ASM=@jwasm.exe $(ASMOPT)
+!endif
+
+LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL /NODEFAULTLIB
+
+NAME=NTLFNHLP
+LIBNAME=LFNHLPS
+LIBS=
+
+ALL: $(OUTDIR) $(OUTDIR)\$(NAME).DLL ..\DKRNL32\$(OUTDIR)\int21lfn.obj
+
+$(OUTDIR):
+	@mkdir $(OUTDIR)
+
+..\DKRNL32\$(OUTDIR)\int21lfn.obj: int21lfn.asm
+	$(ASM) int21lfn.asm
+
+# put all sections in one physical section to reduce memory load
+
+$(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).lib $(OUTDIR)\$(NAME).obj makefile
+    $(LINKBIN) @<<
+$(LOPTS) $(OUTDIR)\$(NAME).obj $(OUTDIR)\$(LIBNAME).lib $(LIBS)
+$(LOPTD)
+/DEF:$(NAME).DEF /SECTION:.text,ERW /MERGE:.rdata=.text /MERGE:.data=.text /OUT:$*.DLL
+<<
+!if $(DEBUG)==0
+    @copy $*.DLL ..\..\bin\*.* >NUL
+!ifdef DLL32DIR    
+    @copy $*.DLL $(DLL32DIR)\*.*
+!endif
+!endif
+
+$(OUTDIR)\$(LIBNAME).lib: $(OBJMODS)
+	@cd $(OUTDIR)
+    $(LIBBIN) /NOLOGO @<<
+$(SRCMODS:.ASM=.OBJ) /OUT:$(LIBNAME).LIB
+<<
+	@cd ..
+#    copy $(OUTDIR)\$(LIBNAME).lib $(LIBCOFF)\*.*
+
+clean:
+	@del $(OUTDIR)\*.dll
+	@del $(OUTDIR)\*.obj
+	@del $(OUTDIR)\*.lst
+	@del $(OUTDIR)\*.lib

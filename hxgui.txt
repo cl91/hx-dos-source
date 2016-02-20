@@ -217,6 +217,7 @@
 
   8. History
   
+  01/20/2009, V2.15: JWasm used to translate assembly modules.
   03/02/2008, V2.14: -
   01/11/2008, V2.13: WINMM V2.12
   07/15/2007, V2.12: HXGUIHLP V2.3, DSOUND V1.3, WINMM V2.11, SB16 V1.1,
@@ -287,7 +288,7 @@
 
   HXGUI is part of HX DOS extender. This extender is freeware and may be
   used for any purpose. The binaries found in HXGUI can be freely distributed
-  with any application. Copyright Japheth 2005-2008. 
+  with any application. Copyright Japheth 2005-2009. 
   
   The WSOCK32.DLL binary is written with the help of WatTCP/Watt-32. If you
   want to distribute WSOCK32.DLL, please read the copyright regarding WatTCP

@@ -747,15 +747,19 @@ else
         .DATA
 
 externdef stdcall _imp__CharToOemBuffA@12:pfunc@12
+externdef stdcall _imp__CloseClipboard@0:pfunc@0
 externdef stdcall _imp__CreateWindowExA@48:pfunc@48
 externdef stdcall _imp__DefWindowProcA@16:pfunc@16
 externdef stdcall _imp__DestroyCursor@4:pfunc@4
 externdef stdcall _imp__DestroyWindow@4:pfunc@4
 externdef stdcall _imp__DispatchMessageA@4:pfunc@4
+externdef stdcall _imp__EmptyClipboard@0:pfunc@0
+externdef stdcall _imp__EnumClipboardFormats@4:pfunc@4
 externdef stdcall _imp__FillRect@12:pfunc@12
 externdef stdcall _imp__GetActiveWindow@0:pfunc@0
 externdef stdcall _imp__GetAsyncKeyState@4:pfunc@4
 externdef stdcall _imp__GetClientRect@8:pfunc@8
+externdef stdcall _imp__GetClipboardData@4:pfunc@4
 externdef stdcall _imp__GetCursorPos@4:pfunc@4
 externdef stdcall _imp__GetDC@4:pfunc@4
 externdef stdcall _imp__GetFocus@0:pfunc@0
@@ -764,10 +768,12 @@ externdef stdcall _imp__GetMessageA@16:pfunc@16
 externdef stdcall _imp__GetSystemMetrics@4:pfunc@4
 externdef stdcall _imp__GetWindowRect@8:pfunc@8
 externdef stdcall _imp__InvalidateRect@12:pfunc@12
+externdef stdcall _imp__IsClipboardFormatAvailable@4:pfunc@4
 externdef stdcall _imp__KillTimer@8:pfunc@8
 externdef stdcall _imp__LoadCursorA@8:pfunc@8
 externdef stdcall _imp__LoadMenuA@8:pfunc@8
 externdef stdcall _imp__MessageBoxA@16:pfunc@16
+externdef stdcall _imp__OpenClipboard@4:pfunc@4
 externdef stdcall _imp__PostMessageA@16:pfunc@16
 externdef stdcall _imp__PostQuitMessage@4:pfunc@4
 externdef stdcall _imp__PostThreadMessageA@16:pfunc@16
@@ -776,6 +782,7 @@ externdef stdcall _imp__RegisterHotKey@16:pfunc@16
 externdef stdcall _imp__ReleaseDC@8:pfunc@8
 externdef stdcall _imp__SendMessageA@16:pfunc@16
 externdef stdcall _imp__SetActiveWindow@4:pfunc@4
+externdef stdcall _imp__SetClipboardData@8:pfunc@8
 externdef stdcall _imp__SetCursor@4:pfunc@4
 externdef stdcall _imp__SetFocus@4:pfunc@4
 externdef stdcall _imp__SetWindowPos@28:pfunc@28
@@ -786,15 +793,19 @@ externdef stdcall _imp__wsprintfA:cpfunc@8v
 externdef stdcall _imp__wvsprintfA@12:pfunc@12
 
 CharToOemBuffA      equ <_imp__CharToOemBuffA@12>
+CloseClipboard      equ <_imp__CloseClipboard@0>
 CreateWindowExA     equ <_imp__CreateWindowExA@48>
 DefWindowProcA      equ <_imp__DefWindowProcA@16>
 DestroyCursor       equ <_imp__DestroyCursor@4>
 DestroyWindow       equ <_imp__DestroyWindow@4>
 DispatchMessageA    equ <_imp__DispatchMessageA@4>
+EmptyClipboard      equ <_imp__EmptyClipboard@0>
+EnumClipboardFormats equ <_imp__EnumClipboardFormats@4>
 FillRect            equ <_imp__FillRect@12>
 GetActiveWindow     equ <_imp__GetActiveWindow@0>
 GetAsyncKeyState    equ <_imp__GetAsyncKeyState@4>
 GetClientRect       equ <_imp__GetClientRect@8>
+GetClipboardData    equ <_imp__GetClipboardData@4>
 GetCursorPos        equ <_imp__GetCursorPos@4>
 GetDC               equ <_imp__GetDC@4>
 GetFocus            equ <_imp__GetFocus@0>
@@ -803,10 +814,12 @@ GetMessageA         equ <_imp__GetMessageA@16>
 GetSystemMetrics    equ <_imp__GetSystemMetrics@4>
 GetWindowRect       equ <_imp__GetWindowRect@8>
 InvalidateRect      equ <_imp__InvalidateRect@12>
+IsClipboardFormatAvailable equ <_imp__IsClipboardFormatAvailable@4>
 KillTimer           equ <_imp__KillTimer@8>
 LoadCursorA         equ <_imp__LoadCursorA@8>
 LoadMenuA           equ <_imp__LoadMenuA@8>
 MessageBoxA         equ <_imp__MessageBoxA@16>
+OpenClipboard       equ <_imp__OpenClipboard@4>
 PostMessageA        equ <_imp__PostMessageA@16>
 PostQuitMessage     equ <_imp__PostQuitMessage@4>
 PostThreadMessageA  equ <_imp__PostThreadMessageA@16>
@@ -815,6 +828,7 @@ RegisterHotKey      equ <_imp__RegisterHotKey@16>
 ReleaseDC           equ <_imp__ReleaseDC@8>
 SendMessageA        equ <_imp__SendMessageA@16>
 SetActiveWindow     equ <_imp__SetActiveWindow@4>
+SetClipboardData    equ <_imp__SetClipboardData@8>
 SetCursor           equ <_imp__SetCursor@4>
 SetFocus            equ <_imp__SetFocus@4>
 SetWindowPos        equ <_imp__SetWindowPos@28>

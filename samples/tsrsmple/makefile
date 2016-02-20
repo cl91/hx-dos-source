@@ -1,24 +1,31 @@
 
-# this make file generates tsrsmple.exe in MZ file format
-# source is in MASM format and the MS OMF linker is used (link16.exe)
+# this make file generates tsrsmple.exe
+# source is in MASM format
 
-NAME=tsrsmple
-AS=ml -c -Fo$* -I..\..\Include
-LIBS=..\..\libomf
-MODS=$(LIBS)\dmythunk
+NAME=TSRSMPLE
+LIBS=..\..\lib
 OUTDIR=.
 
-# Microsoft linker
-LOPTS=/NOD/MAP/NOE/MAP:FULL/ONE:NOE
-LINK=link16.exe
+!ifndef MASM
+MASM=0
+!endif
 
-# Borland Linker
-#LOPTS=/3 /m
-#LINK=tlink
+!if $(MASM)
+ASM=ml -c -coff -Fo$* -I..\..\Include
+!else
+ASM=jwasm -Fo$* -I..\..\Include
+!endif
+
+LINK=link.exe
 
 $(OUTDIR)\$(NAME).exe: $*.obj Makefile
-    $(LINK) $(LOPTS) $(LIBS)\jmppm32 $* $(MODS),$*,$*,$(LIBS)\jmppm32 $(LIBS)\duser32s;
+    $(LINK) @<<
+$(LOPTS) $*.OBJ /OUT:$*.EXE /MAP:$*.MAP $(LIBS)\duser32s.lib
+/STUB:..\..\Bin\LOADPE.BIN /FileAlign:0x80 /FIXED:NO /STACK:0,0
+/SECTION:.text,ERW /MERGE:.rdata=.text /MERGE:.data=.text /MERGE:.reloc=.text
+<<
+    ..\..\Bin\PatchPE $*.EXE
 
 $(OUTDIR)\$(NAME).obj: $(NAME).asm
-    $(AS) $(NAME).asm
+    $(ASM) $(NAME).asm
 

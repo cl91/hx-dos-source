@@ -1,0 +1,77 @@
+
+# this will create COMCTLS.LIB, an OMF library for emulation of COMCTL32.
+
+# to create enter "nmake /f omf.mak"
+
+# Please note: paths in file "..\dirs" have to be adjusted first!
+
+# to create a debug version use "nmake /f omf.mak debug=1"
+# the debug modules will be located in directory OMFD,
+# which probably has to be created first!
+
+# tools:
+# - JWasm
+# - WLib (Open Watcom)
+
+# if MASM version >= 7.00 is used, option -omf has to be placed
+# behind ml in ASM variable
+
+!include <..\dirs>
+
+!ifndef DEBUG
+DEBUG=0
+!endif
+
+!if $(DEBUG)
+AOPTD=-D_DEBUG
+OUTDIR=OMFD
+!else
+AOPTD=
+OUTDIR=OMF
+!endif
+
+NAME=COMCTLS
+
+SRCMODS = \
+!include modules.inc
+
+OBJNAMES= $(SRCMODS:.ASM=.OBJ)
+OBJMODS = $(OBJNAMES:.\=OMF\)
+
+!ifndef MASM
+MASM=0
+!endif
+
+ASMOPT= -c -nologo -Sg $(AOPTD) -I$(INC32DIR)
+!if $(MASM)
+ASM=@ml.exe $(ASMOPT) -D?FLAT=0 -Fl$* -Fo$*
+!else
+ASM=@jwasm.exe $(ASMOPT) -D?FLAT=0 -Fl$* -Fo$*
+!endif
+
+.SUFFIXES: .asm .obj
+
+.asm{$(OUTDIR)}.obj:
+    $(ASM) $<
+
+ALL: $(OUTDIR) $(OUTDIR)\$(NAME).LIB
+
+$(OUTDIR):
+	mkdir $(OUTDIR)
+
+$(OUTDIR)\$(NAME).LIB: $(OBJMODS) $(OUTDIR)\comctl32.obj
+	@cd $(OUTDIR)
+    @if exist $(NAME).lib del $(NAME).lib
+    wlib -n -q $(NAME).LIB @<<
+$(OBJNAMES:.\=+)
+<<
+	@cd ..
+!if $(DEBUG)==0
+#	copy $*.LIB $(LIBOMF)\*.*
+!endif    
+
+clean:
+    @del $(OUTDIR)\*.obj
+    @del $(OUTDIR)\*.lib
+    @del $(OUTDIR)\*.map
+    @del $(OUTDIR)\*.lst

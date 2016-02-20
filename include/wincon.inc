@@ -228,7 +228,7 @@ WriteConsoleInput			textequ <WriteConsoleInputA>
 WriteConsoleOutput			textequ <WriteConsoleOutputA>
 WriteConsoleOutputCharacter	textequ <WriteConsoleOutputCharacterA>
 
-
+if 0
 @GetStdHandle macro typ
           invoke  GetStdHandle,typ
           endm
@@ -312,6 +312,7 @@ WriteConsoleOutputCharacter	textequ <WriteConsoleOutputCharacterA>
 @SetConsoleCursorPosition macro handle,pos
         invoke SetConsoleCursorPosition,handle,pos
         endm
+endif
 
         include vk.inc
 

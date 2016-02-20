@@ -1,0 +1,163 @@
+
+# nmake makefile to create DKRNL32.DLL
+
+# 2 versions of the binary are created:
+# - RELEASE: old std release version (no longer distributed)
+# - SBEMU: SB emu compatible release version (supplied in HX\Bin)
+# with "nmake debug=1", it's:
+# - DEBUG: old std debug version 
+# - SBEMUD: SB emu compatible debug version
+
+# the format of the object modules is COFF, zero-based flat memory model.
+# to create modules in OMF format see OMF.MAK.
+
+# currently NTLFNHLP modules are linked into DKRNL32 statically.
+
+# two libraries are created as well:
+# - dkrnl32s.lib: static lib, COFF format, all modules included.
+# - dkrnl32.lib: import lib, may be used instead of SDK's kernel32.lib,
+#   but you will get linker errors if any win32 API not emulated is used.
+
+!include <..\dirs>
+
+!ifndef DEBUG
+DEBUG=0
+!endif
+
+NAME=DKRNL32
+LIBNAME=DKRNL32S
+
+!if $(DEBUG)
+AOPTD=-D_DEBUG
+OUTD1=DEBUG
+OUTD2=SBEMUD
+!else
+AOPTD=
+OUTD1=RELEASE
+OUTD2=SBEMU
+!endif
+
+SRCMODS = \
+!include modules.inc
+
+OBJMODS = $(SRCMODS:.ASM=.OBJ)
+!if $(DEBUG)
+OBJMODS = $(OBJMODS:.\=DEBUG\)
+!else
+OBJMODS = $(OBJMODS:.\=RELEASE\)
+!endif
+
+OTHERMODS=.\int21lfn.obj
+
+!ifndef MASM
+MASM=0
+!endif
+
+ASMOPT1= -c -coff -nologo -Sg -D_KERNEL32_=1 $(AOPTD) -I$(INC32DIR) -D?FLAT=1 -Fl$* -Fo$*
+ASMOPT2= -c -coff -nologo -Sg -D_KERNEL32_=1 $(AOPTD) -I$(INC32DIR) -D?FLAT=1 -Fl$* -Fo$* -D?DIRECTDISP=1 
+
+!if $(MASM)
+ASM1=@ml.exe $(ASMOPT1)
+ASM2=@ml.exe $(ASMOPT2)
+!else
+ASM1=@jwasm.exe $(ASMOPT1)
+ASM2=@jwasm.exe $(ASMOPT2)
+!endif
+
+LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL /NODEFAULTLIB
+
+.SUFFIXES: .asm .obj
+
+.asm{$(OUTD1)}.obj:
+    $(ASM1) $<
+
+.asm{$(OUTD2)}.obj:
+    $(ASM2) $<
+
+ALL: $(OUTD1) $(OUTD2) $(OUTD1)\$(NAME).DLL $(OUTD2)\$(NAME).DLL
+
+####################################################################
+
+$(OUTD1):
+	@mkdir $(OUTD1)
+
+$(OUTD1)\$(NAME).DLL: $(OUTD1)\$(LIBNAME).lib $(OUTD1)\$(NAME).obj $(NAME).def
+#    @if exist $*.DLL erase $*.DLL
+#    $(LINKBIN) $(OUTD1)\$(NAME).obj $(OUTD1)\$(LIBNAME).lib $(LOPTS) $(LOPTD) /DEF:$(NAME).def /merge:.BASE=.data /OUT:$*.DLL /BASE:0xBFF00000
+	$(LINKBIN) $(OUTD1)\$(NAME).obj $(OUTD1)\$(LIBNAME).lib $(LOPTS) $(LOPTD) /DEF:$(NAME).def /merge:.BASE=.data /OUT:$*.DLL
+!if $(DEBUG)==0
+# now the SBEMU version is the one copied to HX\Bin
+#    @copy $*.DLL ..\..\bin\*.* >NUL
+#!ifdef DLL32DIR
+#    @copy $*.DLL $(DLL32DIR)\*.* >NUL
+#!endif
+# usually these libs aren't used. Use Win32 KERNEL32.LIB instead    
+#   @copy $*.lib $(LIBCOFF)\*.* >NUL
+#   @copy $(OUTD1)\$(LIBNAME).lib $(LIBCOFF)\*.*
+!endif    
+
+######################################################
+
+OBJMODS2 = $(OUTD2)\thread.obj $(OUTD2)\thread3.obj
+
+$(OUTD2):
+	@mkdir $(OUTD2)
+
+$(OUTD2)\$(NAME).DLL: $(OBJMODS2) $(OUTD2)\$(LIBNAME).lib $(OUTD1)\$(NAME).obj $(NAME).def
+#   @if exist $*.DLL erase $*.DLL
+	$(LINKBIN) @<<
+$(OUTD1)\$(NAME).obj $(OUTD2)\$(LIBNAME).lib
+$(LOPTS) $(LOPTD)
+/DEF:$(NAME).def /merge:.BASE=.data /OUT:$*.DLL
+<<
+!if $(DEBUG)==0
+    @copy $*.DLL ..\..\Bin\*.* >NUL
+!ifdef DLL32DIR
+    @copy $*.DLL $(DLL32DIR)\*.*
+!endif 
+	@copy $*.LIB ..\..\Lib\*.* >NUL
+    @copy $(OUTD2)\$(LIBNAME).lib ..\..\Lib\*.* >NUL
+!endif    
+
+$(OBJMODS2): dkrnl32.inc
+
+######################################################
+
+$(OUTD1)\$(LIBNAME).lib: $(OBJMODS)
+    @cd ..\NTLFNHLP
+    @nmake DEBUG=$(DEBUG)
+    @cd ..\DKRNL32\$(OUTD1)
+    @if exist $(NAME).DLL rename $(NAME).DLL $(NAME).DL_
+    $(LIBBIN) @<<
+$(SRCMODS:.ASM=.OBJ) $(OTHERMODS) /OUT:$(LIBNAME).lib
+<<
+    @if exist $(NAME).DL_ rename $(NAME).DL_ $(NAME).DLL
+	@cd ..
+
+######################################################
+
+$(OUTD2)\$(LIBNAME).lib: $(OUTD1)\$(LIBNAME).lib
+    @cd $(OUTD2)
+    @copy ..\$(OUTD1)\$(LIBNAME).lib .\$(LIBNAME).lib
+    @if exist $(NAME).DLL rename $(NAME).DLL $(NAME).DL_
+    $(LIBBIN) $(LIBNAME).lib /REMOVE:.\thread.obj /REMOVE:.\thread3.obj .\thread.obj .\thread3.obj /OUT:$(LIBNAME).lib
+    @if exist $(NAME).DL_ rename $(NAME).DL_ $(NAME).DLL
+	@cd ..
+
+$(OBJMODS): dkrnl32.inc
+
+$(OUTD1)\$(NAME).obj: version.inc dkrnl32.inc
+
+clean:
+    @del $(OUTD1)\*.obj >NUL
+    @del $(OUTD1)\*.dll >NUL
+    @del $(OUTD1)\*.lib >NUL
+    @del $(OUTD1)\*.map >NUL
+    @del $(OUTD1)\*.lst >NUL
+    @del $(OUTD1)\*.exp >NUL
+    @del $(OUTD2)\*.obj >NUL
+    @del $(OUTD2)\*.dll >NUL
+    @del $(OUTD2)\*.lib >NUL
+    @del $(OUTD2)\*.map >NUL
+    @del $(OUTD2)\*.lst >NUL
+    @del $(OUTD2)\*.exp >NUL

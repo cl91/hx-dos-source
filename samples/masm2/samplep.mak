@@ -19,17 +19,10 @@ LOPTD=
 ASM=poasm.exe
 LINK=polink.exe
 
-ASMOPT= -Fo$* -D?POASM -I..\..\Include $(AOPTD)
-
-# set LIBPATH variable to let linker find the Win32 COFF libraries
-#LIBPATH=\PSDK\Lib
-LIBPATH=..\..\Lib
-
-# patchPE is commented out here because app is a true Win32 app
+ASMOPT= -Fo$* -I..\..\Include $(AOPTD)
 
 $(NAME)P.EXE: $*.obj $*.mak
-    $(LINK) $*.obj /LIBPATH:$(LIBPATH) dkrnl32.lib /OUT:$*.EXE /SUBSYSTEM:CONSOLE /STUB:..\..\bin\dpmist32.bin /FIXED:NO $(LOPTD)
-#   ..\..\bin\patchPE $*.EXE
+    $(LINK) $*.obj ..\..\Lib\dkrnl32.lib /OUT:$*.EXE /SUBSYSTEM:CONSOLE /STUB:..\..\bin\dpmist32.bin /FIXED:NO $(LOPTD)
 
 $(NAME)P.OBJ: $(NAME).asm $*.mak
     $(ASM) $(ASMOPT) $(NAME).asm

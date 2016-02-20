@@ -1,0 +1,92 @@
+
+# this will create DADVAPI.DLL
+# adjust paths in file "..\dirs" first!
+# to create a debug version use "nmake debug=1"
+# output will be in subdir RELEASE or DEBUG, format
+# of object modules is COFF format, true flat
+
+# two libraries are created as well:
+# - dadvapis.lib: static lib, COFF format, all modules included
+# - dadvapi.lib: may be used instead of SDK's advapi32.lib, but you will
+#   get linker errors if any win32 API not emulated is used.
+
+!include <..\dirs>
+
+!ifndef DEBUG
+DEBUG=0
+!endif
+
+!if $(DEBUG)
+AOPTD=-D_DEBUG
+OUTDIR=DEBUG
+!else
+AOPTD=
+OUTDIR=RELEASE
+!endif
+
+SRCMODS = \
+!include modules.inc
+
+OBJMODS = $(SRCMODS:.ASM=.OBJ)
+!if $(DEBUG)
+OBJMODS = $(OBJMODS:.\=DEBUG\)
+!else
+OBJMODS = $(OBJMODS:.\=RELEASE\)
+!endif
+
+!ifndef MASM
+MASM=0
+!endif
+
+ASMOPT= -c -nologo -coff -D?FLAT=1 -Fl$* -Fo$* -Sg $(AOPTD) -D_ADVAPI32_=1 -I$(INC32DIR)
+!if $(MASM)
+ASM=@ml.exe $(ASMOPT) 
+!else
+ASM=@jwasm.exe $(ASMOPT) 
+!endif
+
+LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL /NODEFAULTLIB /LIBPATH:$(LIBCOFF) /OPT:NOWIN98
+
+NAME=DADVAPI
+LIBNAME=DADVAPIS
+LIBS=dkrnl32.lib
+
+.SUFFIXES: .asm .obj
+
+.asm{$(OUTDIR)}.obj:
+    $(ASM) $<
+
+ALL: $(OUTDIR) $(OUTDIR)\$(NAME).DLL
+
+$(OUTDIR):
+	@mkdir $(OUTDIR)
+
+$(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).LIB $(OUTDIR)\$(NAME).obj $(NAME).def
+    $(LINKBIN) @<<
+$(OUTDIR)\$(NAME).obj $(OUTDIR)\$(LIBNAME).LIB $(LIBS)
+$(LOPTS) $(LOPTD)
+/DEF:$(NAME).def /merge:.BASE=.data /OUT:$*.DLL
+<<
+!if $(DEBUG)==0
+    copy $*.DLL ..\..\bin\*.* >NUL
+!ifdef DLL32DIR    
+    copy $*.DLL $(DLL32DIR)\*.*
+!endif    
+    copy $*.LIB $(LIBCOFF)\*.*
+    copy $(OUTDIR)\$(LIBNAME).LIB $(LIBCOFF)\*.*
+!endif    
+
+$(OUTDIR)\$(LIBNAME).lib: $(OBJMODS)
+	@cd $(OUTDIR)
+    $(LIBBIN) @<<
+$(SRCMODS:.ASM=.OBJ) /OUT:$(LIBNAME).lib
+<<
+	@cd ..
+
+clean:
+    @del $(OUTDIR)\*.obj
+    @del $(OUTDIR)\*.dll
+    @del $(OUTDIR)\*.lib
+    @del $(OUTDIR)\*.map
+    @del $(OUTDIR)\*.lst
+    @del $(OUTDIR)\*.exp

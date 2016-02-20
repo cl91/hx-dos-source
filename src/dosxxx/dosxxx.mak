@@ -16,7 +16,7 @@ ALL: $(OUTDIR)\$(NAME).LIB $(OUTDIR)\$(SNAME).LIB
 AFLAGS= -nologo -c -Sg -I..\..\Include -Fl$* -Fo$*
 
 .asm{$(OUTDIR)}.obj:
-    $(AS) $(AFLAGS) $<
+    $(ASM) $(AFLAGS) $<
 
 # create the import library DOSXXX.LIB
 

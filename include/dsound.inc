@@ -12,7 +12,7 @@ ifndef LPLONG
 LPLONG typedef ptr SDWORD
 endif
 
-externdef IID_IDirectSound:byte
+externdef IID_IDirectSound:GUID
 
 DirectSoundCreate proto :ptr, :ptr DWORD, :ptr
 

@@ -56,7 +56,7 @@ $(NAME).exe: $(NAME).bin
     
 $(NAME).bin: $(NAME).o
 	ld -T $(LIBPATH)/djgpp.ld -r -s -Map $(NAME)_.map $(NAME).o $(LIBPATH)/crt0hx.o -lc -lgcc -o $(NAME).bin 
-	../../Bin/ldfix -v $(NAME).bin
+	../../Bin/ldfix $(NAME).bin
 
 $(NAME).o: $(NAME).c makefile
 	gcc.exe -c $(COPT) -o $(NAME).o $(NAME).c

@@ -20,18 +20,19 @@ LOPTDM=
 LOPTDW=
 !endif
 
-CC = cl -c -nologo -Fo$* -I..\..\Include $(COPTD)
+# if vesa32 is linked statically, define _VESA32_ and use vesa32s.lib
+
+CC = cl -c -nologo -D_VESA32_ -Fo$* -I..\..\Include $(COPTD)
 !if $(MSLINK)
-#LIBS= ..\..\lib\vesa32.lib ..\..\lib\libc32s.lib kernel32.lib
-LIBS= ..\..\lib\vesa32.lib
-#LIBS= ..\..\lib\vesa32s.lib
-LOPT=/OUT:$*.exe /SUBSYSTEM:CONSOLE $(LOPTDM) /FIXED:NO /NOLOGO /MAP /NODEFAULTLIB /STUB:..\bin\dpmist32.bin
+#LIBS= ..\..\lib\vesa32.lib
+LIBS= ..\..\lib\vesa32s.lib
+LOPT=/OUT:$*.exe /SUBSYSTEM:CONSOLE $(LOPTDM) /FIXED:NO /NOLOGO /MAP /NODEFAULTLIB /STUB:..\..\bin\loadpe.bin /FileAlign:0x200
 LINK=link
 MODS=$*.obj
 !else
 LOPT=system hx $(LOPTDW) name $*.exe opt map opt start=_mainCRTStartup
 MODS=file $*.obj
-LIBS=library ..\..\lib\vesa32.lib
+LIBS=library ..\..\lib\vesa32s.lib
 LINK=wlink
 !endif
 

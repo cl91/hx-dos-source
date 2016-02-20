@@ -414,9 +414,10 @@ WndProc     PROC    hWin   :DWORD,
     ret
 WndProc     ENDP
 
-start:
+start proc c
     INVOKE  GetModuleHandle, NULL
     INVOKE  WinMain, eax, NULL, NULL, SW_SHOWDEFAULT
     INVOKE  ExitProcess, eax
+start endp
 
 	END start

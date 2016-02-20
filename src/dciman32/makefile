@@ -1,0 +1,88 @@
+
+# this will create WS2_32.DLL
+# adjust paths in file "..\dirs" first!
+# to create a debug version use "nmake debug=1"
+# output will be in subdir RELEASE or DEBUG, format
+# of object modules is COFF format, true flat
+
+!include <..\dirs>
+
+!ifndef DEBUG
+DEBUG=0
+!endif
+
+!if $(DEBUG)
+AOPTD=-D_DEBUG
+OUTDIR=DEBUG
+!else
+AOPTD=
+OUTDIR=RELEASE
+!endif
+
+!ifndef MASM
+MASM=0
+!endif
+
+SRCMODS = \
+!include modules.inc
+
+OBJMODS = $(SRCMODS:.ASM=.OBJ)
+!if $(DEBUG)
+OBJMODS = $(OBJMODS:.\=DEBUG\)
+!else
+OBJMODS = $(OBJMODS:.\=RELEASE\)
+!endif
+
+ASMOPT= -c -coff -nologo -Cp -Sg $(AOPTD) -I$(INC32DIR) -D?FLAT=1 -Fl$* -Fo$* 
+
+!if $(MASM)
+ASM=@ml.exe $(ASMOPT)
+!else
+ASM=@jwasm.exe $(ASMOPT)
+!endif
+
+LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL /ENTRY:DllMain /LIBPATH:$(LIBCOFF)
+
+NAME=DCIMAN32
+LIBNAME=DCIMANS
+LIBS=dkrnl32.lib duser32.lib ..\DDDRAW\RELEASE\DDDRAW.LIB
+
+.SUFFIXES: .asm .obj
+
+.asm{$(OUTDIR)}.obj:
+    $(ASM) $<
+
+ALL: $(OUTDIR) $(OUTDIR)\$(NAME).DLL
+
+$(OUTDIR):
+	@mkdir $(OUTDIR)
+
+$(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).LIB $(OUTDIR)\$(NAME).OBJ $(NAME).DEF
+    $(LINKBIN) @<<
+$(OUTDIR)\$(NAME).OBJ $(OUTDIR)\$(LIBNAME).LIB $(LIBS)
+$(LOPTS) $(LOPTD)
+/DEF:$(NAME).DEF /OUT:$*.DLL
+<<
+!if $(DEBUG)==0
+    @copy $*.DLL ..\..\bin\*.* >NUL
+!ifdef DLL32DIR    
+    @copy $*.DLL $(DLL32DIR)\*.*
+!endif    
+#    copy $*.LIB $(LIBCOFF)\*.*
+#   copy $(OUTDIR)\$(LIBNAME).LIB $(LIBCOFF)\*.*
+!endif    
+
+$(OUTDIR)\$(LIBNAME).LIB: $(OBJMODS)
+	@cd $(OUTDIR)
+    $(LIBBIN) /NOLOGO @<<
+$(SRCMODS:.ASM=.OBJ) /OUT:$(LIBNAME).LIB
+<<
+	@cd ..
+
+clean:
+    @del $(OUTDIR)\*.obj
+    @del $(OUTDIR)\*.dll
+    @del $(OUTDIR)\*.lib
+    @del $(OUTDIR)\*.map
+    @del $(OUTDIR)\*.lst
+    @del $(OUTDIR)\*.exp

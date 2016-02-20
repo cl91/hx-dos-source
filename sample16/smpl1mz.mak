@@ -3,7 +3,7 @@
 #    nmake /f smpl1mz.mak
 # created binary will be in simple DOS MZ format
 
-# MS masm and MS OMF linker (renamed to link16.exe) are used
+# JWasm/Masm and MS OMF linker (renamed to link16.exe) are used
 # optionally one may use Open Watcom WASM and WLINK
 
 USEMASM=1
@@ -12,7 +12,8 @@ NAME=SMPL1MZ
 
 !if $(USEMASM)
 
-AS=ml -Zi -c -Sg -Fo$* -I..\include
+#AS=ml -Zi -c -Sg -Fo$* -I..\include
+AS=jwasm -Zi -c -Sg -Fo$* -I..\include
 LINK=link16.exe
 LIBS= 
 LOPTS=/NOD/NOE/NON/MAP:FULL/ONERROR:NOEXE/STACK:1024/CO

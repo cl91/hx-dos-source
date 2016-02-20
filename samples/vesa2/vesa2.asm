@@ -440,7 +440,13 @@ endif
 main    ENDP
 
 mainCRTStartup proc c
+ifdef _VESA32_
+	call	VesaInit
+endif
     invoke  main
+ifdef _VESA32_
+	call	VesaExit
+endif
     mov     ax,4c00h
     int     21h
 mainCRTStartup endp

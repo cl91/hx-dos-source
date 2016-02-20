@@ -361,7 +361,7 @@ dwLowDateTime  dd ?
 dwHighDateTime dd ?
 FILETIME ends
 
-WIN32_FIND_DATAA struct
+WIN32_FIND_DATAA struct 4
 dwFileAttributes dd ?
 ftCreationTime	 FILETIME <?,?>
 ftLastAccessTime FILETIME <?,?>
@@ -520,6 +520,196 @@ PF_RDTSC_INSTRUCTION_AVAILABLE      equ 8
 PF_PAE_ENABLED                      equ 9   
 PF_XMMI64_INSTRUCTIONS_AVAILABLE    equ 10   
 
+;--- COMM API
+
+PST_UNSPECIFIED		EQU	00000000h
+PST_RS232			EQU	00000001h
+PST_PARALLELPORT	EQU	00000002h
+PST_RS422			EQU	00000003h
+PST_RS423			EQU	00000004h
+PST_RS449			EQU	00000005h
+PST_MODEM			EQU	00000006h
+PST_FAX				EQU	00000021h
+PST_SCANNER			EQU	00000022h
+PST_NETWORK_BRIDGE	EQU	00000100h
+PST_LAT				EQU	00000101h
+PST_TCPIP_TELNET	EQU	00000102h
+PST_X25				EQU	00000103h
+
+;--- COMSTAT is used by ClearCommError())
+
+;--- MASM record bits are from high to low!
+
+COMSTAT_R0	RECORD	fReserved:25,fTxim:1,fEof:1,fXoffSent:1,fXoffHold:1,fRlsdHold:1,fDsrHold:1,fCtsHold:1
+
+COMSTAT	struct 
+r0  		COMSTAT_R0 <>
+cbInQue		DWORD	?
+cbOutQue	DWORD	?
+COMSTAT	ends
+
+;--- communication errors (returned by ClearCommError())
+
+CE_RXOVER	EQU	0001h
+CE_OVERRUN	EQU	0002h
+CE_RXPARITY	EQU	0004h
+CE_FRAME	EQU	0008h
+CE_BREAK	EQU	0010h
+CE_TXFULL	EQU	0100h
+CE_PTO		EQU	0200h
+CE_IOE		EQU	0400h
+CE_DNS		EQU	0800h
+CE_OOP		EQU	1000h
+CE_MODE		EQU	8000h
+
+DCB_R0	RECORD fDummy2:17,fAbortOnError:1,fRtsControl:2,fNull:1,fErrorChar:1,fInX:1,fOutX:1,fTXContinueOnXoff:1,fDsrSensitivity:1,fDtrControl:2,fOutxDsrFlow:1,fOutxCtsFlow:1,fParity:1,fBinary:1
+
+DCB	struct 
+DCBlength	DWORD	?	;+0
+BaudRate	DWORD	?	;+4
+r0			DCB_R0 <>	;+8
+wReserved	WORD	?	;+12
+XonLim		WORD	?	;+14
+XoffLim		WORD	?	;+16
+ByteSize	BYTE	?	;+18
+Parity		BYTE	?	;+19
+StopBits	BYTE	?	;+20
+XonChar		SBYTE	?	;+21
+XoffChar	SBYTE	?	;+22
+ErrorChar	SBYTE	?	;+23
+EofChar		SBYTE	?	;+24
+EvtChar		SBYTE	?	;+25
+wReserved1	WORD	?	;+26
+DCB	ends
+
+;--- BaudRate values
+
+CBR_110		EQU	110
+CBR_300		EQU	300
+CBR_600		EQU	600
+CBR_1200	EQU	1200
+CBR_2400	EQU	2400
+CBR_4800	EQU	4800
+CBR_9600	EQU	9600
+CBR_14400	EQU	14400
+CBR_19200	EQU	19200
+CBR_38400	EQU	38400
+CBR_56000	EQU	56000
+CBR_57600	EQU	57600
+CBR_115200	EQU	115200
+CBR_128000	EQU	128000
+CBR_256000	EQU	256000
+
+;--- values for fRtsControl
+
+RTS_CONTROL_DISABLE		EQU	00h
+RTS_CONTROL_ENABLE		EQU	01h
+RTS_CONTROL_HANDSHAKE	EQU	02h
+RTS_CONTROL_TOGGLE		EQU	03h
+
+;--- values for fDtrControl
+
+DTR_CONTROL_DISABLE		EQU	00h
+DTR_CONTROL_ENABLE		EQU	01h
+DTR_CONTROL_HANDSHAKE	EQU	02h
+
+;--- values for Parity
+
+NOPARITY	EQU	0
+ODDPARITY	EQU	1
+EVENPARITY	EQU	2
+MARKPARITY	EQU	3
+SPACEPARITY	EQU	4
+
+;--- values for StopBits
+
+ONESTOPBIT		EQU	0
+ONE5STOPBITS	EQU	1
+TWOSTOPBITS		EQU	2
+
+COMMTIMEOUTS	struct 
+ReadIntervalTimeout			DWORD	?
+ReadTotalTimeoutMultiplier	DWORD	?
+ReadTotalTimeoutConstant	DWORD	?
+WriteTotalTimeoutMultiplier	DWORD	?
+WriteTotalTimeoutConstant	DWORD	?
+COMMTIMEOUTS	ends
+
+COMMCONFIG	struct 4
+dwSize				DWORD	?
+wVersion			WORD	?
+wReserved			WORD	?
+dcb					DCB	<>
+dwProviderSubType	DWORD	?
+dwProviderOffset	DWORD	?
+dwProviderSize		DWORD	?
+wcProviderData		WORD 1 dup (?)
+COMMCONFIG	ends
+
+COMMPROP	struct 4
+wPacketLength		WORD	?
+wPacketVersion		WORD	?
+dwServiceMask		DWORD	?
+dwReserved1			DWORD	?
+dwMaxTxQueue		DWORD	?
+dwMaxRxQueue		DWORD	?
+dwMaxBaud			DWORD	?
+dwProvSubType		DWORD	?
+dwProvCapabilities	DWORD	?
+dwSettableParams	DWORD	?
+dwSettableBaud		DWORD	?
+wSettableData		WORD	?
+wSettableStopParity	WORD	?
+dwCurrentTxQueue	DWORD	?
+dwCurrentRxQueue	DWORD	?
+dwProvSpec1			DWORD	?
+dwProvSpec2			DWORD	?
+wcProvChar			WORD 1 dup (?)
+COMMPROP	ends
+
+;--- dwServiceMask values
+
+SP_SERIALCOMM	EQU	00000001h
+
+;--- dwMaxBaud values
+
+BAUD_115200	EQU	00020000h
+
+;--- dwProvCapabilities values
+
+PCF_DTRDSR			EQU	0001h
+PCF_RTSCTS			EQU	0002h
+PCF_RLSD			EQU	0004h
+PCF_PARITY_CHECK	EQU	0008h
+PCF_XONXOFF			EQU	0010h
+PCF_SETXCHAR		EQU	0020h
+PCF_TOTALTIMEOUTS	EQU	0040h
+PCF_INTTIMEOUTS		EQU	0080h
+PCF_SPECIALCHARS	EQU	0100h
+PCF_16BITMODE		EQU	0200h
+
+;--- dwSettableParams values
+
+SP_PARITY		EQU	0001h
+SP_BAUD			EQU	0002h
+SP_DATABITS		EQU	0004h
+SP_STOPBITS		EQU	0008h
+SP_HANDSHAKING	EQU	0010h
+SP_PARITY_CHECK	EQU	0020h
+SP_RLSD			EQU	0040h
+
+;--- wSettableStopParity values
+
+STOPBITS_10	EQU	0001h
+STOPBITS_15	EQU	0002h
+STOPBITS_20	EQU	0004h
+
+PARITY_NONE		EQU	0100h
+PARITY_ODD		EQU	0200h
+PARITY_EVEN		EQU	0400h
+PARITY_MARK		EQU	0800h
+PARITY_SPACE	EQU	1000h
+
 		.CODE
 
 ifdef _KERNEL32_
@@ -531,6 +721,41 @@ elseif ?FLAT
 else
 ?INDCALL_ = 0
 endif
+
+;--- values for EscapeCommFunction
+
+SETXOFF		EQU	1
+SETXON		EQU	2
+SETRTS		EQU	3
+CLRRTS		EQU	4
+SETDTR		EQU	5
+CLRDTR		EQU	6
+RESETDEV	EQU	7
+SETBREAK	EQU	8
+CLRBREAK	EQU	9
+
+;--- values for WaitCommEvent, GetCommMask, SetCommMask
+
+EV_RXCHAR	EQU	0001h
+EV_RXFLAG	EQU	0002h
+EV_TXEMPTY	EQU	0004h
+EV_CTS		EQU	0008h
+EV_DSR		EQU	0010h
+EV_RLSD		EQU	0020h
+EV_BREAK	EQU	0040h
+EV_ERR		EQU	0080h
+EV_RING		EQU	0100h
+EV_PERR		EQU	0200h
+EV_RX80FULL	EQU	0400h
+EV_EVENT1	EQU	0800h
+EV_EVENT2	EQU	1000h
+
+;--- values for PurgeComm flags parameter
+
+PURGE_TXABORT	EQU	0001h
+PURGE_RXABORT	EQU	0002h
+PURGE_TXCLEAR	EQU	0004h
+PURGE_RXCLEAR	EQU	0008h
 
 	include winerror.inc
 
@@ -551,7 +776,7 @@ CreateFileA 			proto near stdcall x1:dword,x2:dword,x3:dword,x4:dword,x5:dword,x
 CreateFileMappingA		proto near stdcall a1:dword,a2:dword,a3:dword,a4:dword,a5:dword,a6:ptr BYTE
 CreateMutexA			proto near stdcall :dword, :dword, :ptr BYTE
 CreateMutexW			proto near stdcall :dword, :dword, :ptr WORD
-CreateProcessA			proto near stdcall :ptr BYTE, :ptr BYTE, :dword, :dword, :dword, :dword, :ptr , :ptr BYTE, :ptr STARTUPINFO, :ptr PROCESS_INFORMATION
+CreateProcessA			proto near stdcall :ptr BYTE, :ptr BYTE, :dword, :dword, :dword, :dword, :ptr , :ptr BYTE, :ptr STARTUPINFOA, :ptr PROCESS_INFORMATION
 CreateSemaphoreA		proto near stdcall a1:dword,a2:dword,a3:dword,a4:dword
 CreateThread			proto near stdcall x1:dword,x2:dword,x3:dword,x4:dword,x5:dword,x6:dword
 CreateWaitableTimerA	proto near stdcall :dword, :dword, :ptr BYTE
@@ -639,6 +864,7 @@ GetVersionExA			proto near stdcall :ptr OSVERSIONINFO
 GlobalAlloc 			proto near stdcall :dword, :dword
 GlobalFree	 			proto near stdcall :dword
 GlobalMemoryStatus		proto near stdcall :ptr MEMORYSTATUS
+GlobalSize	 			proto near stdcall :dword
 HeapAlloc				proto near stdcall :dword, :dword, :dword
 HeapCreate				proto near stdcall :dword, :dword, :dword
 HeapDestroy 			proto near stdcall :dword
@@ -665,6 +891,7 @@ LocalFree				proto near stdcall :dword
 MapViewOfFile	 		proto near stdcall :dword, :dword, :dword, :dword, :dword
 MapViewOfFileEx	 		proto near stdcall :dword, :dword, :dword, :dword, :dword, :ptr
 MoveFileA 				proto near stdcall :ptr BYTE, :ptr BYTE
+MoveFileExA 			proto near stdcall :ptr BYTE, :ptr BYTE, :dword
 MultiByteToWideChar		proto near stdcall :DWORD, :DWORD, :ptr BYTE, :DWORD, :ptr WORD, :DWORD
 OpenEventA				proto near stdcall :dword, :dword, :ptr BYTE
 OpenFile		 		proto near stdcall :ptr byte, :ptr OFSTRUCT, :dword
@@ -847,8 +1074,11 @@ externdef stdcall  _imp__GetVersion@0				:pfunc@0
 externdef stdcall  _imp__GetVersionExA@4			:pfunc@4
 externdef stdcall  _imp__GlobalAlloc@8				:pfunc@8
 externdef stdcall  _imp__GlobalFree@4				:pfunc@4
+externdef stdcall  _imp__GlobalLock@4				:pfunc@4
 externdef stdcall  _imp__GlobalMemoryStatus@4		:pfunc@4
 externdef stdcall  _imp__GlobalReAlloc@12			:pfunc@12
+externdef stdcall  _imp__GlobalSize@4				:pfunc@4
+externdef stdcall  _imp__GlobalUnlock@4				:pfunc@4
 externdef stdcall  _imp__HeapAlloc@12				:pfunc@12
 externdef stdcall  _imp__HeapCreate@12				:pfunc@12
 externdef stdcall  _imp__HeapDestroy@4				:pfunc@4
@@ -1045,8 +1275,11 @@ GetVersion				equ <_imp__GetVersion@0>
 GetVersionExA			equ <_imp__GetVersionExA@4>
 GlobalAlloc 			equ <_imp__GlobalAlloc@8>
 GlobalFree	 			equ <_imp__GlobalFree@4>
+GlobalLock	 			equ <_imp__GlobalLock@4>
 GlobalMemoryStatus		equ <_imp__GlobalMemoryStatus@4>
 GlobalReAlloc 			equ <_imp__GlobalReAlloc@12>
+GlobalSize	 			equ <_imp__GlobalSize@4>
+GlobalUnlock			equ <_imp__GlobalUnlock@4>
 HeapAlloc				equ <_imp__HeapAlloc@12>
 HeapCreate				equ <_imp__HeapCreate@12>
 HeapDestroy 			equ <_imp__HeapDestroy@4>

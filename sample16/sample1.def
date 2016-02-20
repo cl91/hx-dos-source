@@ -4,8 +4,13 @@ NAME  Sample1
 PROTMODE
 
 ;--- Borland's 16STUB.EXE must be included if TD.EXE ist to be used
-;STUB 'd:\bc4\bin\16stub.exe'
+;STUB '\bc4\bin\16stub.exe'
+;--- HX's standard stub, size 512 bytes.
 STUB '..\bin\DPMIST16.BIN'
+;--- HX's NE loader stub, size 12 kB.
+;STUB '..\bin\DPMILD16.BIN'
+;--- HX's full dos extender, size 48 kb.
+;STUB '..\bin\HDLD16.BIN'
 
 CODE    LOADONCALL MOVEABLE DISCARDABLE
 DATA    LOADONCALL MOVEABLE MULTIPLE

@@ -20,7 +20,6 @@
     variable, which usually is set in CONFIG.SYS or AUTOEXEC.BAT.
     Or copy the files from C:\HX\BIN to a directory included in PATH.
 
-
   3. Requirements
 
   - CPU: the DPMI hosts HDPMI16 and HDPMI32, the PE loader DPMILD32 and
@@ -57,7 +56,7 @@
 
   5. Hints / Known Problems
 
-  þ if HX doesn't run at all, please read TEST\README1.TXT. It contains
+  þ if HX doesn't run at all, please read TEST\README1.TXT. It describes
     a strategy how to - hopefully - find the reason for the failure.
 
   þ some programs may require that environment variable TZ has been set.
@@ -67,7 +66,7 @@
 
   þ to allow nested execution of Win32 applications it may be necessary
     to set environment variables HDPMI=32 *and* DPMILDR=8. Fore more details
-    on this subject please read Doc\Compat.txt.
+    about this issue please read Doc\Compat.txt.
 
   þ if a program imports a dll located in the windows system directory
     avoid to include this directoy to the PATH environment variable.
@@ -111,6 +110,14 @@
     load a program. Use TEST\DPMI.EXE to find out if a host offers
     the functions required by HX (being able to alloc linear memory at
     0x400000 is needed to load "fixed" Win32 binaries).
+
+  þ DPMILD32 allocates the application's stack as committed memory. This is
+    different to Win32, which usually just commits a - small - part of the
+    stack space and then let it grow dynamically. Most applications just
+    use a stack space of 1 MB, which usually is no problem, but some compilers
+    set it to 16 or even 32 MB. HX's PE loader DPMILD32 can be instructed to
+    limit the amount the stack space for an application to 128 kB. See
+    description of environment variable switch DPMILDR=4096 in DPMILD32.TXT.
 
   þ The implementation of Win32 pipes requires SHARE to be loaded. Since
     there exists no working SHARE for FAT32 pipes often may not work. Few  
@@ -160,6 +167,10 @@
   þ VESA32.DLL: helper dll for VESA support in protected mode. View Vesa32.txt
     for more details.
 
+  þ HXVDD.DLL: a Win32 VDD (Virtual Device Driver). Implements support for
+    Windows clipboard when running in a NT/2K/XP DOS box. Not needed for
+    plain DOS.
+
   b. Binaries for 16-Bit applications:
 
   þ HDPMI16.EXE: DPMI server for 16 bit clients.
@@ -182,8 +193,13 @@
 
   7. History
 
-  06/18/2008, V2.14a:DKRNL32 V3.2a
-  03/02/2008, V2.14: HDPMI V3.15, DPMILD32 V3.5, DKRNL32 V3.2
+  01/20/2009, V2.15: HDPMI V3.16, DPMILD32 V3.6, DKRNL32 V3.3
+                     DADVAPI V2.9, DUSER32 V2.12, DGDI32 V1.12,
+                     OLE32 V1.8, OLEAUT32 V1.7, DDDRAW V2.8, VESA32 V1.12,
+                     HXLdr32 V1.11, PESTUB V2.9.
+                     All modules assembled with JWasm now.
+                     File HXVDD.DLL added.
+  03/02/2008, V2.14: HDPMI V3.15, DPMILD32 V3.5, DKRNL32 V3.2,
                      DUSER32 V2.11, DGDI32 V1.11, VESA32 V1.11.
   01/11/2008, V2.13: HDPMI V3.14, DPMILD32 V3.4, DKRNL32 V3.1,
                      DADVAPI V2.8, DUSER32 V2.10, DGDI32 V1.10,
@@ -349,7 +365,7 @@
   8. Copyright
 
   The HX DOS extender runtime is freeware and may be used for any purpose.
-  Copyright Japheth 1996-2008. The HX runtime can be freely distributed
+  Copyright Japheth 1996-2009. The HX runtime can be freely distributed
   with any application.
 
   Japheth   (Web: http://www.japheth.de, Email: mail@japheth.de)

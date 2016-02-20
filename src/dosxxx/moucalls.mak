@@ -23,5 +23,5 @@ $(LIBS),
     cd ..
 
 $(OUTDIR)\$(NAME).obj: $(NAME).asm
-    ml -c -nologo -Fl$* -Fo$* $(NAME).asm
+    jwasm.exe -c -nologo -Fl$* -Fo$* $(NAME).asm
 

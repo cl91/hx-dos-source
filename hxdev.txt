@@ -30,11 +30,12 @@
                        Compiler + Linker may
    Name                run under HX as well
    -----------------------------------------------
-   MASM, TASM, WASM       yes
-   PoASM                  yes
-   FASM                   yes
-   NASM, YASM (Win32)     yes
-   LZASM (Win32)          yes
+   JWasm, Masm, PoAsm     yes
+   Fasm                   yes
+   Nasm, Yasm (Win32)     yes
+   Wasm                   yes
+   Tasm                   yes
+   LZAsm (Win32)          yes
    Visual C++ (MS)        yes
    Borland C++            yes
    Digital Mars C++       yes
@@ -244,6 +245,8 @@
 
  9. History
 
+  01/20/2009, V2.15: All samples for Masm changed to use JWasm instead of
+                     Masm. Masm can be used optionally.
   03/02/2008, V2.14: Added stubs LOADPE.BIN/LOADPEX.BIN.
                      Removed several libraries for segmented memory model
                      in OMF format: static Win32 emulation and libc32.
@@ -333,7 +336,7 @@
 
  10. Copyright
 
-  The HX DOS extender is freeware. Copyright Japheth 1996-2008. HX can be 
+  The HX DOS extender is freeware. Copyright Japheth 1996-2009. HX can be 
   used for any purpose. The HX development package can be freely distributed
   for non-commercial purposes.
 

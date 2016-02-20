@@ -157,6 +157,9 @@ SetVesaPaletteEntries	proto stdcall dwStart:dword, dwCount:dword, pEntries:ptr
 VesaMouseInit           proto stdcall
 VesaMouseExit           proto stdcall
 
+VesaInit proto stdcall	;init vesa (must be called if statically linked)
+VesaExit proto stdcall	;exit vesa (must be called if statically linked)
+
 else
 
         .DATA

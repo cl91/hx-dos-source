@@ -22,7 +22,7 @@ $(LIBS),
     cd ..
 
 $(OUTDIR)\$(NAME).obj: $(NAME).asm
-    ml -c -Fl$* -Fo$* $(NAME).asm
+    jwasm.exe -c -Fl$* -Fo$* $(NAME).asm
 
 clean:
 

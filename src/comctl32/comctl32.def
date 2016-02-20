@@ -1,0 +1,9 @@
+
+LIBRARY COMCTL32
+
+EXPORTS
+
+ GetEffectiveClientRect @4
+ CreateStatusWindowA    @6
+ InitCommonControls	    @17
+ PropertySheetA    	    @58

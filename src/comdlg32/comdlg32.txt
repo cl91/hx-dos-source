@@ -1,0 +1,26 @@
+
+ 1. About
+ 
+ COMDLG32 currently is a dummy dll. 
+ 
+
+ 2. Supported Functions
+
+  Name                     Dummy
+ ----------------------------------
+
+ 3. History
+
+ 2006/12/29:  V1.1
+ 
+   - PrintDlgA added (dummy)
+    
+ 2005/10/10:  V1.0
+ 
+ 4. Copyright
+ 
+ COMDLG32 is freeware.
+ 
+ Japheth
+
+ 

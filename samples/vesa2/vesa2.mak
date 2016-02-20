@@ -22,16 +22,24 @@ LOPTDM=
 LOPTDW=
 !endif
 
-ASM = ml -c -coff -nologo -Fo$* -D?FLAT=1 -I..\..\Include $(AOPTD)
+!ifndef MASM
+MASM=0
+!endif
+
+!if $(MASM)
+ASM = ml -c -coff -nologo -Fo$* -D_VESA32_ -D?FLAT=1 -I..\..\Include $(AOPTD)
+!else
+ASM = jwasm -q -Fo$* -D_VESA32_ -D?FLAT=1 -I..\..\Include $(AOPTD)
+!endif
 
 !if $(MSLINK)
 #LIBS= ..\..\lib\vesa32.lib
 LIBS= ..\..\lib\vesa32s.lib
-LOPT=/OUT:$*.EXE /SUBSYSTEM:CONSOLE $(LOPTDM) /FIXED:NO /MAP /NOLOGO /STUB:..\..\bin\dpmist32.bin
+LOPT=/OUT:$*.EXE /SUBSYSTEM:CONSOLE $(LOPTDM) /FIXED:NO /MAP /NOLOGO /STUB:..\..\bin\loadpe.bin /FileAlign:0x100
 MODS=$*.obj
 LINK=link 
 !else
-LOPT=system hx $(LOPTDW) name $*.exe opt map opt start=_mainCRTStartup
+LOPT=system hxdos $(LOPTDW) name $*.exe opt map opt start=_mainCRTStartup
 MODS=file $*.obj
 LIBS=library ..\..\lib\vesa32s.lib
 LINK=wlink

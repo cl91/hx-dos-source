@@ -4,44 +4,35 @@ ifndef CStr
 ;--- CStr() define a string in .CONST
 ;--- or in .CONST$2 if .CONST is the current section
 
-CStr macro y:req, name
-local sym,xxx
-xxx	textequ @CurSeg
-ifidni xxx,<CONST>
-CONST$2 segment para public 'CONST'
+CStr macro string:req, name
+local sym
+
+ifidni @CurSeg,<CONST>
+CONST$2 segment dword public 'CONST'
 else
- if @Model
-	.const
- else
-CONST segment dword public 'CONST'
- endif
+ifdef CONST
+CONST   segment
+else
+CONST   segment dword public 'CONST'
 endif
+endif
+
 ifnb <name>
-  ifidni <y>,<"">
+  ifidni <string>,<"">
     name db 0
   else
-    name db y,0
+    name db string,0
   endif
 else
-  ifidni <y>,<"">
+  ifidni <string>,<"">
     sym db 0
   else
-    sym db y,0
+    sym db string,0
   endif
 endif
-ifidni xxx,<CONST>
-CONST$2 ends
-else
- if @Model
-   ifidni xxx,<_TEXT>
-     .code
-   else
-     .data
-   endif
- else
-CONST ends
- endif
-endif
+
+@CurSeg ends
+
 ifnb <name>
 	exitm <offset name>
 else
@@ -74,30 +65,27 @@ endif
 
 endif	;L()
 
-;--- CStrW defines a wide string in .CONST
+;--- CStrW defines a wide string in CONST (or CONST$2)
 ;--- returns a pointer to that string
 
 CStrW	macro y:req
-local sym,xxx
+local sym
 
-xxx	textequ @CurSeg
-ifidni xxx,<CONST>
-CONST$2 segment para public 'CONST'
+ifidni @CurSeg,<CONST>
+CONST$2 segment dword public 'CONST'
 else
-	.const
+ifdef CONST
+CONST   segment
+else
+CONST   segment dword public 'CONST'
 endif
+endif
+
 	align 2
+    
 sym dw y
 
-ifidni xxx,<CONST>
-CONST$2 ends
-else
- ifidni xxx,<_TEXT>
-	.code
- else
-	.data
- endif
-endif
+@CurSeg ends
 
 	exitm <offset sym>
 	endm

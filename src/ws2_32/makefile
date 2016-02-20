@@ -1,0 +1,65 @@
+
+# nmake makefile. this will create WS2_32.DLL
+# adjust paths in file "..\dirs" first!
+# to create a debug version use "nmake debug=1"
+# output will be in subdir RELEASE or DEBUG, format
+# of object modules is COFF format, true flat
+
+!include <..\dirs>
+
+!ifndef DEBUG
+DEBUG=0
+!endif
+
+!if $(DEBUG)
+AOPTD=-D_DEBUG
+OUTDIR=DEBUG
+!else
+AOPTD=
+OUTDIR=RELEASE
+!endif
+
+!ifndef MASM
+MASM=0
+!endif
+
+ASMOPT= -c -coff -nologo -Sg $(AOPTD) -I$(INC32DIR) -D?FLAT=1 -Fl$* -Fo$* 
+!if $(MASM)
+ASM=@ml.exe $(ASMOPT)
+!else
+ASM=@jwasm.exe $(ASMOPT)
+!endif
+
+LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL /ENTRY:DllMain /LIBPATH:$(LIBCOFF)
+
+NAME=WS2_32
+LIBS=dkrnl32.lib
+
+.SUFFIXES: .asm .obj
+
+.asm{$(OUTDIR)}.obj:
+    $(ASM) $<
+
+ALL: $(OUTDIR) $(OUTDIR)\$(NAME).DLL
+
+$(OUTDIR):
+	@mkdir $(OUTDIR)
+
+$(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(NAME).OBJ $(NAME).DEF Makefile
+    $(LINKBIN) @<<
+$(OUTDIR)\$(NAME).OBJ $(LIBS)
+$(LOPTS) $(LOPTD)
+/DEF:$(NAME).def /OUT:$*.DLL
+<<
+!if $(DEBUG)==0
+    copy $*.DLL ..\..\bin\*.* >NUL
+!ifdef DLL32DIR
+    copy $*.DLL $(DLL32DIR)\*.*
+!endif    
+!endif    
+
+clean:
+	@del $(OUTDIR)\*.obj
+	@del $(OUTDIR)\*.lib
+	@del $(OUTDIR)\*.dll
+	@del $(OUTDIR)\*.lst
