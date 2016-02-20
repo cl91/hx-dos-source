@@ -1,0 +1,30 @@
+# this file should be added to BINW\wlsystem.lnk
+system begin hx16
+    option osname='HX 16-bit NE format (DPMI)'
+    library dosxxxs.lib
+    library kernel16.lib
+    library os2.lib
+    libfile cstrt16x.obj
+    libpath %WATCOM%/lib286
+    libpath %WATCOM%/lib286/os2
+    op stub=dpmist16.exe, protmode
+    seg type CODE loadoncall
+    seg type DATA loadoncall
+    format os2 ^
+end
+system begin hx16dm
+    option osname='HX 16-bit NE format (OS/2)'
+    library os2.lib
+    libpath %WATCOM%/lib286
+    libpath %WATCOM%/lib286/os2
+    op stub=dpmist16.exe
+    format os2 ^
+end
+system begin hx16mz
+    option osname='HX 16-bit MZ format'
+    libfile jmppm16w.obj
+    library dosxxxs.lib
+    libpath %WATCOM%/lib286
+    libpath %WATCOM%/lib286/os2
+    format DOS ^
+end

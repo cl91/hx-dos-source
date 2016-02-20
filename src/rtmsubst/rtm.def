@@ -1,0 +1,27 @@
+
+LIBRARY RTM
+
+EXETYPE WINDOWS
+
+CODE LOADONCALL FIXED
+DATA LOADONCALL MOVEABLE
+
+EXPORTS
+ WEP                        @1  RESIDENTNAME
+ MEMALLOCATEBLOCK           @5
+ MEMFREEBLOCK               @6
+ MEMRESIZEBLOCK             @7
+ MEMGETBLOCKSIZE            @20
+ MEMQUERYFREEMEM            @21
+; dummy33                    @33 NONAME
+; dummy34                    @34 NONAME
+ InitSwapping               @35
+ DoneSwapping               @36
+; dummy47                    @47 NONAME
+; dummy49                    @49 NONAME
+; dummy50                    @50 NONAME
+; dummy51                    @51 NONAME
+; dummy52                    @52 NONAME
+ MEMINITSWAPFILE            @58
+ MEMCLOSESWAPFILE           @92
+; RTMGETVERSION              @17152

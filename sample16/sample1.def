@@ -1,0 +1,15 @@
+
+NAME  Sample1
+
+PROTMODE
+
+;--- Borland's 16STUB.EXE must be included if TD.EXE ist to be used
+;STUB 'd:\bc4\bin\16stub.exe'
+STUB '..\bin\DPMIST16.BIN'
+
+CODE    LOADONCALL MOVEABLE DISCARDABLE
+DATA    LOADONCALL MOVEABLE MULTIPLE
+
+STACKSIZE   4096
+HEAPSIZE    1024
+

@@ -1,0 +1,24 @@
+
+LIBRARY USER
+
+EXETYPE WINDOWS
+
+CODE LOADONCALL FIXED
+DATA LOADONCALL MOVEABLE
+
+EXPORTS
+ MESSAGEBOX                 @1
+ INITAPP                    @5
+ WEP                        @8  RESIDENTNAME
+ GETTICKCOUNT               @13
+ GETCURSORPOS               @17
+ WINDOWFROMPOINT            @30
+ SETCURSORPOS               @70
+ LOADSTRING                 @176
+ GETSYSTEMMETRICS           @179
+ ENUMTASKWINDOWS            @225
+ GETDESKTOPWINDOW           @286
+ _WSPRINTF                  @420
+ LSTRCMP                    @430
+ ANSIUPPER                  @431
+ ANSILOWER                  @432
