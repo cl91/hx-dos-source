@@ -18,6 +18,10 @@ endif
 
 		.code
 
+;--- ConvertWStr modifies ESP!!!
+;--- It can only be used by PROCs without USES phrase!
+;--- argument: wide string ptr in EAX
+
 ConvertWStr proc public
 		and eax, eax
 		jz exit

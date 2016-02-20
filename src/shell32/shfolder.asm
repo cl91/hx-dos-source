@@ -16,6 +16,19 @@ SE_ERR_NOASSOC	equ 31
 
 	.CODE
 
+SHCreateDirectoryExW proc public hwnd:ptr, path:ptr WORD, security:ptr
+	invoke CreateDirectoryW, path, security
+	.if ( eax )
+		mov eax, S_OK
+	.else
+		invoke GetLastError
+		;todo: translate error code in return code
+		mov eax, ERROR_FILE_EXISTS
+	.endif
+	@strace <"SHCreateDirectoryExW(", hwnd, ", ", path, ", ", security, ")=", eax>
+	ret
+SHCreateDirectoryExW endp
+
 SHGetSpecialFolderLocation proc public hwndOwner:dword, nFolder:dword, ppidl:ptr DWORD
 
 local	dwEsp:dword

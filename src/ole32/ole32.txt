@@ -17,6 +17,7 @@
   CLSIDFromString
   CoCreateGuid             Y
   CoCreateInstance
+  CoGetClassObject
   CoGetMalloc
   CoInitialize             Y
   CoInitializeEx           Y
@@ -34,6 +35,12 @@
 
 
  3. History
+
+ 05/27/2011: V1.10
+
+ þ StringFromGUID2 did always return S_OK (=0).
+ þ stubs CreateItemMoniker + GetRunningObjectTable added.
+ þ CoGetClassObject added
 
  11/16/2009: V1.9
  

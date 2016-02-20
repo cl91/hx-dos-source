@@ -7,7 +7,7 @@
 ifndef ?LFN
 ?LFN            = 1     ;1, 1=support LFN
   if ?32BIT
-?LFNNT                  = 0
+?LFNNT          = 0
   endif
 endif
 
@@ -53,9 +53,9 @@ else
 endif
 
 if ?DEBUG
-_TRACE_ 		= 1     
+_TRACE_ 		= 1
 else
-_TRACE_			= 0		
+_TRACE_			= 0
 endif
 
 HBSEM_NOOPENFILEBOX	equ 80h	;high byte of wErrMode (=SEM_NOOPENFILEBOX)
@@ -113,10 +113,10 @@ RC_FATAL   equ 0FFh	;FatalExit/FatalAppExit called (16bit only)
 
 ;********** publics/externals **********
 
-_DATA   segment
+_DATA segment
 externdef	wLdrDS:word
 externdef	wTDStk:word
-externdef   starttaskstk:byte
+externdef	starttaskstk:byte
 externdef	wMDSta:word
 externdef	wLastRC:word
 externdef	bEnvFlgs:byte
@@ -124,9 +124,9 @@ externdef	bEnvFlgs2:byte
 externdef	fCmdLOpt:byte
 externdef	wEnvFlgs:word
 externdef	wErrMode:word
-externdef   szPath:byte
-externdef   segtable:byte
-externdef   fMode:byte
+externdef	szPath:byte
+externdef	segtable:byte
+externdef	fMode:byte
 externdef	wLdrPSP:word
 externdef	wCurPSP:word
 externdef	fLoadMod:byte
@@ -136,9 +136,9 @@ externdef	dStktop:dword
 else
 externdef	wStktop:word
 endif
-_DATA	ends
+_DATA ends
 
-_TEXT	segment
+_TEXT segment
 SearchNEExport	proto near
 checkne			proto near
 strlen			proto near
@@ -164,13 +164,13 @@ endif
 externdef Segment2ModuleFirst:near
 externdef GetProcAddress16:near
 CallAllLibEntries proto near
-FreeLib16 proto near
-CreateAlias proto near
-CopyDescriptor proto near
-stroutBX proto near
-InitDlls proto near
+FreeLib16       proto near
+CreateAlias     proto near
+CopyDescriptor  proto near
+stroutBX        proto near
+InitDlls        proto near
 externdef stroutstk_err:near
-_TEXT	ends
+_TEXT ends
 
 ;********** constants and structures ***********
 
@@ -233,9 +233,11 @@ PF_MULTIPLE	equ 02h		;bits 0+1: 10 multiple DGROUPs
 
 ;--- application flags
 
-;						;bits 0-2: 000=fullscreen
-						;001=windows aware
-						;010=uses windows API
+;--- bits 0-2:
+;--- 000=fullscreen
+;--- 001=windows aware
+;--- 010=uses windows API
+
 ;AF_WINAPI	equ 02h
 
 ;AF_FAMILY	equ 08h		;bit 3: OS2: family app; Win16: self-loading
@@ -371,139 +373,139 @@ CCONST   ends
 
 @strout macro String,bIsDefined
 	@pushString <String>, bIsDefined
-    call stroutstk
-    endm
+	call stroutstk
+	endm
 
 ;--- display string in BX
 
 @stroutbx macro
-    call stroutBX
+	call stroutBX
 	endm
 
 ;--- display an error (string as constant or in BX)
 
 @strout_err macro String,bIsDefined
 	ifnb <String>
-    	@pushString <String>,bIsDefined
-        call stroutstk_err
-    else
-        call strout_err
-    endif
-    endm
+		@pushString <String>,bIsDefined
+		call stroutstk_err
+	else
+		call strout_err
+	endif
+	endm
 
 ;--- display a new line
 
-@cr_out	macro
+@cr_out macro
 	call _mycrout		;;std routine doesnt work with 32bit stack
 	endm
 
 
-@swap   macro   x,y
-        push    x
-        push    y
-        pop     x
-        pop     y
-        endm
+@swap macro x,y
+	push x
+	push y
+	pop x
+	pop y
+	endm
 
 ;--- @saveregs, @restoreregs
 
 @saveregs_exec macro
 if ?32BIT
-        push    gs
-        push    es
-        push    ds
-        pushad
+	push gs
+	push es
+	push ds
+	pushad
 ?SIZE_SAVEREGS equ 8*4+3*2
 else
-        push    es
-        push    ds
-        pusha
-?SIZE_SAVEREGS equ 8*2+2*2        
+	push es
+	push ds
+	pusha
+?SIZE_SAVEREGS equ 8*2+2*2
 endif
-        endm
+	endm
 
 @restoreregs_exec macro
 if ?32BIT
-        popad           ;get register from application stack
-        pop     ds
-        pop     es
-        pop     gs
+	popad	;get register from application stack
+	pop ds
+	pop es
+	pop gs
 else
-        popa
-        pop     ds
-        pop     es
+	popa
+	pop ds
+	pop es
 endif
-        endm
+	endm
 
 ;--- @iret, @retf, @pusha, @popa
 
-@iret	macro        
+@iret macro
 if ?32BIT
-		iretd
+	iretd
 else
-		iret
+	iret
 endif
-		endm
+	endm
 
-@retf	macro
+@retf macro
 if ?32BIT
-		db		66h
+	db 66h
 endif
-		retf
-        endm
-        
-@pusha	macro
-if ?32BIT
-		pushad
-else
-		pusha
-endif
-		endm
+	retf
+	endm
 
-@popa	macro
+@pusha macro
 if ?32BIT
-		popad
+	pushad
 else
-		popa
+	pusha
 endif
-		endm
+	endm
+
+@popa macro
+if ?32BIT
+	popad
+else
+	popa
+endif
+	endm
 
 ;-------------------------
 
 @entercriticalsection macro
 if 1
-		mov		ax,0900h
-        int		31h
-        push	ax
+	mov ax,0900h
+	int 31h
+	push ax
 else
-		push	bp
-		mov 	bp,sp
-		push	ax
-		in		al,21h
-		push	ax
-		mov 	al,0FFh
-		out 	21h,al
-		mov 	ax,[bp-2]
+	push bp
+	mov bp,sp
+	push ax
+	in al,21h
+	push ax
+	mov al,0FFh
+	out 21h,al
+	mov ax,[bp-2]
 endif
-		endm
+	endm
 
 @exitcriticalsection macro
 local l1
 if 1
-;		pop 	bx
-;		test	bh,2
-;		jz		l1
-;		sti
-        mov		cx,ax
-		pop		ax
-        int		31h
-        mov		ax,cx
+;	pop bx
+;	test bh,2
+;	jz l1
+;	sti
+	mov cx,ax
+	pop ax
+	int 31h
+	mov ax,cx
 l1:
 else
-		mov 	[bp-2],ax
-		pop 	ax
-		out 	21h,al
-		pop 	ax
+	mov [bp-2],ax
+	pop ax
+	out 21h,al
+	pop ax
 endif
-		endm
+	endm
 

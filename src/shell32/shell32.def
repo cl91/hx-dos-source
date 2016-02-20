@@ -12,6 +12,7 @@ EXPORTS
   ExtractIconExA
   FindExecutableA
   SHBrowseForFolderA
+  SHCreateDirectoryExW
   SHFileOperationA
   SHGetDesktopFolder
   SHGetFileInfoA

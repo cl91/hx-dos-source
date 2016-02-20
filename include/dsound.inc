@@ -97,7 +97,7 @@ z	REAL4	?
 D3DVECTOR	ends
 endif
 
-DS3DBUFFER	struct 
+DS3DBUFFER	struct
 dwSize				DWORD		?
 vPosition			D3DVECTOR	<>
 vVelocity			D3DVECTOR	<>
@@ -113,42 +113,49 @@ DS3DBUFFER	ends
 LPDS3DBUFFER typedef ptr DS3DBUFFER
 
 DSOBJVFT struct
-pQueryInterface         dd ?  ; REFIID riid, LPVOID FAR * ppvObj
-pAddRef                 dd ?  ;
-pRelease                dd ?  ;
+pQueryInterface 		dd ?  ; REFIID riid, LPVOID FAR * ppvObj
+pAddRef 				dd ?  ;
+pRelease				dd ?  ;
 pCreateSoundBuffer		dd ?  ; :LPCDSBUFFERDESC, :ptr LPDIRECTSOUNDBUFFER, :LPUNKNOWN
-pGetCaps    			dd ?  ; :LPDSCAPS
-pDuplicateSoundBuffer   dd ?  ; :LPDIRECTSOUNDBUFFER, :ptr LPDIRECTSOUNDBUFFER
+pGetCaps				dd ?  ; :LPDSCAPS
+pDuplicateSoundBuffer	dd ?  ; :LPDIRECTSOUNDBUFFER, :ptr LPDIRECTSOUNDBUFFER
 pSetCooperativeLevel	dd ?  ; :HWND, :DWORD
-pCompact   				dd ?  ;
-pGetSpeakerConfig   	dd ?  ; :LPDWORD
-pSetSpeakerConfig   	dd ?  ; :DWORD
+pCompact				dd ?  ;
+pGetSpeakerConfig		dd ?  ; :LPDWORD
+pSetSpeakerConfig		dd ?  ; :DWORD
 pInitialize				dd ?  ; :LPCGUID
 DSOBJVFT ends
 
 DSBUFFERVFT struct
-pQueryInterface         dd ?  ; :REFIID, :LPVOID
-pAddRef                 dd ?
-pRelease                dd ?
+pQueryInterface 		dd ?  ; :REFIID, :LPVOID
+pAddRef 				dd ?
+pRelease				dd ?
 pGetCaps				dd ?  ; :LPDSBCAPS
 pGetCurrentPosition 	dd ?  ; :LPDWORD, :LPDWORD
 pGetFormat  			dd ?  ; :LPWAVEFORMATEX, :DWORD, :LPDWORD
 pGetVolume  			dd ?  ; :LPLONG
 pGetPan 				dd ?  ; :LPLONG
 pGetFrequency   		dd ?  ; :LPDWORD
-pGetStatus     			dd ?  ; :LPDWORD
-pInitialize   			dd ?  ; :LPDIRECTSOUND, :LPCDSBUFFERDESC
-pLock           		dd ?  ; :DWORD, :DWORD, :ptr LPVOID, :LPDWORD, :ptr LPVOID, :LPDWORD, :DWORD
-pPlay                	dd ?  ; :DWORD, :DWORD, :DWORD
+pGetStatus				dd ?  ; :LPDWORD
+pInitialize 			dd ?  ; :LPDIRECTSOUND, :LPCDSBUFFERDESC
+pLock					dd ?  ; :DWORD, :DWORD, :ptr LPVOID, :LPDWORD, :ptr LPVOID, :LPDWORD, :DWORD
+pPlay					dd ?  ; :DWORD, :DWORD, :DWORD
 pSetCurrentPosition 	dd ?  ; :DWORD
-pSetFormat    			dd ?  ; :LPCWAVEFORMATEX
-pSetVolume    			dd ?  ; :SDWORD
-pSetPan         		dd ?  ; :SDWORD
-pSetFrequency   		dd ?  ; :DWORD
-pStop      				dd ?  ;
-pUnlock         		dd ?  ; :LPVOID, :DWORD, :LPVOID, :DWORD
-pRestore        		dd ?  ;
+pSetFormat				dd ?  ; :LPCWAVEFORMATEX
+pSetVolume				dd ?  ; :SDWORD
+pSetPan 				dd ?  ; :SDWORD
+pSetFrequency			dd ?  ; :DWORD
+pStop					dd ?  ;
+pUnlock 				dd ?  ; :LPVOID, :DWORD, :LPVOID, :DWORD
+pRestore				dd ?  ;
 DSBUFFERVFT ends
+
+DSNOTIFYVFT struct
+pQueryInterface 		dd ?  ; :REFIID, :LPVOID
+pAddRef 				dd ?
+pRelease				dd ?
+pSetNotificationPositions dd ?  ; :DWORD, :LPCDSBPOSITIONNOTIFY
+DSNOTIFYVFT ends
 
 _FACDS	EQU	878h
 

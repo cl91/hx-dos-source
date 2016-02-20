@@ -76,6 +76,8 @@
 
   4. History
 
+  08/11/2011, V2.17: in v2.16, directory DUSER32\RES was missing.
+                     JWlink is used exclusively, MS link no longer used.
   11/16/2009, V2.16: Source for VERSION.DLL added.
                      Required set of tools to make the HX binaries reduced:
                      Linkers: MS link (COFF) and (J)WLink (OMF) are used.
@@ -144,6 +146,6 @@
 
   5. License
 
-  The HX DOS extender is freeware. Copyright 1996-2009 Japheth.
+  The HX DOS extender is freeware. Copyright 1996-2010 Japheth.
 
   Japheth ( http://www.japheth.de )

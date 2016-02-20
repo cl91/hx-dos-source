@@ -69,7 +69,7 @@ exit:
 		pop	CX
 		pop	BX
 		pop	BP
-		retf	0Ch
+		retf 0Ch
 DOSXXX	ends
 
 	end

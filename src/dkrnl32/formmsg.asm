@@ -1,4 +1,6 @@
 
+;--- implements FormatMessageA
+
 	.386
 if ?FLAT
 	.MODEL FLAT, stdcall
@@ -284,7 +286,7 @@ nocopy:
 			.if (ecx && !(ebx & FORMAT_MESSAGE_ARGUMENT_ARRAY))
 				mov ecx,[ecx]  ;correct?
 			.endif
-			movzx edx, byte ptr dwFlags
+			movzx edx, bl
 			invoke FormatString, edi, eax, ecx, bFSIsWide, ?MAXSIZE, bIsWide, edx
 		.endif
 	.else
@@ -294,6 +296,13 @@ copyMsgId:
 		add edi, 7
 		mov eax, dwMessageId
 		call __dw2aX
+		movzx edx, bl
+		.if ( edx && edx != FORMAT_MESSAGE_MAX_WIDTH_MASK )
+			mov al,10
+			stosb
+		.endif
+		mov al,0
+		stosb
 		pop edi
 	.endif
 	invoke lstrlen, edi
@@ -301,7 +310,7 @@ copyMsgId:
 	mov edi, lpBuffer
 	mov ecx, nSize
 	test ebx, FORMAT_MESSAGE_ALLOCATE_BUFFER
-	jz	@F
+	jz @F
 	inc eax
 	mov ebx, eax
 	invoke LocalAlloc, LMEM_FIXED or LMEM_ZEROINIT, eax

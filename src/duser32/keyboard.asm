@@ -12,11 +12,14 @@
 ;--- MapVirtualKeyExA
 ;--- VkKeyScanExA
 ;--- VkKeyScanA
+;--- OemKeyScan
 ;--- GetKeyboardLayout
 ;--- LoadKeyboardLayoutA
 ;--- GetKeyboardLayoutNameA
 ;--- GetKeyboardLayoutList
 ;--- GetKeyNameTextA
+
+
 
 	.386
 if ?FLAT
@@ -216,7 +219,7 @@ SetKeyboardState proc public pKeyState:ptr
 
 SetKeyboardState endp
 
-GetKeyboardType	proc public nTypeFlag:dword
+GetKeyboardType proc public nTypeFlag:dword
 
 	mov ecx, nTypeFlag
 	.if (ecx == 0)
@@ -230,7 +233,7 @@ GetKeyboardType	proc public nTypeFlag:dword
 	ret
 	align 4
 
-GetKeyboardType	endp
+GetKeyboardType endp
 
 ;--- the 256-byte KeyState array isn't used currently!
 ;--- once it is used TranslateMessage has to be changed accordingly!
@@ -297,15 +300,22 @@ ToUnicode endp
 ;--- type 1: uCode = scan code, out = virtual key code
 ;--- type 2: uCode = virtual key code, out = ascii code
 
-MapVirtualKeyA proc public uCode:DWORD, uMapType:DWORD
+MapVirtualKeyA proc public uses edi uCode:DWORD, uMapType:DWORD
 
 	xor eax, eax
 	mov ecx, uMapType
 	.if (ecx == 0)
 ;--- uCode is a virtual key code, out is scan code
-		@strace <"MapVirtualKeyA: MapType==0 not supported yet">
+		mov eax, uCode
+		mov ecx, 256
+		mov edi, offset vktable
+		repnz scasb
+		jnz error
+		dec edi
+		sub edi, offset vktable
+		mov eax, edi
 	.elseif (ecx == 1)
-;--- uCode is a scan code to be translated into a virtual key code        
+;--- uCode is a scan code to be translated into a virtual key code
 		invoke _GetKeyTable
 		xor eax, eax
 		mov ecx, uCode
@@ -330,7 +340,6 @@ MapVirtualKeyA proc public uCode:DWORD, uMapType:DWORD
 		.elseif ((eax >= 'A') && (eax <= 'Z'))
 			;
 		.else
-			push edi
 			mov ecx, 60h
 			mov edi, offset vktable
 			repnz scasb
@@ -342,12 +351,14 @@ MapVirtualKeyA proc public uCode:DWORD, uMapType:DWORD
 			.else
 				xor eax, eax
 			.endif
-			pop edi
 		.endif
 	.endif
 exit:
 	@strace <"MapVirtualKeyA(", uCode, ", ", uMapType, ")=", eax>
 	ret
+error:
+	xor eax,eax
+	jmp exit
 	align 4
 
 MapVirtualKeyA endp
@@ -373,6 +384,10 @@ VkKeyScanExA proc public ch_:dword, dwhkl:dword
 
 VkKeyScanExA endp
 
+;--- returns a WORD value:
+;--- low byte: VK code
+;--- high byte: shift state
+
 VkKeyScanA proc public ch_:dword
 
 	movzx eax, byte ptr ch_
@@ -381,6 +396,23 @@ VkKeyScanA proc public ch_:dword
 	align 4
 
 VkKeyScanA endp
+
+;--- returns a DWORD value:
+;--- low word: OEM scan code
+;--- high word: shift state
+
+OemKeyScan proc public wOemChar:word
+
+	movzx eax, wOemChar
+	invoke MapVirtualKeyA, eax, 0
+	.if ( !eax )	;no translation?
+		dec eax		;then return -1!
+	.endif
+	@strace <"OemKeyScanA(", wOemChar, ")=", eax>
+	ret
+	align 4
+
+OemKeyScan endp
 
 GetKeyboardLayout proc public idThread:DWORD
 

@@ -122,3 +122,4 @@ EXPORTS
  SetSecurityDescriptorDacl
  SetThreadToken
  StartServiceA
+ SystemFunction036

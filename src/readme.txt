@@ -3,31 +3,32 @@ List of HX main parts, their size and tools required to build the binary:
 
          lines     total  asm/c  linker  lib   rc
 ----------------------------------------------------
-HDPMI    25000            m/jw   jwlink  wlib
-DPMILDR  13500            m/jw   wlink
-STUBS     1000            jw     -
-DKRNL32  35000            m/jw   mslink  wlib
-DADVAPI   2000            m/jw   mslink  wlib
-DGDI      8000            m/jw   mslink  wlib
-DUSER32   9000            m/jw   mslink  wlib  wrc
-DDDRAW    3600            m/jw   mslink  wlib
-OLE32      600            m/jw   mslink  wlib
-OLEAUT32   600            m/jw   mslink  wlib
-VESA32    3000            m/jw   mslink  wlib
-HXLDR32    950            jw     wlink
-PESTUB     900    103150  m/jw   wlink
-
-HXGUIHLP  1000            m/jw   mslink
-DINPUT    1500            m/jw   mslink  wlib
-DSOUND    1200            m/jw   mslink  wlib
-SB16      1500            m/jw   mslink  wlib
-SHELL32    500            m/jw   mslink  wlib
-WINMM     2600            m/jw   mslink  wlib
-WSOCK32   1050      9350  wcc386 wlink
-
-MZSUPP    1150            m/jw   -       wlib
-PATCHPE    300            jw     -
-PATCHNE    500            jw     -
-HXHELP    6900      8850  m/jw   wlink
+HDPMI    25000            jwasm  jwlink  wlib
+DPMILDR  13500            jwasm  jwlink
+STUBS     1000            jwasm  -
+DKRNL32  35000            jwasm  jwlink  wlib
+DADVAPI   2000            jwasm  jwlink  wlib
+DGDI      8000            jwasm  jwlink  wlib
+DUSER32   9000            jwasm  jwlink  wlib  wrc
+DDDRAW    3600            jwasm  jwlink  wlib
+OLE32      600            jwasm  jwlink  wlib
+OLEAUT32   600            jwasm  jwlink  wlib
+VESA32    3000            jwasm  jwlink  wlib
+HXLDR32    950            jwasm  jwlink
+PESTUB     900            jwasm  jwlink
+                  103150
+HXGUIHLP  1000            jwasm  jwlink
+DINPUT    1500            jwasm  jwlink  wlib
+DSOUND    1200            jwasm  jwlink  wlib
+SB16      1500            jwasm  jwlink  wlib
+SHELL32    500            jwasm  jwlink  wlib
+WINMM     2600            jwasm  jwlink  wlib
+WSOCK32   1050            wcc386 jwlink
+                    9350
+MZSUPP    1150            jwasm  -       wlib
+PATCHPE    300            jwasm  -
+PATCHNE    500            jwasm  -
+HXHELP    6900            jwasm  jwlink
+                    8850
 ----------------------------------------------------
                   121350

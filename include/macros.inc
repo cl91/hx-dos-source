@@ -4,49 +4,20 @@ ifndef CStr
 ;--- CStr() define a string in .CONST
 ;--- or in .CONST$2 if .CONST is the current section
 
-CStr macro y:req, name
-local sym,xxx
-xxx textequ @CurSeg
-ifidni xxx,<CONST>
+CStr macro text:VARARG
+local sym
+ifidni @CurSeg,<CONST>
 CONST$2 segment dword public 'CONST'
 else
- if @Model
-	.const
- else
 CONST segment dword public 'CONST'
- endif
 endif
-ifnb <name>
-  ifidni <y>,<"">
-    name db 0
+  ifidni <text>,<"">
+	sym db 0
   else
-    name db y,0
+	sym db text,0
   endif
-else
-  ifidni <y>,<"">
-    sym db 0
-  else
-    sym db y,0
-  endif
-endif
-ifidni xxx,<CONST>
-CONST$2 ends
-else
- if @Model
-   ifidni xxx,<_TEXT>
-     .code
-   else
-     .data
-   endif
- else
-CONST ends
- endif
-endif
-ifnb <name>
-	exitm <offset name>
-else
+@CurSeg ends
 	exitm <offset sym>
-endif
 	endm
 
 endif
@@ -56,37 +27,31 @@ ifndef L
 ;---- L() defines a wide string
 ;---- usage: StringName dw L(stringvalue)
 
-ifndef __POASM__
 L macro y:req
 local x
-x		textequ <>
-		forc chr$,<y>
-x		CatStr x,<'&chr$'>,<,>
-		endm
-x		CatStr x,<0>
-		exitm <x>
-		endm
-else
-L macro y:req
-		exitm <y>
-        endm
-endif
+x	textequ <>
+	forc chr$,<y>
+x	CatStr x,<'&chr$'>,<,>
+	endm
+x	CatStr x,<0>
+	exitm <x>
+	endm
 
-endif	;L()
+endif
 
 ;--- CStrW defines a wide string in CONST (or CONST$2)
 ;--- returns a pointer to that string
 
-CStrW	macro y:req
+CStrW macro y:req
 local sym
 
 ifidni @CurSeg,<CONST>
 CONST$2 segment dword public 'CONST'
 else
 ifdef CONST
-CONST   segment
+CONST segment
 else
-CONST   segment dword public 'CONST'
+CONST segment dword public 'CONST'
 endif
 endif
 
@@ -113,6 +78,7 @@ local ?bytes
 	mov reg,esp
 	push ?bytes+4
 	endm
+
 sreload macro reg:req,index		;reload address of stack items
 ifnb <index>
 	mov reg,esp
@@ -124,6 +90,7 @@ else
 	lea reg,[esp+4]
 endif
 	endm
+
 sfree macro
 	add esp,[esp]
 	endm
@@ -154,25 +121,25 @@ endif	;return
 
 ;--- simple macro for a 3 byte move, used i.e.: @mov ecx, 3
 
-@mov	macro x, y
+@mov macro x, y
 	push y
 	pop x
 	endm
 
 vf macro pThis, interface, function
 	mov edx, pThis
-    ifb <interface>
-       mov edx,[edx].IUnknown.lpVtbl
-       exitm <[edx].IUnknownVtbl.&function, pThis>
-    else
-       mov edx, [edx].&interface.lpVtbl
-       exitm <[edx].&interface&Vtbl.&function, pThis>
-    endif
-    endm
+	ifb <interface>
+	   mov edx,[edx].IUnknown.lpVtbl
+	   exitm <[edx].IUnknownVtbl.&function, pThis>
+	else
+	   mov edx, [edx].&interface.lpVtbl
+	   exitm <[edx].&interface&Vtbl.&function, pThis>
+	endif
+	endm
 
 ;--- simple string output if wsprintf is not available
 
-@trace	macro x
+@trace macro x
 local y, defConst
 ifdef _DEBUG
 	defConst = 1
@@ -192,12 +159,12 @@ ifdef _DEBUG
 			int 41h
 		else
 			invoke OutputDebugStringA, offset y
-        endif        
+		endif
 	else
 		ifndef OutputDebugStringA
 			mov esi, x
-	        mov ax, 0002
-    	    int 41h
+			mov ax, 0002
+			int 41h
 		else
 			invoke OutputDebugStringA, x
 		endif        
@@ -208,7 +175,7 @@ endif
 
 ;--- same for wide chars (OutputDebugStringW doesnt work for win9x)
 
-@tracew	macro x
+@tracew macro x
 ifdef _DEBUG
 OutputDebugStringW proto stdcall :ptr WORD
 	defConst = 1
@@ -232,9 +199,9 @@ endif
 
 ;--- simple number output if wsprintf is not available
 
-@tracedw	macro x
+@tracedw macro x
 ifdef _DEBUG
-__dw2aDebug	proto stdcall
+__dw2aDebug proto stdcall
 	pushad
 	mov eax, x
 	call __dw2aDebug
@@ -244,27 +211,27 @@ endif
 
 ;--- display a string with given size
 
-@traceN	macro x, cnt
+@traceN macro x, cnt
 ifdef _DEBUG
 	pushad
-    mov ebx, esp
-    mov ecx, cnt
-    sub esp, ecx
-    push 0
-    and esp,-4
-    mov esi, x
-    mov edi, esp
-    rep movsb
-    mov [edi],cl
+	mov ebx, esp
+	mov ecx, cnt
+	sub esp, ecx
+	push 0
+	and esp,-4
+	mov esi, x
+	mov edi, esp
+	rep movsb
+	mov [edi],cl
 	invoke OutputDebugString, esp
-    mov esp,ebx
-    popad
+	mov esp,ebx
+	popad
 endif
 	endm
 
 ;--- displays EIP + a string
 
-@traceX	macro x
+@traceX macro x
 ifdef _DEBUG
 	@tracedw [ebp+4]
 	@trace <": ">
@@ -274,22 +241,22 @@ endif
 
 ;--- display items of different type in a line
 
-@strace	macro x
+@strace macro x
 local _y_
 ifdef _DEBUG
 	for operand,<x>
-        _y_ SubStr <operand>,1,1
-    	ifidn _y_,<&>
-            @trace @SubStr(<operand>,2)
-        else
+		_y_ SubStr <operand>,1,1
+		ifidn _y_,<&>
+			@trace @SubStr(<operand>,2)
+		else
 			if (OPATTR(operand)) and 10010y
 				@tracedw operand
-	        else
+			else
 				@trace operand
 			endif
 		endif
 	endm
-    @trace <13,10>
+	@trace <13,10>
 endif
 	endm
 
@@ -297,31 +264,31 @@ endif
 
 @noints macro
 if 0
-       	pushfd
-        cli
+	pushfd
+	cli
 else
-		push eax
-		mov ax,0900h
-        int 31h
-        xchg eax,[esp]
+	push eax
+	mov ax,0900h
+	int 31h
+	xchg eax,[esp]
 endif
-        endm
+	endm
 
 ;--- restore previous state of VIF after being disabled by @noints
 
 @restoreints macro
 local nochange
 if 0
-		xchg eax, [esp]
-        test ah,2
-   	    jz nochange
-        sti
+	xchg eax, [esp]
+	test ah,2
+	jz nochange
+	sti
 else
-		xchg eax, [esp]
-        and al,al
-        jz nochange
-        int 31h
+	xchg eax, [esp]
+	and al,al
+	jz nochange
+	int 31h
 endif
 nochange:
-        pop eax
-		endm
+	pop eax
+	endm

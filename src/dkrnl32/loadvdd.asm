@@ -13,7 +13,7 @@ endif
 	include winbase.inc
 	include dkrnl32.inc
 	include macros.inc
-    include isvbop.inc
+	include isvbop.inc
 
 HXVDD equ 1
 

@@ -65,7 +65,7 @@ FreeEnvironmentStringsW endp
 ExpandEnvironmentStringsW proc public lpSrc:ptr WORD, lpDest:ptr WORD, nSize:DWORD
 
 	mov eax,lpSrc
-	invoke	ConvertWStr
+	invoke ConvertWStr
 	mov ecx, nSize
 	shl ecx, 1
 	sub esp, ecx

@@ -2,7 +2,7 @@
 # nmake makefile to create PESTUB.EXE
 # tools used:
 # - JWasm
-# - WLink
+# - JWlink
 
 name = PESTUB
 
@@ -47,7 +47,7 @@ ASM = @jwasm.exe $(ASMOPT)
 !endif
 
 LIBS=$(LIBOMF)\jmppm32.lib $(LIBOMF)\dkrnl32s.lib $(LIBOMF)\libc32.lib
-LINK=wlink.exe
+LINK=jwlink.exe
 MODS=$*.obj $(LIBOMF)\jmppm32.obj
 
 !else
@@ -64,6 +64,7 @@ ASM = @ml.exe $(ASMOPT2)
 !else
 ASM = @jwasm.exe $(ASMOPT2)
 !endif
+MSLINK=0
 
 !if $(USEDLL)
 CRTLIB=$(LIBCOFF)\crtdll.lib
@@ -95,8 +96,11 @@ lib {$(LIBS)}
 !else
 
 $(OUTDIR)\$(name).EXE: $*.obj makefile
-#	@$(LINKBIN) $* $(LIBS) $(LOPT)
-	@jwlink sys nt file $* lib { $(LIBS) } op q, stub=..\..\bin\dpmist32.bin
+!if $(MSLINK)
+	@link $* $(LIBS) $(LOPT)
+!else
+	@$(LINKBIN) format win pe file $* lib { $(LIBS) } op q, stub=..\..\bin\dpmist32.bin, map=$*
+!endif
 !if $(DEBUG)==0
 	@copy $*.EXE ..\..\bin\*.* >NUL
 !ifdef TOOLSDIR

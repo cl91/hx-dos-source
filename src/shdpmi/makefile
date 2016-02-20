@@ -20,6 +20,7 @@ OUTDIR=RELEASE
 !ifndef MASM
 MASM=0
 !endif
+MSLINK=0
 
 ASMOPT1= -c -coff -nologo -Sg -Fl$* -Fo$* -D?FLAT=1 -D_KERNEL32_ -D_USER32_ -I$(INC32DIR)
 
@@ -39,10 +40,14 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).EXE: $*.obj Makefile
-	@$(LINKBIN) @<<
+!if $(MSLINK)
+	@link @<<
 /NOLOGO /SUBSYSTEM:CONSOLE $*.obj $(LOPTS) /OUT:$*.EXE /MAP:$*.MAP $(LIBS)
 <<
-	@..\..\Bin\PatchPE $*.EXE
+!else
+	@$(LINKBIN) format win pe hx ru console f $*.obj lib {$(LIBS)} op q, map=$*, STUB=..\..\Bin\LOADPE.BIN 
+!endif
+#	@..\..\Bin\PatchPE $*.EXE
 !if $(DEBUG)==0
 	@copy $*.EXE ..\..\Bin\*.* >NUL
 !endif    
@@ -62,7 +67,7 @@ ASR=@jwasm.exe $(ASMOPT2)
 
 ASMOPT2= -c -nologo -Sg -Fl$* -Fo$* 
 LOPTSR=sys DOS
-LINKR=$(OWDIR)\BINW\wlink.exe op q $(LOPTSR) file $*.obj name $*.EXE op map=$*.MAP
+LINKR=jwlink.exe op q $(LOPTSR) file $*.obj name $*.EXE op map=$*.MAP
 
 $(OUTDIR)\$(NAME)R.EXE: $*.obj Makefile
 	@$(LINKR)

@@ -1,25 +1,24 @@
 
-        .386
+	.386
 if ?FLAT
-        .MODEL FLAT, stdcall
+	.MODEL FLAT, stdcall
 else
-        .MODEL SMALL, stdcall
+	.MODEL SMALL, stdcall
 endif
-		option casemap:none
-        option proc:private
+	option casemap:none
+	option proc:private
 
-        include winbase.inc
+	include winbase.inc
 
-        .CODE
+	.CODE
 
 _lclose proc public handle:dword
 
-        invoke  CloseHandle,handle
-		cmp		eax, 1
-		sbb		eax, eax
-        ret
+	invoke CloseHandle,handle
+	cmp eax, 1
+	sbb eax, eax
+	ret
 _lclose endp
 
-
-        end
+	end
 

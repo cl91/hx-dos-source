@@ -13,11 +13,11 @@
 # OWDIR:  Open Watcom installation directory. Required for WSOCK32
 
 # MAKE:      MS NMake compatible make utility (default NMake)
-# ASM:       Masm v6 compatible assembler (default JWasm)
-# LINKBIN:   32-bit COFF linker (default MS Link)
+# ASM:       Masm-compatible assembler (default JWasm)
+# LINKBIN:   32-bit COFF linker (default JWlink)
 # LIBBIN:    32-bit COFF librarian (default OW WLib)
 # RCBIN:     32-bit COFF resource compiler (default OW WRC)
-# LINK16BIN: OMF linker (default OW WLink)
+# LINK16BIN: OMF linker (default JWlink)
 # LIB16BIN:  OMF librarian (default OW WLib)
 
 # optional:
@@ -29,15 +29,16 @@ LIBOMF=..\..\LibOMF
 INC32DIR=..\..\Include
 INC16DIR=.
 
+# OW directory (needed for WSOCK32 only)
 OWDIR=\Watcom
 
 #MAKE=wmake.exe -h -ms
 MAKE=nmake.exe /nologo
 ASM=jwasm.exe
-LINKBIN=link.exe /OPT:NOWIN98
+LINKBIN=jwlink.exe
 LIBBIN=wlib.exe -q -fa -n
 RCBIN=wrc.exe
-LINK16BIN=wlink.exe
+LINK16BIN=jwlink.exe
 LIB16BIN=wlib.exe -q -n
 
 #DLL32DIR=

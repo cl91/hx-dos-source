@@ -27,6 +27,7 @@
  AdjustWindowRect
  AdjustWindowRectEx         Y
  AppendMenuA
+ AppendMenuW
  BeginPaint
  BroadcastSystemMessage     Y
  BringWindowToTop
@@ -89,6 +90,7 @@
  EndDialog                  Y
  EndPaint
  EnumClipboardFormats
+ EnumDisplayDevicesA        Y
  EnumDisplaySettingsA
  EnumThreadWindows
  EnumChildWindows
@@ -100,7 +102,13 @@
  GetActiveWindow
  GetAsyncKeyState
  GetClassInfoA
+ GetClassInfoW
  GetClassInfoExA
+ GetClassInfoExW
+ GetClassLongA
+ GetClassLongW
+ GetClassNameA
+ GetClassNameW
  GetClientRect
  GetClipboardData
  GetClipboardFormatNameA
@@ -176,6 +184,7 @@
  KillTimer
  LoadBitmapA
  LoadCursorA
+ LoadCursorW
  LoadIconA
  LoadImageA                 
  LoadKeyboardLayoutA        
@@ -193,6 +202,7 @@
  ModifyMenuA                Y
  MoveWindow
  MsgWaitForMultipleObjects
+ OemKeyScan
  OemToCharA
  OemToCharBuffA
  OemToCharBuffW
@@ -206,23 +216,28 @@
  PostThreadMessageA
  PtInRect
  RegisterClassA
+ RegisterClassW
  RegisterClassExA
+ RegisterClassExW
  RegisterClipboardFormatA
  RegisterHotKey
  RegisterWindowMessageA     Y
  ReleaseDC
  RemoveMenu                 Y
  ScreenToClient
+ ScrollWindow
  ScrollWindowEx             Y
  SendDlgItemMessageA
  SendMessageA
  SendMessageW
  SetActiveWindow
  SetClassLongA
+ SetClassLongW
  SetClipboardData
  SetClipboardViewer         Y
  SetCursorPos
  SetDlgItemTextA            Y
+ SetDlgItemTextW            Y
  SetFocus
  SetForegroundWindow        Y
  SetKeyboardState           Y
@@ -244,6 +259,7 @@
  ShowOwnedPopups            Y
  ShowWindow
  SystemParametersInfoA      Y
+ SystemParametersInfoW      Y
  TabbedTextOut
  ToAscii
  ToAsciiEx
@@ -253,6 +269,7 @@
  UnhookWindowsHookEx        Y
  UnionRect
  UnregisterClassA
+ UnregisterClassW
  UnregisterHotKey
  UpdateWindow
  ValidateRect
@@ -266,6 +283,22 @@
 
 
  3. History
+
+ 08/22/2011:  Version 2.14
+
+ þ bugfix: GetWindowRect() did always return the non-maximized values.
+ þ bugfix: GetWindowFromPoint() did always check the non-maximized values.
+ þ bugfix: CharLowerA/W() worked just for letter 'A'.
+ þ EnumDisplayDevicesA added.
+ þ ScrollWindow added.
+ þ GetLastInputInfo added (stub).
+ þ WM_SYSCOMMAND, SC_MAXIMIZE is handled.
+ þ WM_MOUSEWHEEL supported.
+ þ SetScrollPos(), SetScrollRange() added (dummies).
+ þ MapVirtualKeyA() now works with type=0.
+ þ OemKeyScan added.
+ þ SystemParametersInfoW, LoadCursorW, SetDlgItemTextW, AppendMenuW added.
+ þ bugfix: RegisterClassW, FindWindowW destroyed contents of EBX register.
 
  11/16/2009:  Version 2.13
 

@@ -6,6 +6,7 @@
 .\dosclose.ASM    \
 .\dosdbcs.ASM     \
 .\dosdel.ASM      \
+.\dosdev.ASM      \
 .\dosdtime.ASM    \
 .\dosduph.ASM     \
 .\doserror.ASM    \

@@ -46,7 +46,7 @@ ifdef ?OMF
 DGROUP  group .BASE$IA, .BASE$XA
 endif
 
-IRETS	struct
+IRETS struct
 if ?CLEARHIGHEBP
 rIP		dw ?
 rCS		dw ?
@@ -56,12 +56,12 @@ rIP		dd ?
 rCS		dd ?
 rFlags	dd ?
 endif
-IRETS	ends
+IRETS ends
 
 LPFAR32 typedef  ptr far32
 LPFAR16 typedef  ptr far16
 
-		.DATA
+	.DATA
 
 dwDTASel	dd 0
 dwDosSel	dd 0
@@ -71,7 +71,7 @@ if ?LFNHLP
   if ?DYNLFN
 hLFNHlp		dd 0
   else
-bLFNHlp     db 0 
+bLFNHlp		db 0 
   endif
 endif
 
@@ -81,17 +81,19 @@ else
 	.CODE
 endif
 
+	align 4
 if ?CLEARHIGHEBP
 oldvec21	LPFAR16 0
 oldvec31	LPFAR16 0
 ?SEGOFFS	equ 2
 else
 oldvec21	LPFAR32 0
+	align 4
 oldvec31	LPFAR32 0
 ?SEGOFFS	equ 4
 endif
 
-        .CODE
+	.CODE
 
 int2160 proc
 	pushad

@@ -673,6 +673,8 @@ endif
 errmsg1 db "no DPMI host found",13,10,'$'
 errmsg2 db "DPMI initialization failed",13,10,'$'
 
+	align 2
+
 _TEXT16 ends
 
 if ?LOADSERVER

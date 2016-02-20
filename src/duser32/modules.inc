@@ -29,6 +29,7 @@
 .\msgboxw.ASM \
 .\property.ASM \
 .\RECT.ASM \
+.\scrlwin.ASM \
 .\SYSCLR.ASM \
 .\system.ASM \
 .\timer.ASM \

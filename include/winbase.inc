@@ -7,14 +7,14 @@
 
 _PAGESIZE equ 4096
 
-SID_IDENTIFIER_AUTHORITY	struct
+SID_IDENTIFIER_AUTHORITY struct
 Value	BYTE 6 dup (?)
-SID_IDENTIFIER_AUTHORITY	ends
+SID_IDENTIFIER_AUTHORITY ends
 
 SID	struct
-Revision			BYTE	?
-SubAuthorityCount	BYTE	?
-IdentifierAuthority	SID_IDENTIFIER_AUTHORITY	<>
+Revision			BYTE ?
+SubAuthorityCount	BYTE ?
+IdentifierAuthority	SID_IDENTIFIER_AUTHORITY <>
 SubAuthority		DWORD 1 dup (?)
 SID	ends
 
@@ -27,12 +27,12 @@ SMALL_RECT ends
 
 COORD struct
 X		dw ?
-Y	 	dw ?
+Y		dw ?
 COORD ends
 
 ifndef NT_INCLUDED
 		include winnt.inc
-endif        
+endif
 
 LMEM_FIXED		equ 00h
 LMEM_MOVEABLE	equ 02h
@@ -66,10 +66,10 @@ LCMAP_LOWERCASE		equ 100h
 LCMAP_UPPERCASE		equ 200h
 LCMAP_SORTKEY		equ 400h
 LCMAP_BYTEREV		equ 800h
-LCMAP_HIRAGANA            equ 00100000h
-LCMAP_KATAKANA            equ 00200000h
-LCMAP_HALFWIDTH           equ 00400000h
-LCMAP_FULLWIDTH           equ 00800000h
+LCMAP_HIRAGANA			  equ 00100000h
+LCMAP_KATAKANA			  equ 00200000h
+LCMAP_HALFWIDTH 		  equ 00400000h
+LCMAP_FULLWIDTH 		  equ 00800000h
 LCMAP_LINGUISTIC_CASING   equ 01000000h
 LCMAP_SIMPLIFIED_CHINESE  equ 02000000h
 LCMAP_TRADITIONAL_CHINESE equ 04000000h
@@ -500,7 +500,7 @@ PROCESS_HEAP_REGION				equ 1
 PROCESS_HEAP_UNCOMMITTED_RANGE	equ 2
 PROCESS_HEAP_ENTRY_BUSY			equ 4
 
-OVERLAPPED	struct 
+OVERLAPPED	struct
 Internal		DWORD	?
 InternalHigh	DWORD	?
 Offset_			DWORD	?
@@ -509,16 +509,16 @@ hEvent			HANDLE	?
 OVERLAPPED	ends
 
 PF_FLOATING_POINT_PRECISION_ERRATA  equ 0
-PF_FLOATING_POINT_EMULATED          equ 1   
-PF_COMPARE_EXCHANGE_DOUBLE          equ 2   
-PF_MMX_INSTRUCTIONS_AVAILABLE       equ 3   
-PF_PPC_MOVEMEM_64BIT_OK             equ 4   
-PF_ALPHA_BYTE_INSTRUCTIONS          equ 5   
-PF_XMMI_INSTRUCTIONS_AVAILABLE      equ 6   
-PF_3DNOW_INSTRUCTIONS_AVAILABLE     equ 7   
-PF_RDTSC_INSTRUCTION_AVAILABLE      equ 8   
-PF_PAE_ENABLED                      equ 9   
-PF_XMMI64_INSTRUCTIONS_AVAILABLE    equ 10   
+PF_FLOATING_POINT_EMULATED          equ 1
+PF_COMPARE_EXCHANGE_DOUBLE          equ 2
+PF_MMX_INSTRUCTIONS_AVAILABLE       equ 3
+PF_PPC_MOVEMEM_64BIT_OK             equ 4
+PF_ALPHA_BYTE_INSTRUCTIONS          equ 5
+PF_XMMI_INSTRUCTIONS_AVAILABLE      equ 6
+PF_3DNOW_INSTRUCTIONS_AVAILABLE     equ 7
+PF_RDTSC_INSTRUCTION_AVAILABLE      equ 8
+PF_PAE_ENABLED                      equ 9
+PF_XMMI64_INSTRUCTIONS_AVAILABLE    equ 10
 
 ;--- COMM API
 
@@ -542,7 +542,7 @@ PST_X25				EQU	00000103h
 
 COMSTAT_R0	RECORD	fReserved:25,fTxim:1,fEof:1,fXoffSent:1,fXoffHold:1,fRlsdHold:1,fDsrHold:1,fCtsHold:1
 
-COMSTAT	struct 
+COMSTAT	struct
 r0  		COMSTAT_R0 <>
 cbInQue		DWORD	?
 cbOutQue	DWORD	?
@@ -796,7 +796,7 @@ EnumResourceTypesA  	proto near stdcall :dword, :dword, :dword
 ExitProcess 			proto near stdcall :dword
 ExitThread				proto near stdcall :dword
 ExpandEnvironmentStringsA proto near stdcall :ptr BYTE, :ptr BYTE, :dword
-FatalAppExitA			proto near stdcall :dword, :dword
+FatalAppExitA			proto near stdcall :dword, :ptr BYTE
 FileTimeToDosDateTime	proto near stdcall :ptr FILETIME, :ptr WORD, :ptr WORD
 FileTimeToSystemTime    proto near stdcall :ptr FILETIME, :ptr SYSTEMTIME
 FindAtomA				proto near stdcall :ptr byte
@@ -863,6 +863,7 @@ GetTickCount			proto near stdcall
 GetUserDefaultLCID      proto near stdcall
 GetVersion				proto near stdcall
 GetVersionExA			proto near stdcall :ptr OSVERSIONINFO
+GlobalAddAtomA			proto near stdcall :ptr BYTE
 GlobalAlloc 			proto near stdcall :dword, :dword
 GlobalFree	 			proto near stdcall :dword
 GlobalGetAtomNameA		proto near stdcall :dword, :ptr BYTE, :dword
@@ -967,6 +968,7 @@ _lread					proto near stdcall :dword, :dword, :dword
 _lwrite 				proto near stdcall :dword, :dword, :dword
 lstrcat 				proto near stdcall :ptr BYTE, :ptr BYTE
 lstrcatA				proto near stdcall :ptr BYTE, :ptr BYTE
+lstrcatW				proto near stdcall :ptr WORD, :ptr WORD
 lstrcmp 				proto near stdcall :ptr BYTE, :ptr BYTE
 lstrcmpA				proto near stdcall :ptr BYTE, :ptr BYTE
 lstrcmpi				proto near stdcall :ptr BYTE, :ptr BYTE
@@ -996,6 +998,7 @@ externdef stdcall  _imp__CopyFileA@12				:pfunc@12
 externdef stdcall  _imp__CompareStringA@24			:pfunc@24
 externdef stdcall  _imp__CompareStringW@24			:pfunc@24
 externdef stdcall  _imp__CreateDirectoryA@8 		:pfunc@8
+externdef stdcall  _imp__CreateDirectoryW@8 		:pfunc@8
 externdef stdcall  _imp__CreateEventA@16			:pfunc@16
 externdef stdcall  _imp__CreateFileA@28 			:pfunc@28
 externdef stdcall  _imp__CreateFileMappingA@24		:pfunc@24
@@ -1177,6 +1180,7 @@ externdef stdcall  _imp___lread@12					:pfunc@12
 externdef stdcall  _imp___lwrite@12 				:pfunc@12
 externdef stdcall  _imp__lstrcat@8					:pfunc@8
 externdef stdcall  _imp__lstrcatA@8 				:pfunc@8
+externdef stdcall  _imp__lstrcatW@8 				:pfunc@8
 externdef stdcall  _imp__lstrcmp@8					:pfunc@8
 externdef stdcall  _imp__lstrcmpA@8 				:pfunc@8
 externdef stdcall  _imp__lstrcmpi@8					:pfunc@8
@@ -1200,6 +1204,7 @@ CompareStringA			equ <_imp__CompareStringA@24>
 CompareStringW			equ <_imp__CompareStringW@24>
 CopyFileA				equ <_imp__CopyFileA@12>
 CreateDirectoryA		equ <_imp__CreateDirectoryA@8>
+CreateDirectoryW		equ <_imp__CreateDirectoryW@8>
 CreateEventA			equ <_imp__CreateEventA@16>
 CreateFileA 			equ <_imp__CreateFileA@28>
 CreateFileMappingA		equ <_imp__CreateFileMappingA@24>
@@ -1380,6 +1385,7 @@ _lread					equ <_imp___lread@12>
 _lwrite 				equ <_imp___lwrite@12>
 lstrcat 				equ <_imp__lstrcat@8>
 lstrcatA 				equ <_imp__lstrcatA@8>
+lstrcatW 				equ <_imp__lstrcatW@8>
 lstrcpy 				equ <_imp__lstrcpy@8>
 lstrcpyA 				equ <_imp__lstrcpyA@8>
 lstrcpyn 				equ <_imp__lstrcpyn@12>
@@ -1395,7 +1401,7 @@ lstrlenW 				equ <_imp__lstrlenW@4>
 
 endif
 
-AddAtom				 	textequ <AddAtomA>
+AddAtom					textequ <AddAtomA>
 CompareString			textequ <CompareStringA>
 CopyFile				textequ <CopyFileA>
 CreateDirectory			textequ <CreateDirectoryA>
@@ -1429,12 +1435,12 @@ GetFileAttributesEx     textequ <GetFileAttributesExA>
 GetFullPathName			textequ <GetFullPathNameA>
 GetLongPathName			textequ <GetLongPathNameA>
 GetModuleFileName 		textequ <GetModuleFileNameA>
-GetModuleHandle 		textequ <GetModuleHandleA>
+GetModuleHandle			textequ <GetModuleHandleA>
 GetPrivateProfileString textequ <GetPrivateProfileStringA>
 GetShortPathName		textequ <GetShortPathNameA>
 GetTempFileName			textequ <GetTempFileNameA>
 GetTempPath    			textequ <GetTempPathA>
-GetVersionEx	 		textequ <GetVersionExA>
+GetVersionEx			textequ <GetVersionExA>
 LoadLibrary				textequ <LoadLibraryA>
 MoveFile				textequ <MoveFileA>
 OpenFileMapping			textequ <OpenFileMappingA>

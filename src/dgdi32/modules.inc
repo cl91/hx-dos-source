@@ -36,6 +36,7 @@
 .\POLYGON.ASM \
 .\PRINT.ASM \
 .\REGION.ASM \
+.\RESETDC.ASM \
 .\SaveDC.ASM \
 .\StockObj.ASM \
 .\Stretch.ASM \

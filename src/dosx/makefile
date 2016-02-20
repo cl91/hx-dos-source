@@ -28,7 +28,7 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\DOSX.EXE: $*.obj makefile
-	@wlink @<<
+	@jwlink @<<
 format dos
 file $*.OBJ
 name $*.EXE

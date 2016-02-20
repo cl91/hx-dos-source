@@ -22,6 +22,7 @@ OUTDIR=RELEASE
 !ifndef MASM
 MASM=0
 !endif
+MSLINK=0
 
 ASMOPT= -c -coff -nologo -Sg $(AOPTD) -I$(INC32DIR) -D?FLAT=1 -Fl$* -Fo$* 
 !if $(MASM)
@@ -46,11 +47,14 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(NAME).OBJ $(NAME).DEF Makefile
-	@$(LINKBIN) @<<
-$(OUTDIR)\$(NAME).OBJ $(LIBS)
-$(LOPTS) $(LOPTD)
+!if $(MSLINK)
+	@link @<<
+$(OUTDIR)\$(NAME).OBJ $(LOPTS) $(LIBS)
 /DEF:$(NAME).def /OUT:$*.DLL
 <<
+!else
+	@$(LINKBIN) format win pe dll name $*.DLL f $(OUTDIR)\$(NAME).OBJ libpath $(LIBCOFF) lib {$(LIBS)} op q, map=$*, implib=$* @$(NAME).rsp
+!endif
 !if $(DEBUG)==0
 	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR

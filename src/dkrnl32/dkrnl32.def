@@ -185,6 +185,8 @@ EXPORTS
  GetConsoleScreenBufferInfo
  GetConsoleTitleA
  GetConsoleTitleW
+ GetCurrencyFormatA
+ GetCurrencyFormatW
  GetCurrentDirectoryA
  GetCurrentDirectoryW
  GetCurrentProcess
@@ -236,6 +238,7 @@ EXPORTS
  GetNamedPipeHandleStateA
  GetNamedPipeInfo
  GetNumberFormatA
+ GetNumberFormatW
  GetNumberOfConsoleInputEvents
  GetNumberOfConsoleMouseButtons
  GetOEMCP
@@ -302,6 +305,7 @@ EXPORTS
  GetWindowsDirectoryA
  GetWindowsDirectoryW
  GlobalAddAtomA
+ GlobalAddAtomW
  GlobalAlloc
  GlobalCompact
  GlobalDeleteAtom
@@ -351,7 +355,7 @@ EXPORTS
  IsDBCSLeadByte
  IsDBCSLeadByteEx
  IsDebuggerPresent
-; IsProcessorFeaturePresent
+ IsProcessorFeaturePresent
  IsValidCodePage
  IsValidLocale
  IsWow64Process
@@ -397,6 +401,7 @@ EXPORTS
  OpenMutexW
  OpenProcess
  OpenSemaphoreA
+ OpenWaitableTimerA
  OutputDebugStringA
  OutputDebugStringW
  PeekConsoleInputA

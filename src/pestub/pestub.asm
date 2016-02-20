@@ -24,7 +24,7 @@ lf		equ 0Ah
 
 	.DATA
 
-hStdOut         DWORD 0
+hStdOut 		DWORD 0
 hFileOut		DWORD 0		;handle for file to write
 hFileInp		DWORD 0		;handle for input file
 pszFilename		LPSTR 0
@@ -37,8 +37,8 @@ pObjtab			LPSTR 0		;dyn allocated memory for object table
 dwObjSize		DWORD 0		;size of object table
 dwSizeHeader	DWORD 0		;size of header with new stub
 dwSizeHeaderOld	DWORD 0		;size of header with old stub (real size)
-dwHdrMin        DWORD -1
-dwHdrMax        DWORD 0
+dwHdrMin		DWORD -1
+dwHdrMax		DWORD 0
 dwWarnings		DWORD 0
 dwWarnings2		DWORD 0
 fNoBackup		BYTE 0		;dont write a backup file
@@ -49,6 +49,7 @@ fReadOnly		BYTE 0
 fIgnoreWarnings	BYTE 0
 fWriteable		BYTE 0
 fQuiet			BYTE 0
+fZ 				BYTE 0
 
 wvsprintfA proto stdcall :dword, :dword, :dword
 ;printf proto C a1:LPSTR, a2:VARARG
@@ -354,6 +355,11 @@ getoption proc uses esi pszArgument:LPSTR
 	mov fPX, 1		;patch PE to PX
 	jmp done
 @@:
+	cmp ax,"z"
+	jnz @F
+	mov fZ, 1
+	jmp done
+@@:
 	cmp ax,"v"
 	jnz @F
 	mov fVerbose, 1
@@ -466,6 +472,9 @@ local	szTempFile[MAX_PATH]:byte
 		.endif
 		jmp main_ex
 	.endif
+	.if ( fZ )
+		jmp nostub
+	.endif
 
 ;--------------------------- open stub
 	mov edx,pszStubname
@@ -540,6 +549,7 @@ step1:
 	mov ecx, pStub
 	mov eax, dwSizeStubNew
 	mov [ecx+3Ch],eax
+nostub:
 
 ;------------------ so here stub is read into memory and checked
 
@@ -573,6 +583,21 @@ step1:
 		invoke printf, CStr(<"%s has no valid PE format - magic bytes PE not found",lf>), pszFilename
 		jmp main_ex
 	.endif
+
+	.if ( fZ )
+		mov byte ptr pehdr.Signature+1, 'X'
+		invoke _llseek, hFileInp, dwSizeStubOld, FILE_BEGIN 
+		invoke _lwrite, hFileInp, addr pehdr.Signature, sizeof IMAGE_NT_HEADERS.Signature
+		.if (eax != sizeof IMAGE_NT_HEADERS.Signature)
+			invoke GetLastError
+			invoke printf, CStr(<"writing '%s' failed [%X]",lf>), pszFilename, eax
+			jmp main_ex
+		.endif
+		invoke _lclose, hFileInp
+		xor eax, eax
+		jmp @exit
+	.endif
+
 	invoke _lread, hFileInp, addr pehdr.FileHeader, sizeof IMAGE_NT_HEADERS.FileHeader
 	.if (eax != sizeof IMAGE_NT_HEADERS.FileHeader)
 		invoke printf, CStr(<"Error reading FileHeader",lf>)
@@ -831,7 +856,7 @@ endif
 	mov bError, FALSE
 	jmp main_ex
 displayusage:
-	invoke printf, CStr(<"pestub v2.9, copyright japheth 2003-2009",lf>)
+	invoke printf, CStr(<"pestub v3.0, copyright japheth 2003-2010",lf>)
 	invoke printf, CStr(<"pestub may be used to exchange stub of a PE binary, or to",lf>)
 	invoke printf, CStr(<"check it for being compatible with HX's PE loader.",lf,lf>)
 	invoke printf, CStr(<"usage: pestub [ options ] filename [stubname]",lf>)
@@ -845,6 +870,7 @@ displayusage:
 	invoke printf, CStr(<" -v = verbose mode",lf>)
 	invoke printf, CStr(<" -w = make code sections writeable",lf>)
 	invoke printf, CStr(<" -x = patch PE to PX (same as PatchPE.exe)",lf>)
+	invoke printf, CStr(<" -z = don't replace stub (useful for -x)",lf>)
 	jmp @exit
 main_ex:
 	.if (hFileOut != -1)

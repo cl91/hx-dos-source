@@ -109,7 +109,7 @@ rEflags dd ?
 endif
 IRETDS ends
 
-KEYEVNT struct
+KEYEVNT struct	;KEYEVNT is also used by DirectInput!!!
 bScan	db ?
 bAscii	db ?
 bStat17	db ?
@@ -153,8 +153,6 @@ dwSize		COORD <>
 dwCursorPos COORD <>
 cci			CONSOLE_CURSOR_INFO <>
 SCREENBUF ends
-
-TYPE_SCREENBUF	textequ <"SCBF">
 
 ;--- SCREENBUF dwFlags values
 
@@ -223,6 +221,17 @@ SYNCTYPE_FILEMAPP	textequ <"FMAP">
 SYNCTYPE_CHANGENOT	textequ <"CHNT">
 SYNCTYPE_SOCKET		textequ <"SCKT">
 SYNCTYPE_PIPE		textequ <"PIPE">
+
+;--- other non-sync types:
+
+TYPE_SCREENBUF	textequ <"SCBF">
+
+NAMEDOBJECT struct
+	SYNCOBJECT <>
+NextObj	dd ?
+lpName	dd ?
+NAMEDOBJECT ends
+
 
 FILE struct
 		SYNCOBJECT <>
@@ -302,7 +311,7 @@ SegSs  dd ?
 CONTEXT_CTRL ends
 
 FILEMAPOBJ struct
-			SYNCOBJECT <>
+			NAMEDOBJECT <>
 hFile		DWORD ?		;file handle
 dwSize		DWORD ?		;total size
 pView		DWORD ?		;linear address of view
@@ -310,8 +319,7 @@ dwProtect	DWORD ?		;PAGE_READONLY or PAGE_READWRITE
 dwOffset	DWORD ?		;file offset
 dwSizeReal	DWORD ?		;real size to read/write
 dwFlags		DWORD ?
-dwCnt		DWORD ?		;workaround: use a reference counter
-lpName		DWORD ?
+dwRefCnt	DWORD ?		;workaround: use a reference counter
 FILEMAPOBJ ends
 
 ;--- FILEMAPOBJ dwFlags values
@@ -320,24 +328,24 @@ FMO_MAPPED	equ 1
 FMO_CLOSED	equ 2
 
 SEMAPHORE struct
-			SYNCOBJECT <>
+			NAMEDOBJECT <>
 dwCurCnt	DD ?
 dwMaxCnt	DD ?
-lpName		dd ?
+dwRefCnt	DD ?
 SEMAPHORE ends
 
 MUTEX struct
-			SYNCOBJECT <>
-dwCnt		DD ?
+			NAMEDOBJECT <>
+wRefCnt		DW ?
+wCnt		DW ?
 dwOwner		DD ?	;thread who owns the mutex
-lpName		dd ?
 MUTEX ends
 
 protoTimerAPCProc typedef proto :DWORD, :DWORD, :DWORD
 LPFNTIMERAPCPROC typedef ptr protoTimerAPCProc
 
 TIMER struct
-			SYNCOBJECT <>
+			NAMEDOBJECT <>
 pNext		dd ?	;active timers are in a linked list
 filetime	FILETIME <>
 if ?MICROSECS
@@ -352,24 +360,22 @@ lpfnCompRoutine LPFNTIMERAPCPROC ?
 lpArgCompRoutine DD ?
 bManReset	DB ?	;
 bSignaled	DB ?	;
-bDispatch   db ?	;dispatch to the thread waiting for the timer
-			db ?
-lpName		dd ?
+bDispatch   DB ?	;dispatch to the thread waiting for the timer
+bRefCnt		DB ?
 TIMER ends
 
 EVENT struct
-			SYNCOBJECT <>
+			NAMEDOBJECT <>
 bFlags		db ?
-bCount		db ?
+bRefCnt 	db ?
 			dw ?
 if ?EVENTOPT
-dwThread	dd ?
+hThread		dd ?	;thread waiting for event
 endif
 EVENT ends
 
 EVNT_SIGNALED	equ 1
 EVNT_MANRESET	equ 2
-EVNT_NAMED		equ 4
 
 EVNT_SIGNALED_BIT equ 0	;for BT, BTS, BTR, BTC functions
 
@@ -427,7 +433,8 @@ endif
 KernelHeapAlloc		proto stdcall :DWORD
 KernelHeapAllocObject proto stdcall :DWORD, :ptr BYTE
 KernelHeapFree		proto stdcall :DWORD
-KernelHeapFindObject	proto stdcall :ptr BYTE
+KernelHeapFindObject proto stdcall :ptr BYTE, :DWORD
+KernelHeapUnlinkObject proto stdcall :ptr NAMEDOBJECT
 KernelHeapWalk		proto stdcall :ptr PROCESS_HEAP_ENTRY, :DWORD
 _growseg			proto c
 _searchseg			proto c
@@ -546,7 +553,7 @@ DKF_NOEXCHOOK	equ 32	;dont hook any exceptions (for debuggers)
 
 ;--- g_bIntFl values
 
-IKF_DPMILDR		equ 1	;dpmild32 API is present
+IKF_PELDR		equ 1	;dpmild32 API is present
 IKF_CALLTERM	equ 2	;call terminators in int 21h, ah=4Ch handler
 
 ;------------------- macros
@@ -594,11 +601,13 @@ endif
 	endm
 
 if 1;def _DEBUG
-DBGF_FLUSH	equ 1	;flush dos file buffers after each write
-DBGF_CIN	equ 2	;verbose log console input
-DBGF_COUT	equ 4	;verbose log console output
-DBGF_SCRNFL equ 8	;show activity on text screen, line 25
-DBGF_WAIT   equ 10h ;verbose wait functions
+;--- flags read from DKRNLDBG environment variable
+DBGF_FLUSH		equ 01h	;flush dos file buffers after each write
+DBGF_CIN		equ 02h	;verbose log console input
+DBGF_COUT		equ 04h	;verbose log console output
+DBGF_SCRNFL		equ 08h	;show activity on text screen, line 25
+DBGF_WAIT		equ 10h	;verbose wait functions
+DBGF_TEXTMODE	equ 20h	;switch to text mode when an exception occurs
 endif
 
 if 1

@@ -106,6 +106,7 @@ MOUSE_EVENT     equ 2
 
 MOUSE_MOVED   equ 0001h
 DOUBLE_CLICK  equ 0002h
+MOUSE_WHEELED equ 0004h
 
 CONSOLE_CURSOR_INFO   struct
 dwSize   dd ?

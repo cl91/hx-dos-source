@@ -34,6 +34,7 @@ ASMOPT= -c -coff -nologo -Sg $(AOPTD) -I$(INC32DIR) -D?FLAT=1 -Fl$* -Fo$*
 !ifndef MASM
 MASM=0
 !endif
+MSLINK=0
 
 !if $(MASM)
 ASM=@ml.exe $(ASMOPT)
@@ -58,11 +59,15 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).LIB $(OUTDIR)\$(NAME).OBJ $(NAME).DEF
-	@$(LINKBIN) @<<
+!if $(MSLINK)
+	@link @<<
 $(OUTDIR)\$(NAME).OBJ $(OUTDIR)\$(LIBNAME).LIB $(LIBS)
-$(LOPTS) $(LOPTD)
+$(LOPTS)
 /DEF:$(NAME).DEF /OUT:$*.DLL
 <<
+!else
+	@$(LINKBIN) format win pe dll name $*.DLL f $(OUTDIR)\$(NAME).OBJ libpath $(LIBCOFF) lib {$(OUTDIR)\$(LIBNAME).LIB $(LIBS)} op q, map=$*, implib=$* @$(NAME).rsp
+!endif
 !if $(DEBUG)==0
 	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR    

@@ -33,5 +33,5 @@ DllMain proc public handle:dword,reason:dword,reserved:dword
 	ret
 DllMain endp
 
-	END
+	END DllMain
 

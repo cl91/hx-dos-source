@@ -178,7 +178,7 @@ endif
 	.data?
 
 g_dwSavedBoostProc dd ?
-g_dwSavedIdleProc dd ?
+g_dwSavedIdleProc dd ?	;contains former content of g_dwIdleProc when threads are active
 
 if ?OWNSTACK
 g_OldDS	dd ?
@@ -850,6 +850,8 @@ faterror:
 
 _dispatch endp
 
+;--- todo: describe what this is supposed to do!
+
 myidleproc proc
 	pushfd
 	pushad
@@ -857,7 +859,7 @@ if 0
 	mov ax,1680h
 	int 2Fh
 else
-	call cs:[g_dwSavedIdleProc]
+	call cs:[g_dwSavedIdleProc]	;usually contains GiveupTimeSlice
 endif
 	popad
 	popfd
@@ -962,7 +964,7 @@ endif
 
 if ?MODULENOTIFY
 NotifyModule proc uses esi
-	test [g_bIntFl],IKF_DPMILDR	;DPMILDR active?
+	test [g_bIntFl],IKF_PELDR	;DPMILD32 active?
 	jz done
 	invoke GetCurrentProcess
 	mov esi, [eax].PROCESS.pModuleList

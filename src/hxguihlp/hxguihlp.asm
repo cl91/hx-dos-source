@@ -76,11 +76,11 @@ szDisplay db "display",0
 szOptions db "options",0
 szHxGuiHlpClass db "hxguihlpwndcls",0
 
-fonts	label dword
-		dd CStr("boot"), CStr("oemfonts.fon")
-		dd CStr("boot"), CStr("fixedfon.fon")
-		dd CStr("boot"), CStr("fonts.fon")
-		dd 0
+fonts label dword
+	dd CStr("boot"), CStr("oemfonts.fon")
+	dd CStr("boot"), CStr("fixedfon.fon")
+	dd CStr("boot"), CStr("fonts.fon")
+	dd 0
 
 dispres label dword
 
@@ -88,24 +88,24 @@ dispres label dword
 dwFormat dd 00000000000000000011111111000000b 
 
 options label dword
-		dd offset szDisplay, CStr("xres"), offset g_dwWidth
-		dd offset szDisplay, CStr("yres"), offset g_dwHeight
-		dd offset szDisplay, CStr("bpp") , offset g_dwBpp
-		dd offset szDisplay, CStr("xmax"), offset g_dwXMax 
-		dd offset szDisplay, CStr("ymax"), offset g_dwYMax	
-		dd offset szDisplay, CStr("mode"), offset g_dwMode
+	dd offset szDisplay, CStr("xres"), offset g_dwWidth
+	dd offset szDisplay, CStr("yres"), offset g_dwHeight
+	dd offset szDisplay, CStr("bpp") , offset g_dwBpp
+	dd offset szDisplay, CStr("xmax"), offset g_dwXMax 
+	dd offset szDisplay, CStr("ymax"), offset g_dwYMax	
+	dd offset szDisplay, CStr("mode"), offset g_dwMode
 
-		dd offset szOptions, CStr("wait"), offset g_bWait
-		dd offset szOptions, CStr("save"), offset g_bSave
-		dd offset szOptions, CStr("menu"), offset g_fMenu
-		dd offset szOptions, CStr("clear"), offset g_bClear
-		dd offset szOptions, CStr("NoVsyncWait"), offset g_Vesa32Options.bNoVSyncWait
-		dd offset szOptions, CStr("UsePMTab"), offset g_Vesa32Options.bUsePMTable
-		dd offset szOptions, CStr("FlipStatus"), offset g_Vesa32Options.bFlipStatus
-		dd offset szOptions, CStr("DirectDACAccess"), offset g_Vesa32Options.bHandleDAC
-		dd 0
+	dd offset szOptions, CStr("wait"), offset g_bWait
+	dd offset szOptions, CStr("save"), offset g_bSave
+	dd offset szOptions, CStr("menu"), offset g_fMenu
+	dd offset szOptions, CStr("clear"), offset g_bClear
+	dd offset szOptions, CStr("NoVsyncWait"), offset g_Vesa32Options.bNoVSyncWait
+	dd offset szOptions, CStr("UsePMTab"), offset g_Vesa32Options.bUsePMTable
+	dd offset szOptions, CStr("FlipStatus"), offset g_Vesa32Options.bFlipStatus
+	dd offset szOptions, CStr("DirectDACAccess"), offset g_Vesa32Options.bHandleDAC
+	dd 0
 
-		include hxguihlp.inc
+	include hxguihlp.inc
 
 	.code
 
@@ -598,6 +598,7 @@ waitkey:
 actions label byte
 	db VK_ESCAPE
 	db VK_APPS
+	db VK_F3
 	db VK_F4
 	db VK_F5
 	db VK_F6
@@ -608,6 +609,7 @@ NUMACTIONS equ $ - actions
 cmds label dword
 	dd doescape
 	dd doapps
+	dd dof3
 	dd dof4
 	dd dof5
 	dd dof6
@@ -619,6 +621,13 @@ doescape:
 doapps:
 	test g_fMenu,1
 	jz waitkey
+	jmp exit
+dof3:
+	invoke GetActiveWindow
+	.if (eax)
+		mov g_bWait, 0
+		invoke PostMessage, eax, WM_SYSCOMMAND, SC_MAXIMIZE, 0
+	.endif
 	jmp exit
 dof4:
 	invoke GetActiveWindow
@@ -1060,5 +1069,5 @@ DllMain proc public handle:dword,reason:dword, dwReserved:dword
 	ret
 DllMain endp
 
-	end
+	end DllMain
 

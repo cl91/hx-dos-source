@@ -15,7 +15,7 @@ endif
 
 .BASE$XA SEGMENT dword public 'DATA'
 	DD offset ClearDeleteList
-.BASE$XA	  ENDS
+.BASE$XA ENDS
 
 	.data
 

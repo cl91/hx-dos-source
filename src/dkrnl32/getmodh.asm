@@ -33,7 +33,7 @@ if ?FLAT
 	jmp exit
 @@:
 ;	xor eax,eax
-;	test [g_bIntFl],IKF_DPMILDR
+;	test [g_bIntFl],IKF_PELDR
 ;	jz exit
 	mov ax,4B82h
 	int 21h

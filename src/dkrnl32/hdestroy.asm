@@ -53,8 +53,8 @@ HeapDestroy proc public uses ebx handle:dword
 	jz exit
 	mov ebx, eax
 	invoke HeapFreeMemBlocks, ebx
-	.if ([ebx].HEAPDESC.semaphor)
-		invoke CloseHandle, [ebx].HEAPDESC.semaphor
+	.if ([ebx].HEAPDESC.mutex)
+		invoke CloseHandle, [ebx].HEAPDESC.mutex
 	.endif
 	invoke VirtualFree, ebx, 0, MEM_RELEASE
 exit:

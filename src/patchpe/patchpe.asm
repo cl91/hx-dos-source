@@ -11,7 +11,19 @@
 	.386
 
 	include winnt.inc
-	include macros.inc
+;	include macros.inc
+
+CStr macro text:VARARG
+local sym
+	.const
+  ifidni <text>,<"">
+	sym db 0
+  else
+	sym db text,0
+  endif
+	.code
+	exitm <offset sym>
+	endm
 
 ?MAXSEC	equ 24
         

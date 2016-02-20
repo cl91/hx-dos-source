@@ -1,6 +1,6 @@
 OUTPUT_FORMAT("coff-go32")
 ENTRY(start)
-SEARCH_DIR("/djgpp/lib/gcc/djgpp/4.10"); SEARCH_DIR("/djgpp/lib")
+SEARCH_DIR("/djgpp/lib/gcc/djgpp/4.41"); SEARCH_DIR("/djgpp/lib")
 SECTIONS
 {
   .text 0x0 : {

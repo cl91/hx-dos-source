@@ -29,7 +29,7 @@ endif
 externdef g_bFPUPresent:byte
 
 	.code
-        
+
 _SaveContext proc public hThread:dword, CC:CONTEXT_CTRL
 
 	push edi

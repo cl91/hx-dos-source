@@ -1046,7 +1046,7 @@ endif
 PF16 typedef far16 ptr
 PF32 typedef far32 ptr
 
-IVTHOOK	struct
+IVTHOOK struct
 bInt		db ?
 ;dwOldVec	dd ?
 wOldVec		dw ?
@@ -1056,43 +1056,43 @@ IVTHOOK ends
 ;-------------------------------- macros
 
 @useext macro
-        db 67h
-        endm
+	db 67h
+	endm
 
-@movsd	macro
+@movsd macro
 ife ?32BIT
-		@useext
+	@useext
 endif
-		movsd
-		endm
+	movsd
+	endm
 
-@stosw	macro
+@stosw macro
 ife ?32BIT
-		@useext
+	@useext
 endif
-		stosw
-		endm
+	stosw
+	endm
 
-@stosb	macro
+@stosb macro
 ife ?32BIT
-		@useext
+	@useext
 endif
-		stosb
-		endm
+	stosb
+	endm
 
-@lodsw	macro
+@lodsw macro
 ife ?32BIT
-		@useext
+	@useext
 endif
-		lodsw
-		endm
+	lodsw
+	endm
 
-@lodsb	macro
+@lodsb macro
 ife ?32BIT
-		@useext
+	@useext
 endif
-		lodsb
-		endm
+	lodsb
+	endm
 
 @inctrace equ <_LTRACE_ = _LTRACE_ + 1>
 @dectrace equ <_LTRACE_ = _LTRACE_ - 1>
@@ -1101,149 +1101,149 @@ endif
 ifndef _DEBUG
 _LTRACE_ = 0
 endif
-		endm
+	endm
         
 @SetTrace macro
 _LTRACE_ = 1
-		endm
+	endm
 
-@defseg macro name_, align_, use_, group_    
-name_	segment align_ use_ public 'CODE'
-name_	ends
+@defseg macro name_, align_, use_, group_
+name_ segment align_ use_ public 'CODE'
+name_ ends
 ifnb <group_>
-group_ group name_    
+group_ group name_
 endif
-		endm
-        
-@seg	macro segname
+	endm
+
+@seg macro segname
 	ifidn <segname>,<_TEXT32>
-      @defseg segname, <dword>, <use32>, <GROUP32>
+	  @defseg segname, <dword>, <use32>, <GROUP32>
 	elseifidn <segname>,<CDATA32>
-      @defseg segname, <dword>, <use32>, <GROUP32>
+	  @defseg segname, <dword>, <use32>, <GROUP32>
 	elseifidn <segname>,<_ITEXT32>
-      @defseg segname, <dword>, <use32>, <GROUP32>
+	  @defseg segname, <dword>, <use32>, <GROUP32>
 	elseifidn <segname>,<ENDTEXT32>
-      @defseg segname,  <para>, <use32>, <GROUP32>
+	  @defseg segname, <para>, <use32>, <GROUP32>
 	elseifidn <segname>,<_DATA16>
-      @defseg segname, <dword>, <use16>, <GROUP16>
+	  @defseg segname, <dword>, <use16>, <GROUP16>
 	elseifidn <segname>,<VDATA16>
-      @defseg segname, <dword>, <use16>, <GROUP16>
+	  @defseg segname, <dword>, <use16>, <GROUP16>
 	elseifidn <segname>,<CDATA16>
-      @defseg segname, <dword>, <use16>, <GROUP16>
+	  @defseg segname, <dword>, <use16>, <GROUP16>
 	elseifidn <segname>,<BEGTEXT16>
-      @defseg segname,  <para>, <use16>, <GROUP16>
+	  @defseg segname, <para>, <use16>, <GROUP16>
 	elseifidn <segname>,<_TEXT16>
-      @defseg segname, <dword>, <use16>, <GROUP16>
+	  @defseg segname, <dword>, <use16>, <GROUP16>
 	elseifidn <segname>,<_ITEXT16>
-      @defseg segname,  <byte>, <use16>, <GROUP16>
+	  @defseg segname, <byte>, <use16>, <GROUP16>
 	elseifidn <segname>,<ENDTEXT16>
-      @defseg segname,  <para>, <use16>, <GROUP16>
+	  @defseg segname, <para>, <use16>, <GROUP16>
 	else
-      @defseg segname,  <byte>, <use16>, <GROUP16>
-    endif
-    endm
+	  @defseg segname, <byte>, <use16>, <GROUP16>
+	endif
+	endm
 
 @checkssattr macro x,y
 local xxxx
 if ?32BIT
 	ifnb <x>
-		mov 	ax,x
+		mov ax,x
 	endif
-		lar 	eax,eax
-		bt		eax,22
-		jc		xxxx
-		movzx	e&y,y
+		lar eax,eax
+		bt eax,22
+		jc xxxx
+		movzx e&y,y
 endif
 xxxx:
-endm
+	endm
 
 @pushifdefnd macro x
-		ifnb <x>
-		  push x
-		endif
-		endm
+	ifnb <x>
+	  push x
+	endif
+	endm
 
-CStr	macro xx
+CStr macro xx:VARARG
 local xxxx
-CONST32	segment byte use32 public 'CODE'
-   xxxx   db xx
-		  db 0
+CONST32 segment byte use32 public 'CODE'
+xxxx db xx
+	db 0
 CONST32 ends
 GROUP32 GROUP CONST32
-		exitm <LOWWORD(offset xxxx)>
-		endm
+	exitm <LOWWORD(offset xxxx)>
+	endm
 
 @printf macro xx,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12
-		ifnb <a12>
-		  %out too many parameters for @strout
-		  .err1
-		endif
-		@pushifdefnd <a11>
-		@pushifdefnd <a10>
-		@pushifdefnd <a9>
-		@pushifdefnd <a8>
-		@pushifdefnd <a7>
-		@pushifdefnd <a6>
-		@pushifdefnd <a5>
-		@pushifdefnd <a4>
-		@pushifdefnd <a3>
-		@pushifdefnd <a2>
-		@pushifdefnd <a1>
-		call _stroutx
-		dw CStr(<xx>)
-		endm
+	ifnb <a12>
+	  echo too many parameters for @strout
+	  .err1
+	endif
+	@pushifdefnd <a11>
+	@pushifdefnd <a10>
+	@pushifdefnd <a9>
+	@pushifdefnd <a8>
+	@pushifdefnd <a7>
+	@pushifdefnd <a6>
+	@pushifdefnd <a5>
+	@pushifdefnd <a4>
+	@pushifdefnd <a3>
+	@pushifdefnd <a2>
+	@pushifdefnd <a1>
+	call _stroutx
+	dw CStr(<xx>)
+	endm
 
 @strout macro strg:REQ, xx:VARARG
 if _LTRACE_
-		@printf <strg>,xx
+	@printf <strg>,xx
 endif
-		endm
+	endm
 
 @stroutrm macro xx,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12
 local xxxx
 if _LTRACE_
 CONST16 segment byte use16 public 'CODE'
    xxxx   db xx
-		  db 0
+	db 0
 CONST16 ends
 GROUP16 group CONST16
-		ifnb <a12>
-		  %out too many parameters for @stroutrm
-		  .err1
-		endif
-		@pushifdefnd <a11>
-		@pushifdefnd <a10>
-		@pushifdefnd <a9>
-		@pushifdefnd <a8>
-		@pushifdefnd <a7>
-		@pushifdefnd <a6>
-		@pushifdefnd <a5>
-		@pushifdefnd <a4>
-		@pushifdefnd <a3>
-		@pushifdefnd <a2>
-		@pushifdefnd <a1>
-		call _$stroutx
-		dw offset xxxx
+	ifnb <a12>
+	  echo too many parameters for @stroutrm
+	  .err1
+	endif
+	@pushifdefnd <a11>
+	@pushifdefnd <a10>
+	@pushifdefnd <a9>
+	@pushifdefnd <a8>
+	@pushifdefnd <a7>
+	@pushifdefnd <a6>
+	@pushifdefnd <a5>
+	@pushifdefnd <a4>
+	@pushifdefnd <a3>
+	@pushifdefnd <a2>
+	@pushifdefnd <a1>
+	call _$stroutx
+	dw offset xxxx
 endif
-		endm
+	endm
 
 ;--- call real-mode software int xx 
 ;--- esp -> IRET32
 ;--- (will return flags)
 
 @callrmsint macro xx
-		push xx
-		jmp  dormsint
-        align 4
-		endm
+	push xx
+	jmp  dormsint
+	align 4
+	endm
 
 ;--- call real-mode int xx 
 ;--- used internally
 
 @simrmint macro xx
-		push xx
-		call dormintintern
-		endm
+	push xx
+	call dormintintern
+	endm
 
 ;--- call ring 3 protected-mode int xx
 ;--- usually this is done by the Int 30h dispatcher
@@ -1251,26 +1251,26 @@ endif
 ;--- esp -> IRET32
 
 @simintpms macro xx
-		db 68h
-        dd offset GROUP32:r3vect&xx
-		jmp 	pms_call_int
-        align 4
-		endm
+	db 68h
+	dd offset GROUP32:r3vect&xx
+	jmp pms_call_int
+	align 4
+	endm
 
 ;--- switch to LPMS, then call ring 3 protected mode int xx
 
 @simintlpms macro xx
-		db 68h
-        dd offset GROUP32:r3vect&xx
-		jmp 	lpms_call_int
-        align 4
-		endm
+	db 68h
+	dd offset GROUP32:r3vect&xx
+	jmp lpms_call_int
+	align 4
+	endm
 
 ;--- set SS:SP to current real-mode stack
 
 @setrmstk macro
-		lss 	sp,cs:[tskstate.rmSSSP]
-endm
+	lss sp,cs:[tskstate.rmSSSP]
+	endm
 
 ;--- save current real-mode state
 ;--- this is just the real-mode SS:SP
@@ -1285,15 +1285,15 @@ else
 endif
 if ?SAVERMSPONHS
 ?RMPUSHSIZE = 0
-		mov		@SegPrefix:[wCurSP],sp
-		mov		@SegPrefix:[wCurSS],ss
+	mov @SegPrefix:[wCurSP],sp
+	mov @SegPrefix:[wCurSS],ss
 else
 ?RMPUSHSIZE = 4
-		push	@SegPrefix:[tskstate.rmSSSP]
-		mov 	@SegPrefix:[tskstate.rmSP],sp
-		mov 	@SegPrefix:[tskstate.rmSS],ss
-endif        
-endm
+	push @SegPrefix:[tskstate.rmSSSP]
+	mov @SegPrefix:[tskstate.rmSP],sp
+	mov @SegPrefix:[tskstate.rmSS],ss
+endif
+	endm
 
 ;--- restore value of real-mode stack
 ;--- this is used by standard and client real-mode callbacks
@@ -1306,12 +1306,12 @@ else
 @SegPrefix equ <CS>
 endif
 if ?SAVERMSPONHS
-		lss 	sp, @SegPrefix:[dwCurSSSP]
+	lss sp, @SegPrefix:[dwCurSSSP]
 else
-		lss 	sp, @SegPrefix:[tskstate.rmSSSP]
-		pop 	@SegPrefix:[tskstate.rmSSSP]
+	lss sp, @SegPrefix:[tskstate.rmSSSP]
+	pop @SegPrefix:[tskstate.rmSSSP]
 endif
-endm
+	endm
 
 ;--- save protected-mode state
 ;--- this is used by standard and client real-mode callbacks
@@ -1319,236 +1319,236 @@ endm
 @pushpmstate macro bRMSegs
 ifnb <bRMSegs>
   ife ?SAVERMSEGSONRMS
-		push	ss:[v86iret].rES
-		push	ss:[v86iret].rDS
-		push	ss:[v86iret].rFS
-		push	ss:[v86iret].rGS
-  endif        
-endif        
+	push ss:[v86iret].rES
+	push ss:[v86iret].rDS
+	push ss:[v86iret].rFS
+	push ss:[v86iret].rGS
+  endif
+endif
 if ?RMSCNT
-		push	dword ptr ss:[bRMScnt]
-        mov		ss:[bRMScnt],0
+	push dword ptr ss:[bRMScnt]
+	mov ss:[bRMScnt],0
 endif
-if ?SAVERMSPONHS	
-		push ss:tskstate.rmSSSP
-		push ss:[dwCurSSSP]
-        pop	 ss:[tskstate.rmSSSP]
+if ?SAVERMSPONHS
+	push ss:tskstate.rmSSSP
+	push ss:[dwCurSSSP]
+	pop ss:[tskstate.rmSSSP]
 endif
-		push dword ptr ss:tskstate.ssesp+4
-		push dword ptr ss:tskstate.ssesp+0
-        push ss:tskstate.rFSGS
-        push ss:tskstate.rDSES
+	push dword ptr ss:tskstate.ssesp+4
+	push dword ptr ss:tskstate.ssesp+0
+	push ss:tskstate.rFSGS
+	push ss:tskstate.rDSES
 if ?FIXTSSESP
-        mov ss:[dwHostStack], esp
+	mov ss:[dwHostStack], esp
 else
-        mov ss:[taskseg._Esp0], esp
-        lea esp, [esp - sizeof R3FAULT32]
-        mov ss:[dwHostStackExc], esp
-        lea esp, [esp + sizeof R3FAULT32]
-endif        
-endm
+	mov ss:[taskseg._Esp0], esp
+	lea esp, [esp - sizeof R3FAULT32]
+	mov ss:[dwHostStackExc], esp
+	lea esp, [esp + sizeof R3FAULT32]
+endif
+	endm
 
 ;--- restore protected-mode state
 ;--- this is used by standard and client real-mode callbacks
 
 @poppmstate macro bRMSegs
-        pop ss:tskstate.rDSES
-        pop ss:tskstate.rFSGS
-		pop dword ptr ss:tskstate.ssesp+0
-		pop dword ptr ss:tskstate.ssesp+4
+	pop ss:tskstate.rDSES
+	pop ss:tskstate.rFSGS
+	pop dword ptr ss:tskstate.ssesp+0
+	pop dword ptr ss:tskstate.ssesp+4
 if ?SAVERMSPONHS	
-        push ss:[tskstate.rmSSSP]
-		pop  ss:[dwCurSSSP]
-		pop ss:tskstate.rmSSSP
+	push ss:[tskstate.rmSSSP]
+	pop  ss:[dwCurSSSP]
+	pop ss:tskstate.rmSSSP
 endif
 if ?RMSCNT
-        pop dword ptr ss:[bRMScnt]
-endif        
+	pop dword ptr ss:[bRMScnt]
+endif
 ifnb <bRMSegs>
   ife ?SAVERMSEGSONRMS
-		pop	ss:[v86iret].rGS
-		pop	ss:[v86iret].rFS
-		pop	ss:[v86iret].rDS
-		pop	ss:[v86iret].rES
+	pop	ss:[v86iret].rGS
+	pop	ss:[v86iret].rFS
+	pop	ss:[v86iret].rDS
+	pop	ss:[v86iret].rES
   endif
 endif
 if ?FIXTSSESP
-    	mov ss:[dwHostStack], esp
+	mov ss:[dwHostStack], esp
 else
-    	mov ss:[taskseg._Esp0], esp
-        lea esp, [esp - sizeof R3FAULT32]
-        mov ss:[dwHostStackExc], esp
-        lea esp, [esp + sizeof R3FAULT32]
+	mov ss:[taskseg._Esp0], esp
+	lea esp, [esp - sizeof R3FAULT32]
+	mov ss:[dwHostStackExc], esp
+	lea esp, [esp + sizeof R3FAULT32]
 endif
-endm
+	endm
 
 ;--- set protected-mode state
 ;--- this macro is used before a jump to real-mode
 ;--- save current protected-mode segment registers and ring 3 ss:esp
 
 @setpmstate macro
-		mov 	ss:tskstate.rDS,ds
-		mov 	ss:tskstate.rES,es
-		mov 	ss:tskstate.rFS,fs
-		mov 	ss:tskstate.rGS,gs
-    	push	ebp
-		mov		ebp, ss:taskseg._Esp0
-		push	[ebp - sizeof IRET32].IRET32.rSP
-		mov 	ebp, dword ptr [ebp - sizeof IRET32].IRET32.rSS
-		pop 	dword ptr ss:[tskstate.ssesp+0]
-		mov 	dword ptr ss:[tskstate.ssesp+4], ebp
-    	pop		ebp
-endm
+	mov ss:tskstate.rDS,ds
+	mov ss:tskstate.rES,es
+	mov ss:tskstate.rFS,fs
+	mov ss:tskstate.rGS,gs
+	push ebp
+	mov ebp, ss:taskseg._Esp0
+	push [ebp - sizeof IRET32].IRET32.rSP
+	mov ebp, dword ptr [ebp - sizeof IRET32].IRET32.rSS
+	pop dword ptr ss:[tskstate.ssesp+0]
+	mov dword ptr ss:[tskstate.ssesp+4], ebp
+	pop ebp
+	endm
 
 ;--- real-mode to protected-mode break
 ;--- this prevents debuggers from stepping in untraceable code
 
 @rm2pmbreak macro
 if ?INTRM2PM
-		int 	?XRM2PM
-		nop
+	int ?XRM2PM
+	nop
 else
-		cli
+	cli
 endif
-endm
+	endm
 
 
 @DebugBreak macro x
 local sm
 if x
-		test	cs:fDebug,FDEBUG_KDPRESENT
-		jz		sm
-		int		3
+	test cs:fDebug,FDEBUG_KDPRESENT
+	jz sm
+	int 3
 sm:
 endif
-		endm
+	endm
 
 @waitesckey macro
 local sm1
 if _LTRACE_
-		pushfd
-		push	eax
+	pushfd
+	push eax
 sm1:
-		in		al,64h		;key from keyboard arrived?
-		test	al,1
-		jz		sm1
-		in		al,60h
-        cmp		al,81h		;wait for ESC released
-        jnz		sm1
-        pop		eax
-        popfd
-endif        
-        endm
+	in al,64h		;key from keyboard arrived?
+	test al,1
+	jz sm1
+	in al,60h
+	cmp al,81h		;wait for ESC released
+	jnz sm1
+	pop eax
+	popfd
+endif
+	endm
 
 ;--- the lgdt,sgdt,lidt and sidt opcodes
 ;--- are CS Default bit dependant!
 ;--- in 16bit code segments the highest byte of the address
 ;--- is *not* loaded without prefix 66h!
 
-@lgdt	macro x
-		db 66h
-		lgdt x
-		endm
-@sgdt	macro x
-		db 66h
-		sgdt x
-		endm
-@lidt	macro x
-		db 66h
-		lidt x
-		endm
-@sidt	macro x
-		db 66h
-		sidt x
-		endm
+@lgdt macro x
+	db 66h
+	lgdt x
+	endm
+@sgdt macro x
+	db 66h
+	sgdt x
+	endm
+@lidt macro x
+	db 66h
+	lidt x
+	endm
+@sidt macro x
+	db 66h
+	sidt x
+	endm
 
 @mov_eax_cr4 macro
-;       mov eax, cr4
-		db 0Fh,20h,0E0h
-		endm
+;	mov eax, cr4
+	db 0Fh,20h,0E0h
+	endm
 
 @mov_cr4_eax macro
-;       mov cr4, eax
-		db 0Fh,22h,0E0h
-		endm
+;	mov cr4, eax
+	db 0Fh,22h,0E0h
+	endm
 
-@cpuid	macro
-;		cpuid
-		db 0Fh,0A2h
-		endm
+@cpuid macro
+;	cpuid
+	db 0Fh,0A2h
+	endm
 
 @int_31 macro
 if ?FASTINT31
-		int 31h
+	int 31h
 else
-		call	intr31_
-endif        
-        endm
+	call intr31_
+endif
+	endm
 
 @int_21 macro
 if ?FASTINT21
-		int 21h
+	int 21h
 else
-		call	intr21_
-endif        
-        endm
+	call intr21_
+endif
+	endm
 
 ;-- switches read-mode
 
 @jmp_rm macro xx
-		mov ss:[wRetAdrRm], xx
-        jmp _gotorm
-        endm
-        
+	mov ss:[wRetAdrRm], xx
+	jmp _gotorm
+	endm
+
 @rawjmp_rm macro xx
-;		push offset xx
-;		db 68h
-;       dd offset xx
-		mov ss:[wRetAdrRm2], offset xx
-        jmp _rawjmp_rm
-        endm
+;	push offset xx
+;	db 68h
+;	dd offset xx
+	mov ss:[wRetAdrRm2], offset xx
+	jmp _rawjmp_rm
+	endm
 
 @exitserver_pm macro xx
-;		push offset xx
-		db 68h
-        dd offset xx
-        jmp _exitserver_pm
-        endm
+;	push offset xx
+	db 68h
+	dd offset xx
+	jmp _exitserver_pm
+	endm
 
 ;-- switches to protected-mode
-        
+
 @jmp_pm macro xx
-        push word ptr LOWWORD(offset xx)
-        jmp _gotopm
-        endm
+	push word ptr LOWWORD(offset xx)
+	jmp _gotopm
+	endm
 
 @jmp_pmX macro xx
-        push word ptr LOWWORD(offset xx)
-        jmp _gotopmEx
-        endm
+	push word ptr LOWWORD(offset xx)
+	jmp _gotopmEx
+	endm
 
 @rawjmp_pm macro xx, bMode
-		push word ptr LOWWORD(offset xx)
+	push word ptr LOWWORD(offset xx)
 ifb <bMode>        
-        jmp _rawjmp_pm
+	jmp _rawjmp_pm
 else
-        jmp _rawjmp_pm_setsegm
+	jmp _rawjmp_pm_setsegm
 endif
-		endm
+	endm
 
 ;--- push offset of a real-mode proc (inside hdpmi) as dword
 
 @pushproc macro procaddr
 ;; masm doesn't like "push dword ptr seg procaddr shl 16 + offset procaddr"
-		db 68h
-		dd offset procaddr
-        endm
+	db 68h
+	dd offset procaddr
+	endm
 
 @proto macro name, type
   ifb <type>
-name	proto near
+name proto near
   else
-name	proto type
+name proto type
   endif
-		endm
+	endm
 

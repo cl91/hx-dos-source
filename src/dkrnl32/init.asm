@@ -56,6 +56,8 @@ DGROUP  group CONST, .BASE$I, .BASE$IZ, .BASE$X, .BASE$XZ
 endif
 endif
 
+DeinstallDebugLog proto
+
 	.DATA
 
 ;--- about the g_dwRefCnt variable:
@@ -123,13 +125,13 @@ if ?HOOKINT21
 ;-- int 21h hook. required for MZ, optionally for PE.
 ;-- for MZ the termination procs must be executed now
 
-myint21x proc
+myint21x proc	;used if IKF_PELDR == 0
 	cmp ah,4Bh
 	jz int214b
 	align 4
 myint21x endp	;fall thru
 
-myint21 proc        
+myint21 proc	;used if IKF_PELDR == 1
 	cmp ah,4Ch
 	jz int214c
 int21default::
@@ -144,7 +146,7 @@ int214b proc
 	cmp al,80h
 	jb int21default
 	xor eax,eax
-	or dword ptr [esp+8],1
+	or dword ptr [esp+8],1	;set CF = 1
 	iretd
 	align 4
 int214b endp
@@ -306,7 +308,7 @@ endif
 	pop [eax].PROCESS.hModule
 ;	mov [eax].PROCESS.pHeap, NULL
 ;	mov [eax].PROCESS.pCmdLine, NULL
-	test [g_bIntFl],IKF_DPMILDR	;modules supported?
+	test [g_bIntFl],IKF_PELDR	;modules supported?
 	jz @F
 	mov [eax].PROCESS.wFlags, PF_LOCKED
 @@:
@@ -332,7 +334,7 @@ if ?FLAT
 endif
 	mov [eax].THREAD.hStack, ecx
 
-	test [g_bIntFl],IKF_DPMILDR
+	test [g_bIntFl],IKF_PELDR
 	jz @F
 	mov ecx,[ebp+14h]	;get value of EDX on entry
 	mov ebx,[ebp+18h]	;start of module list in ECX
@@ -444,7 +446,7 @@ if ?HOOKINT21
 	mov word ptr g_oldint21+4,cx
 	mov ecx, cs
 	mov edx, offset myint21
-	test [g_bIntFl],IKF_DPMILDR
+	test [g_bIntFl],IKF_PELDR
 	jnz @F
 	mov edx, offset myint21x
 @@:
@@ -568,6 +570,7 @@ else
 endif
 nofinalterm:
 	invoke _FreeAllRegions	;--- free memory of current process
+	invoke DeinstallDebugLog
 	dec g_bIsActive
 	mov eax, [g_hCurThread]
 	.if (eax)

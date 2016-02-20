@@ -23,7 +23,7 @@ $(OUTDIR):
 
 !if 0
 
-LINK=wlink.exe
+LINK=jwlink.exe
 
 !ifndef MASM
 MASM=0

@@ -6,9 +6,9 @@
 ;;
 	.286
 
-DOSXXX	segment	byte public 'CODE'
+DOSXXX segment byte public 'CODE'
 
-	public	DOSSETVEC
+	public DOSSETVEC
 
 DOSSETVEC:
 
@@ -20,10 +20,10 @@ wClass	equ	P+08h
 pNHan	equ	P+04h
 ppOHan	equ	P+00h
 
-	push	bp			;sp = sp+2
-	mov	bp,sp
+	push bp			;sp = sp+2
+	mov bp,sp
 
-	mov	ax,wClass
+	mov ax,wClass
 ;***
 ifndef $NOCHECK
   if 1;def $OS2COMPAT
@@ -55,11 +55,11 @@ ifndef $NOCHECK
   endif
 endif
 ;****
-	push	DS		;preserve regs
-	push	ES
-	push	bx
-	push	dx
-	push	si
+	push DS		;preserve regs
+	push ES
+	push bx
+	push dx
+	push si
 
 	mov	ah,35h		; 21,35xx - Get Vector
 	int	21h
@@ -89,15 +89,15 @@ endif
 	int	21h
 	xor	ax,ax		; rc 0
 @5f:
-	pop	si		;restore all
-	pop	dx
-	pop	bx
-	pop	ES
-	pop	DS
+	pop si		;restore all
+	pop dx
+	pop bx
+	pop ES
+	pop DS
 @6f:
-	pop	bp
-	retf	10
+	pop bp
+	retf 10
 
-DOSXXX	ends
+DOSXXX ends
 
 	end

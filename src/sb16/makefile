@@ -32,6 +32,7 @@ OBJMODS = $(OBJMODS:.\=RELEASE\)
 !ifndef MASM
 MASM=0
 !endif
+MSLINK=0
 
 ASMOPT= -c -coff -nologo -Sg $(AOPTD) -D_SB16_ -I$(INC32DIR) -D?FLAT=1 -Fl$* -Fo$* 
 
@@ -41,14 +42,14 @@ ASM=@ml.exe $(ASMOPT)
 ASM=@jwasm.exe $(ASMOPT)
 !endif
 
-LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL
+LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL /LIBPATH:$(LIBCOFF)
 
 #LINKBIN=polink.exe
 #LIBBIN=lib.exe /NOLOGO
 
 NAME=SB16
 LIBNAME=SB16S
-LIBS=$(LIBCOFF)\dkrnl32.lib ..\DUSER32\RELEASE\duser32.lib
+LIBS=dkrnl32.lib ..\DUSER32\RELEASE\duser32.lib
 
 .SUFFIXES: .asm .obj
 
@@ -61,11 +62,15 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).lib $(OUTDIR)\$(NAME).obj $(NAME).def Makefile
-	@$(LINKBIN) @<<
+!if $(MSLINK)
+	@link @<<
 $(OUTDIR)\$(NAME).obj $(OUTDIR)\$(LIBNAME).lib $(LIBS)
 $(LOPTS) $(LOPTD)
 /DEF:$(NAME).def /OUT:$*.DLL
 <<
+!else
+	@$(LINKBIN) format win pe dll name $*.DLL f $(OUTDIR)\$(NAME).obj libpath $(LIBCOFF) lib {$(OUTDIR)\$(LIBNAME).lib $(LIBS)} op q, map=$*, implib=$* @$(NAME).rsp
+!endif
 !if $(DEBUG)==0
 	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR

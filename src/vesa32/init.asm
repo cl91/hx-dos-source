@@ -1,15 +1,15 @@
 
-        .386
-        .MODEL FLAT, stdcall
-        option proc:private
-        
-        option casemap:none
+		.386
+		.MODEL FLAT, stdcall
+		option proc:private
+
+		option casemap:none
 
 		include winnt.inc
-        include isvbop.inc
-        include macros.inc
-        include vesa32.inc
-        include equates.inc
+		include isvbop.inc
+		include macros.inc
+		include vesa32.inc
+		include equates.inc
 
 VesaMouseExit proto
 _GetVesaInfo  proto
@@ -22,22 +22,22 @@ g_hVesaVDD	dd 0
 g_dwSelector dd 0
 endif
 
-        .CODE
+		.CODE
 
 if ?VESAVDD
 ;--- on NT platforms load VESAVDD.DLL
 
-InstallVDD	proc handle:dword
+InstallVDD proc handle:dword
 
-       	pushad
+		pushad
 		mov	ax,3306h
 		int	21h
 		cmp	bx,3205h		;NT, 2k, XP?
 		jnz	exit
-        mov cx,1
-        mov ax,0
-        int 31h
-        jc exit
+		mov cx,1
+		mov ax,0
+		int 31h
+		jc exit
 		mov g_dwSelector, eax
 		mov ebx, eax
 		mov eax, handle
@@ -47,12 +47,12 @@ InstallVDD	proc handle:dword
 		mov ax,0007h
 		int 31h
 		jc error
-        mov cx,0
-        mov dx,-1
-        mov ax,0008h
-        int 31h
-        jc error
-        mov eax, handle
+		mov cx,0
+		mov dx,-1
+		mov ax,0008h
+		int 31h
+		jc error
+		mov eax, handle
 		mov esi, CStr("VESAVDD.DLL")
 		sub esi, eax
 		mov edi, CStr("Init")			
@@ -60,60 +60,60 @@ InstallVDD	proc handle:dword
 		mov ebx, CStr("Dispatch")			
 		sub ebx, eax
 		push ds
-        push es
+		push es
 		mov es,g_dwSelector
 		mov ds,g_dwSelector
 		RegisterModule
-        pop es
+		pop es
 		pop ds
 		jc error
 		mov	g_hVesaVDD, eax
-        jmp exit
+		jmp exit
 error:
 		mov edx, CStr(<"RegisterModule('VESAVDD.DLL') failed",13,10,'$'>)
-        mov ah,9
-        int 21h
+		mov ah,9
+		int 21h
 exit:
-        popad
+		popad
 		ret
-InstallVDD	endp
+InstallVDD endp
 
 DeinstallVDD proc uses ebx
-      	mov eax, g_hVesaVDD
-        and eax, eax
-        jz @F
-        UnRegisterModule
+		mov eax, g_hVesaVDD
+		and eax, eax
+		jz @F
+		UnRegisterModule
 
-@@:            
+@@:
 		mov ebx, g_dwSelector
-        and ebx, ebx
-        jz @F
+		and ebx, ebx
+		jz @F
 		mov ax,1
 		int 31h
-@@:        
+@@:
 		ret
-DeinstallVDD endp        
+DeinstallVDD endp
 endif
 
 VesaInit proc public
 
 if ?VESAVDD
-		invoke	InstallVDD, hModule
+		invoke InstallVDD, hModule
 endif
-        invoke  _GetVesaInfo
-		invoke  _SetDisplayStartProc, 0
-        ret
-        align 4
+		invoke _GetVesaInfo
+		invoke _SetDisplayStartProc, 0
+		ret
+		align 4
 VesaInit endp
 
 VesaExit proc public
-       	invoke VesaMouseExit
-if ?VESAVDD            
+		invoke VesaMouseExit
+if ?VESAVDD
 		invoke DeinstallVDD
-endif            
-        ret
-        align 4
+endif
+		ret
+		align 4
 VesaExit endp
 
-        END
+		END
 

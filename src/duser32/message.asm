@@ -63,9 +63,9 @@ endif
 	.DATA?
 
 ife ?THREADQUEUE
-start_of_queue label dword        
+start_of_queue label dword
 	MSG 256 dup (<>)
-end_of_queue label dword        
+end_of_queue label dword
 endif
 
 	.CODE
@@ -423,6 +423,7 @@ endif
 		and eax,eax
 		jz exit
 
+		movzx edx, dx
 		.if ([ebx].INPUT_RECORD.Event.MouseEvent.dwEventFlags == MOUSE_MOVED)
 			mov eax,WM_MOUSEMOVE
 		.elseif ([ebx].INPUT_RECORD.Event.MouseEvent.dwEventFlags == 0)
@@ -450,6 +451,9 @@ endif
 				xor eax, eax
 				jmp exit
 			.endif
+		.elseif ([ebx].INPUT_RECORD.Event.MouseEvent.dwEventFlags == MOUSE_WHEELED)
+			mov edx, [ebx].INPUT_RECORD.Event.MouseEvent.dwButtonState
+			mov eax,WM_MOUSEWHEEL
 		.elseif ([ebx].INPUT_RECORD.Event.MouseEvent.dwEventFlags == DOUBLE_CLICK)
 			mov ecx, [ebx].INPUT_RECORD.Event.MouseEvent.dwButtonState
 			and ecx, g_dwOldButtonState
@@ -467,7 +471,7 @@ endif
 		mov msg.message, eax
 		mov ecx, [ebx].INPUT_RECORD.Event.MouseEvent.dwButtonState
 		mov g_dwOldButtonState, ecx
-		movzx edx, cl
+		movzx dx, cl
 		and dl, MK_LBUTTON or MK_RBUTTON	;same as FROM_LEFT_1ST_BUTTON_PRESSED + RIGHTMOST_BUTTON_PRESSED
 if 0
 		test cl,FROM_LEFT_2ND_BUTTON_PRESSED
@@ -494,7 +498,7 @@ endif
 		mov msg.lParam, ecx
 		.if (eax == WM_MOUSEMOVE)
 ;--- wParam of WM_SETCURSOR: hwnd of window which contains the cursor
-;--- lParam of WM_SETCURSOR: HIWORD==mouse msg, LOWORD=hittest code 		   
+;--- lParam of WM_SETCURSOR: HIWORD==mouse msg, LOWORD=hittest code
 			shl eax, 16				;mov mouse msg to upper word
 			.if (hwnd)
 			   mov ax, HTCLIENT
@@ -673,9 +677,9 @@ queue_empty:
 	jz nomsg
 	.if (eax == 1 && g_hwndFocus)
 		mov ebx, g_hConInp
-if 0        
+if 0
 		push 0
-		invoke	GetNumberOfConsoleInputEvents, ebx, esp
+		invoke GetNumberOfConsoleInputEvents, ebx, esp
 		pop ecx
 		and eax,eax
 		jz nexttry
@@ -720,7 +724,7 @@ if 0;def _DEBUG
 endif
 	ret
 	align 4
-        
+
 PeekMessageA endp
 
 GetMessageA proc public pMsg:dword, hWnd:dword, dwMin:dword, dwMax:dword
@@ -780,7 +784,7 @@ local	dwEsp:dword
 	.if (eax > nCount)
 		mov eax, nCount
 	.endif
-exit:        
+exit:
 ;	@strace <"MsgWaitForMultipleObjects(", nCount, ", ", pHandles, ", ", fWaitAll, ", ",  dwMS, ", ", dwWakeMask, ")=", eax>
 	ret
 	align 4
@@ -811,7 +815,7 @@ GetMessageTime proc public
 	cmp ecx, g_Queue.pStart
 	jnz @F
 	mov ecx, g_Queue.pEnd
-@@:        
+@@:
 	mov eax, [ecx-sizeof MSG].MSG.time        
 	@strace <"GetMessageTime()=", eax>
 	ret
@@ -919,6 +923,15 @@ BroadcastSystemMessage proc public dwFlags:DWORD, lpdwRecipients:ptr DWORD, uiMe
 	align 4
 
 BroadcastSystemMessage endp
+
+GetLastInputInfo proc public lpii:ptr
+
+	xor eax, eax
+	@strace <"GetLastInputInfo(", lpii, ")=", eax, " *** unsupp ***">
+	ret
+	align 4
+
+GetLastInputInfo endp
 
 	end
 

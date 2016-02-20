@@ -12,6 +12,8 @@ endif
 	include dkrnl32.inc
 	include macros.inc
 
+?KHEAP	equ 0	;std=0, 1 for kernel heap debugging
+
 TIBSEG segment use16
 TIBSEG ends
 	assume fs:TIBSEG	;declare FS=TIB a 16 bit segment (saves space)
@@ -56,6 +58,12 @@ GetProcessHeapEx endp
 GetProcessHeap proc public
 
 	invoke GetProcessHeapEx, 1
+if ?KHEAP
+	push eax
+	invoke GetKernelHeap
+	mov edx, eax
+	pop eax
+endif
 	@strace <"GetProcessHeap()=", eax>
 	ret
 	align 4

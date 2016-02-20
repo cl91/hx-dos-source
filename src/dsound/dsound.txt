@@ -16,6 +16,10 @@
 
   4. History
   
+  2010/__/__: Version 1.5
+  
+  þ IDirectSoundNotify supported.
+
   2009/01/20: Version 1.4
   
   þ source assembled with JWasm.

@@ -18,7 +18,10 @@ endif
 	.DATA
 
 if ?TIMERCACHE        
-g_Timer	TIMER ?TIMERCACHE dup (<<SYNCTYPE_TIMER>,-1>)
+g_Timer label TIMER
+	repeat ?TIMERCACHE
+	TIMER <<<SYNCTYPE_TIMER>,0,0>,-1,<>,0,0,-2>	;hThread must be -2
+	endm
 endoftimers label byte
 endif
 
@@ -27,13 +30,15 @@ endif
 ;--- more accurate wait if interval is < 110 ms
 ;--- inp: ecx=time to wait in ms
 
+?FREETIMER equ -2
+
 _Wait proc
 	mov esi, ecx
 if ?TIMERCACHE
 	cli
 	mov ebx, offset g_Timer
 nextitem:
-	cmp [ebx].TIMER.hThread,0
+	cmp [ebx].TIMER.hThread,?FREETIMER
 	jz itemfound
 	lea ebx, [ebx+sizeof TIMER]
 	cmp ebx, offset endoftimers
@@ -45,15 +50,22 @@ endif
 	and eax,eax
 	jz error
 	mov ebx, eax
-	push offset delobj
-if ?TIMERCACHE
-	jmp @F
+	call xxx
+	invoke CloseHandle, ebx
+error:
+	@strace <"_Wait(", esi, ")=", eax>
+	ret
 	align 4
+if ?TIMERCACHE
 itemfound:
-	mov [ebx].TIMER.hThread,-1
+	mov [ebx].TIMER.hThread,0
 	sti
-@@:
+	call xxx
+	mov [ebx].TIMER.hThread,?FREETIMER
+	ret
+	align 4
 endif
+xxx:
 	mov eax, esi
 	mov ecx, 1000*10	;convert ms -> 100 ns units
 	mul ecx
@@ -76,13 +88,6 @@ endif
 		.endif
 	.endw
 	invoke CancelWaitableTimer, ebx
-error:
-exit:
-	@strace <"_Wait(", esi, ")=", eax>
-	ret
-	align 4
-delobj:
-	invoke	CloseHandle, ebx
 	retn
 	align 4
 

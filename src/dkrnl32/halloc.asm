@@ -18,11 +18,58 @@ endif
 
 ?DONTFREE	equ 0	;0 for debugging: dont free item in HeapFree
 ?CHKITEM	equ 1	;1 check if item is free already
-?EXTCHK		equ 0	;1 check if corruption would occur
+;--- ?EXTCHK = 1 adds 4 byte to the heap item size in HeapAlloc,
+;--- fills the additional DWORD with a certain value and checks in
+;--- HeapFree if the value is still there. If no, either the debugger
+;--- is called or an exception is thrown.
+?EXTCHK		equ 0
+;--- additional bytes to add to each request if ?EXTCHK is on.
+;--- minimum is 4.
+?ADDBYTES	equ 4
 
 	.CODE
 
 if ?FREELIST
+
+if ?EXTCHK
+
+heapdisp proc
+	push edi
+	sub ebx, 4
+	mov edi, [esi].HEAPDESC.start
+	.while ( dword ptr [edi] != _HEAP_END )
+		sub esp,64
+		mov eax,[edi]
+		and eax, -4
+		lea eax,[edi+eax-4]
+		invoke IsBadReadPtr, eax, 4
+		mov edx, esp
+		.if ( eax == 0 )
+			mov eax,[edi]
+			and eax, -4
+			mov eax,[edi+eax-4]
+			invoke _sprintf, edx, CStr(<"heap item=%X [item]=%X %X %X %X",10>),\
+				edi, dword ptr [edi], dword ptr [edi+4], dword ptr [edi+8], eax
+			.break
+		.else
+			invoke _sprintf, edx, CStr(<"heap item=%X [item]=%X %X %X",10>),\
+				edi, dword ptr [edi], dword ptr [edi+4], dword ptr [edi+8]
+		.endif
+		invoke Display_szString, esp
+		add esp,64
+		.break .if (edi == ebx)
+		mov ecx, [edi].FLITEM.dwSize
+		and cl, 0FCh
+		lea edi, [edi+ecx+4]
+		invoke IsBadReadPtr, edi, 4
+		.break .if (eax)
+	.endw
+	pop edi
+	ret
+	align 4
+heapdisp endp
+
+endif
 
 ;--- the list of free items is sorted descending!
 ;--- this will result in a large free block at the beginning
@@ -42,8 +89,8 @@ if ?VERBOSE
 endif        
 	test cl, HEAP_NO_SERIALIZE
 	jnz @F
-	invoke WaitForSingleObject,[esi].HEAPDESC.semaphor,INFINITE
-	push offset relsemaph1
+	invoke WaitForSingleObject,[esi].HEAPDESC.mutex,INFINITE
+	push offset relmutex1
 @@:
 	push edi
 	sub ebx,4
@@ -51,7 +98,12 @@ endif
 	mov eax,[esi].HEAPDESC.rover
 	xor edx,edx
 	xor ecx,ecx
-
+if ?EXTCHK
+	assume fs:nothing
+	push offset exception_freeitem
+	push fs:[edx]
+	mov fs:[edx], esp
+endif
 ;--- scan free list until we find an item
 ;--- whose address is below address of new item
 
@@ -60,15 +112,14 @@ if 0;?VERBOSE
 	@strace <"heap scan, item=", eax, " size=", [eax].FLITEM.dwSize, " next=", [eax].FLITEM.pNext>
 endif
 	cmp eax,ebx			;cur item - new item: is new item >= cur item?
-	jbe ifl_1			;then jump
+	jbe @F				;then jump
 	mov edx,ecx
 	mov ecx,eax
 	mov eax,[eax].FLITEM.pNext	;get next free item
 	and eax,eax
 	jnz nextitem
 ;----------------------- new item is new last item
-
-ifl_1:
+@@:
 ;--- current state:
 ;--- eax=will become successor of ebx
 ;--- ebx=new free item to insert
@@ -153,17 +204,38 @@ if 0;?VERBOSE
 endif
 
 done:
-
+if ?EXTCHK
+	xor edx, edx
+	pop fs:[edx]
+	pop ecx			;adjust stack (offset exception)
+endif
 if 0;?VERBOSE
 	@strace <"insertfreelist exit">
 endif
 	pop edi
 	ret
-relsemaph1:
-	invoke ReleaseSemaphore,[esi].HEAPDESC.semaphor,1,0
+relmutex1:
+	invoke ReleaseMutex,[esi].HEAPDESC.mutex
 	ret
+if ?EXTCHK
 	align 4
-
+doneX:
+	xor edx, edx
+	pop fs:[edx]
+	pop ecx			;adjust stack (offset exception)
+	invoke ReleaseMutex, [esi].HEAPDESC.mutex
+	call heapdisp
+	invoke RaiseException, STATUS_NO_MEMORY, EXCEPTION_NONCONTINUABLE, 0, 0
+	pop edi
+	ret
+exception_freeitem:
+	mov eax, [esp+12]	;get context
+	mov [eax].CONTEXT.rEip, offset doneX
+	@strace <"*** exception caught inside insertfreelist">
+	xor eax, eax		;== _XCPT_CONTINUE_EXECUTION
+	retn
+endif
+	align 4
 insertfreelist endp
 
 ;--- delete a free item from freelist
@@ -181,7 +253,7 @@ endif
 	test cl, HEAP_NO_SERIALIZE
 	jnz @F
 	push edx
-	invoke WaitForSingleObject,[esi].HEAPDESC.semaphor,INFINITE
+	invoke WaitForSingleObject,[esi].HEAPDESC.mutex,INFINITE
 	pop edx
 	push offset relsemaph2
 @@:
@@ -225,7 +297,7 @@ endif
 	ret
 relsemaph2:
 	push eax
-	invoke ReleaseSemaphore,[esi].HEAPDESC.semaphor,1,0
+	invoke ReleaseMutex,[esi].HEAPDESC.mutex
 	pop eax
 	ret
 	align 4
@@ -265,14 +337,26 @@ if ?EXTCHK
  if ?VERBOSE
 	@strace <"heap item size=", ecx>
  endif
-	cmp dword ptr [ebx+ecx-4],0DEADBABEh
-	jz @F
+	lea edx,[ebx+ecx-4]
+	push edx
+	push ecx
+	invoke IsBadReadPtr, edx, 4
+	pop ecx
+	pop edx
+	and eax, eax
+	jnz isbad
+	cmp dword ptr [edx],0DEADBABEh
+	jz isok
 	@strace <"heap ", heap, " is corrupted, item=", ebx>
+isbad:
 	invoke IsDebuggerPresent
 	.if (eax)
 		int 3
+	.else
+		call heapdisp
+		invoke RaiseException, STATUS_INVALID_HANDLE, EXCEPTION_NONCONTINUABLE, 0, 0
 	.endif
-@@:
+isok:
 endif
 ifdef _DEBUG
 	pushad
@@ -316,7 +400,7 @@ HeapAlloc proc public uses ebx esi edi hHeap:dword, flags:dword, dwBytes:dword
 @@:
 	mov dwBytes, ecx		;save it so zerofill will use true size
 if ?EXTCHK
-	add ecx,4
+	add ecx, ?ADDBYTES
 endif
 @@:
 	call _searchseg			;search item >= ecx. modifies esi!
@@ -331,7 +415,7 @@ error2:
 	xor eax,eax
 	test edi,HEAP_GENERATE_EXCEPTIONS
 	jz exit 
-	invoke RaiseException, STATUS_NO_MEMORY, 0, 0, 0
+	invoke RaiseException, STATUS_NO_MEMORY, EXCEPTION_NONCONTINUABLE, 0, 0
 done:
 ifdef _DEBUG
 	test flags,HEAP_ZERO_MEMORY
@@ -342,26 +426,23 @@ ifdef _DEBUG
 	mov eax, 12345678h
 	shr ecx,2
 	rep stosd
- if ?EXTCHK
-	mov eax, 0DEADBABEh
-	stosd
- endif
 	pop eax
 @@:
 endif
 	test flags,HEAP_ZERO_MEMORY
-	jz exit
+	jz @F
 	push eax
 	mov edi,eax
 	mov ecx,dwBytes
 	xor eax,eax
 	shr ecx,2			;bytes is dword adjusted!
 	rep stosd
-if ?EXTCHK
-	mov eax,0DEADBABEh
-	stosd
-endif
 	pop eax
+@@:
+if ?EXTCHK
+	mov edx, dwBytes
+	mov dword ptr [eax+edx+?ADDBYTES-4],0DEADBABEh
+endif
 exit:
 	@strace <[ebp+4], ": HeapAlloc(", hHeap, ", ", flags, ", ", dwBytes, ")=", eax>
 	ret
@@ -391,7 +472,7 @@ endif
 if ?EXTCHK
 	and edx, edx
 	jz error1				;size 0 not allowed
-	add edx, 3+4
+	add edx, 3+?ADDBYTES
 	and dl, 0FCh			;DWORD align 
 else
 	add edx, 3
@@ -491,12 +572,12 @@ exit:
 error1:
 	test flags, HEAP_GENERATE_EXCEPTIONS
 	jz error
-	invoke RaiseException, STATUS_ACCESS_VIOLATION,0,0,0
+	invoke RaiseException, STATUS_ACCESS_VIOLATION, EXCEPTION_NONCONTINUABLE, 0, 0
 error2:
 	xor eax,eax
 	test flags, HEAP_GENERATE_EXCEPTIONS
 	jz error
-	invoke RaiseException, STATUS_NO_MEMORY,0,0,0
+	invoke RaiseException, STATUS_NO_MEMORY, EXCEPTION_NONCONTINUABLE, 0, 0
 	align 4
 
 HeapReAlloc endp

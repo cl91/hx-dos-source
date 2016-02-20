@@ -23,8 +23,8 @@ WNDENUMPROC typedef ptr protoEnumThreadWndProc
 EnumThreadWindows proc public uses ebx esi dwThreadId:dword, lpEnumFunc:WNDENUMPROC, lParam:DWORD
 
 	mov esi, esp
-	mov ebx, g_pWindows
 	@serialize_enter
+	mov ebx, g_pWindows
 	.while (ebx)
 		mov eax, [ebx].WNDOBJ.dwThreadId
 		.if (eax == dwThreadId)
@@ -55,8 +55,8 @@ EnumChildWindows proc public uses ebx esi hwndParent:dword, lpEnumFunc:WNDENUMPR
 	mov esi, esp
 	mov ebx, hwndParent
 	.if (ebx && [ebx].WNDOBJ.dwType == USER_TYPE_HWND)
-		mov ebx, [ebx].WNDOBJ.hwndChilds
 		@serialize_enter
+		mov ebx, [ebx].WNDOBJ.hwndChilds
 		.while (ebx)
 			push ebx
 			mov ebx, [ebx].WNDOBJ.hwndSibling
@@ -77,7 +77,7 @@ EnumChildWindows proc public uses ebx esi hwndParent:dword, lpEnumFunc:WNDENUMPR
 		.endw
 	.endif
 	mov esp, esi
-	@strace <"EnumChildWindows(", hwndParent, ", ", lpEnumFunc, ", ", lParam, ")=", eax, " *** unsupp ***">
+	@strace <"EnumChildWindows(", hwndParent, ", ", lpEnumFunc, ", ", lParam, ")=", eax>
 	ret
 	align 4
 EnumChildWindows endp
@@ -85,8 +85,8 @@ EnumChildWindows endp
 EnumWindows proc public uses ebx esi lpEnumFunc:WNDENUMPROC, lParam:dword
 
 	mov esi, esp
-	mov ebx, g_pWindows
 	@serialize_enter
+	mov ebx, g_pWindows
 	.while (ebx)
 		mov eax, [ebx].WNDOBJ.dwThreadId
 		push ebx
@@ -103,7 +103,7 @@ EnumWindows proc public uses ebx esi lpEnumFunc:WNDENUMPROC, lParam:dword
 	.endw
 	mov esp, esi
 
-	@strace <"EnumWindows(", lpEnumFunc, ", ", lParam, ")=", eax, " *** unsupp ***">
+	@strace <"EnumWindows(", lpEnumFunc, ", ", lParam, ")=", eax>
 	ret
 	align 4
 EnumWindows endp

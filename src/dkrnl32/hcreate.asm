@@ -43,9 +43,9 @@ _heapset proc c public uses ebx
 	mov [ebx].HEAPDESC.dwSize,eax	;init uncommitted memory size
 	test edx,HEAP_NO_SERIALIZE
 	jnz @F
-	invoke CreateSemaphoreA, eax, 1, 1, eax
+	invoke CreateMutexA, eax, eax, eax
 @@:
-	mov [ebx].HEAPDESC.semaphor, eax
+	mov [ebx].HEAPDESC.mutex, eax
 	mov eax,ebx
 	ret
 	align 4

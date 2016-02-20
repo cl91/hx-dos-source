@@ -482,6 +482,19 @@ RC_STRETCHDIB	EQU	2000h
 RC_OP_DX_OUTPUT	EQU	4000h
 RC_DEVBITS		EQU	8000h
 
+DISPLAY_DEVICEA struct
+cb            DWORD ?
+DeviceName    BYTE  32 dup (?)
+DeviceString  BYTE  128 dup (?)
+StateFlags    DWORD ?
+DeviceID      BYTE  128 dup (?)
+DeviceKey     BYTE  128 dup (?)
+DISPLAY_DEVICEA ends
+
+DISPLAY_DEVICE_ATTACHED_TO_DESKTOP equ 01h
+DISPLAY_DEVICE_PRIMARY_DEVICE      equ 04h
+DISPLAY_DEVICE_VGA_COMPATIBLE      equ 10h
+
 TEXTMETRICA	struct DWORD
 tmHeight			SDWORD	?
 tmAscent			SDWORD	?

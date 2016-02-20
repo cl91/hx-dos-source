@@ -23,7 +23,7 @@ CreateEventW proc public security:dword, bManualReset:dword, bInitialState:dword
 		call ConvertWStr
 	.endif
 	invoke CreateEventA, security, bManualReset, bInitialState, eax
-	@strace	<"CreateEventW(", security, ", ", bManualReset, ", ", bInitialState, ", ", lpName, ")=", eax>
+	@strace <"CreateEventW(", security, ", ", bManualReset, ", ", bInitialState, ", ", lpName, ")=", eax>
 	ret
 	align 4
 
@@ -34,7 +34,7 @@ OpenEventW proc public dwDesiredAccess:DWORD, bInheritHandle:DWORD, lpName:ptr W
 	mov eax, lpName
 	call ConvertWStr
 	invoke OpenEventA, dwDesiredAccess, bInheritHandle, eax
-	@strace	<"OpenEventW(", dwDesiredAccess, ", ", bInheritHandle, ", ", lpName, ")=", eax>
+	@strace <"OpenEventW(", dwDesiredAccess, ", ", bInheritHandle, ", ", lpName, ")=", eax>
 	ret
 	align 4
 

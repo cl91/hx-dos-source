@@ -1,8 +1,8 @@
 
 		.286
 		public	DOSSELECTDISK
-        
-DOSXXX	segment word public 'CODE'
+
+DOSXXX segment word public 'CODE'
 
 DOSSELECTDISK:
 		push	BP
@@ -25,6 +25,6 @@ exit:
 		pop	BP
 		retf 2
 
-DOSXXX	ends
+DOSXXX ends
 
 	end

@@ -8,10 +8,14 @@ endif
 	option casemap:none
 	option proc:private
 
+	.nolist
+	.nocref
 	include windef.inc
 	include winbase.inc
 	include winsock.inc
 	include macros.inc
+	.cref
+	.list
 
 ?DEFNAME	equ 0
 
@@ -176,6 +180,14 @@ _&name proc public
 _&name endp
 	endm
 
+;--- in WSOCK32, 3 export numbers differ!!!
+;---
+;---              WSOCK32       WS2_32
+;---------------------------------------
+;--- inet_addr        10           11
+;--- inet_ntoa        11           12
+;--- ioctlsocket      12           10
+
 	@DefProc accept,      1
 	@DefProc bind,        2
 	@DefProc closesocket, 3
@@ -222,9 +234,18 @@ _&name endp
 
 	@DefProc __WSAFDIsSet,         151
 
-WSAStringToAddressA proc public x1:dword, x2:dword, x3:ptr DWORD, x4:ptr DWORD, x5:ptr DWORD
+	option prologue:prologuedef
+	option epilogue:epiloguedef
+
+;--- lpAddress is a SOCKADDR ptr,
+;--- lpAddressLength may return required length of lpAddress if too small
+
+WSAStringToAddressA proc public AddressString:ptr BYTE, 
+	AddressFamily:dword, lpProtocolInfo:ptr , lpAddress:ptr DWORD, 
+	lpAddressLength:ptr DWORD
 
 	mov eax, WSAEBADF
+	@strace <"WSAStringToAddressA(", AddressString, ", ", AddressFamily, ", ", lpProtocolInfo, ", ", lpAddress, ", ", lpAddressLength, ")=", eax, " ( unsupp )">
 	ret
 	align 4
 
@@ -238,6 +259,7 @@ WSACreateEvent proc public
 		call _WSASetLastError
 		mov eax, WSA_INVALID_EVENT
 	.endif
+	@strace <"WSACreateEvent()=", eax>
 	ret
 	align 4
 
@@ -253,6 +275,7 @@ WSACloseEvent proc public hEvent:DWORD
 		call _WSASetLastError
 		xor eax, eax
 	.endif
+	@strace <"WSACloseEvent(", hEvent, ")=", eax>
 	ret
 	align 4
 
@@ -274,12 +297,14 @@ WSAResetEvent proc public evnt:dword
 
 WSAResetEvent endp
 
+;--- WSAEventSelect() is a slighly modified WSAAsyncSelect()
+
 WSAEventSelect proc public sock:dword, evnt:dword, lNetworkEvents:dword
 
 	push WSAEFAULT
 	call _WSASetLastError 
 	mov eax, SOCKET_ERROR
-	@strace <"WSAEventSelect(", sock, ", ", evnt, ", ", lNetworkEvents, ")=", eax>
+	@strace <"WSAEventSelect(", sock, ", ", evnt, ", ", lNetworkEvents, ")=", eax, " ( unsupp )">
 	ret
 	align 4
 
@@ -290,7 +315,7 @@ WSAEnumNetworkEvents proc public sock:dword, evnt:dword, lpevt:ptr
 	push WSAEFAULT
 	call _WSASetLastError 
 	mov eax, SOCKET_ERROR
-	@strace <"WSAEnumNetworkEvents(", sock, ", ", evnt, ", ", lpevt, ")=", eax>
+	@strace <"WSAEnumNetworkEvents(", sock, ", ", evnt, ", ", lpevt, ")=", eax, " ( unsupp )">
 	ret
 	align 4
 
@@ -313,7 +338,7 @@ WSAIoctl proc public sock:dword, dwIoControlCode:dword, lpvInBuffer:ptr, cbInBuf
 	push WSAEFAULT
 	call _WSASetLastError 
 	mov eax, SOCKET_ERROR
-	@strace <"WSAIoctl(", sock, ", ", dwIoControlCode, ", ", lpvInBuffer, ", ", cbInBuffer, ", ", lpvOutBuffer, ", ", cbOutBuffer, ", ", lpcbBytesReturned, ", ", lpOverlapped, ", ", lpCompletionRoutine, ")=", eax>
+	@strace <"WSAIoctl(", sock, ", ", dwIoControlCode, ", ", lpvInBuffer, ", ", cbInBuffer, ", ", lpvOutBuffer, ", ", cbOutBuffer, ", ", lpcbBytesReturned, ", ", lpOverlapped, ", ", lpCompletionRoutine, ")=", eax, " ( unsupp )">
 	ret
 	align 4
 
@@ -324,10 +349,10 @@ WSAAddressToStringA proc public lpsaAddress:dword, dwAddressLength:dword, lpProt
 	push WSAEFAULT
 	call _WSASetLastError 
 	mov eax, SOCKET_ERROR
-	@strace <"WSAAddressToStringA(", lpsaAddress, ", ", dwAddressLength, ", ", lpProtocolInfo, ", ", lpszAddressString, ", ", lpdwAddressStringLength, ")=", eax>
+	@strace <"WSAAddressToStringA(", lpsaAddress, ", ", dwAddressLength, ", ", lpProtocolInfo, ", ", lpszAddressString, ", ", lpdwAddressStringLength, ")=", eax, " ( unsupp )">
 	ret
 	align 4
 
 WSAAddressToStringA endp
 
-	end
+	end DllMain

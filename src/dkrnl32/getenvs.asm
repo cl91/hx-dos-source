@@ -14,7 +14,7 @@ endif
 ?CURDIR equ 0
 
 	.CODE
-        
+
 GetEnvironmentStrings proc public
 GetEnvironmentStrings endp
 
@@ -83,9 +83,7 @@ endif
 	rep movsb
 	pop ds
 done:
-	@trace <"GetEnvironmentStringsA()=">
-	@tracedw eax
-	@trace <13,10>
+	@strace <"GetEnvironmentStringsA()=", eax>
 	ret
 	align 4
 
@@ -93,9 +91,7 @@ GetEnvironmentStringsA endp
 
 
 FreeEnvironmentStringsA proc public pStrings:dword
-	@trace <"FreeEnvironmentStringsA(">
-	@tracedw pStrings
-	@trace <")",13,10>
+	@strace <"FreeEnvironmentStringsA(", pStrings, ")">
 	invoke LocalFree, pStrings
 	ret
 	align 4

@@ -23,6 +23,7 @@ AOPTD=
 !ifndef MASM
 MASM=0
 !endif
+MSLINK=0
 
 ASMOPT= -c -nologo -coff -Sg -Fl$* -Fo$* -D_ML -I$(INC32DIR) $(AOPTD)
 !if $(MASM)
@@ -41,19 +42,10 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).DLL: $*.obj Makefile
-	@$(LINKBIN) $*.obj $(LOPTS) $(LIBS) /OUT:$*.DLL /DEF:$(NAME).DEF /MERGE:.CRT=.data
-!if 0
-# doesn't work yet!
-	@wlink @<<
-format windows nt dll
-runtime console
-file $*.obj
-name $*.DLL
-libpath $(LIBCOFF)
-lib { $(LIBS) }
-export GetProfileString='_GetProfileString@16'
-op map=$*.MAP
-<<
+!if $(MSLINK)
+	@link $*.obj $(LOPTS) $(LIBS) /OUT:$*.DLL /DEF:$(NAME).DEF /MERGE:.CRT=.data
+!else
+	@$(LINKBIN) format win pe dll f $*.obj name $*.DLL libpath $(LIBCOFF) lib { $(LIBS) } op q, map=$*.MAP @$(NAME).rsp
 !endif
 !if $(DEBUG)==0
     @copy $*.DLL ..\..\Bin\$(NAME).* >NUL

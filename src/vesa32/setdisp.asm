@@ -1,18 +1,18 @@
 
-        .386
+		.386
 if ?FLAT
-        .MODEL FLAT, stdcall
+		.MODEL FLAT, stdcall
 else
-        .MODEL SMALL, stdcall
+		.MODEL SMALL, stdcall
 endif
 		option casemap:none
-        option proc:private
+		option proc:private
 
-        include function.inc
-        include vesa32.inc
-        include dpmi.inc
-        include equates.inc
-        include macros.inc
+		include function.inc
+		include vesa32.inc
+		include dpmi.inc
+		include equates.inc
+		include macros.inc
 
 ?WAITINPM	equ 1	;std 1: 0=wait in VESA function
 ?CLI		equ 0	;std 0: disable interrupts before call
@@ -32,7 +32,7 @@ if ?FLIPSTATUS
 g_dwFlipStatus  		dd offset flipstatusdefault
 endif
 
-        .CODE
+		.CODE
 
 SetVesaDisplayStart proc public uses ebx dwOffset:dword, dwPitch:dword, dwFlags:dword
 
@@ -41,87 +41,87 @@ if ?CLI
 endif
 		xor ebx, ebx
 ife ?WAITINPM
-        cmp  g_Vesa32Options.bNoVSyncWait,0	;ignore DDFLIP_NOVSYNC flag?
-        jnz  @F
-        test byte ptr dwFlags,DDFLIP_NOVSYNC
-        setz bl
-		shl bl,7        		;80h=wait for vertical retrace
-@@:        
-endif        
-        jmp g_dwDisplayStart
-        align 4
+		cmp g_Vesa32Options.bNoVSyncWait,0	;ignore DDFLIP_NOVSYNC flag?
+		jnz @F
+		test byte ptr dwFlags,DDFLIP_NOVSYNC
+		setz bl
+		shl bl,7				;80h=wait for vertical retrace
+@@:
+endif
+		jmp g_dwDisplayStart
+		align 4
 vbe2int::
-        mov  eax, dwOffset
+		mov eax, dwOffset
 		cdq
-        mov  ecx, dwPitch
-        div  ecx
-        mov  edx, eax
-        xor  ecx, ecx
-        mov  ax,4F07h 
-		int  10h
-        jmp done
-        align 4
+		mov ecx, dwPitch
+		div ecx
+		mov edx, eax
+		xor ecx, ecx
+		mov ax,4F07h 
+		int 10h
+		jmp done
+		align 4
 vbe2direct::
 		mov edx, dwOffset
-        shr edx, 2
+		shr edx, 2
 		mov ecx, edx
-        shr edx, 16
-       	call g_lpfnSetDisplayStart
-        jmp done
-        align 4
+		shr edx, 16
+		call g_lpfnSetDisplayStart
+		jmp done
+		align 4
 vbe3int::
-		or   bl, 2             ;schedule display start at next retrace
-		mov  ecx, dwOffset
-        mov  ax,4F07h 
-		int  10h
-        jmp done
-        align 4
-        
+		or bl, 2			   ;schedule display start at next retrace
+		mov ecx, dwOffset
+		mov ax,4F07h 
+		int 10h
+		jmp done
+		align 4
+
 vbe3direct::
 		or bl, 2
 		mov edx, dwOffset
-        shr edx, 2
+		shr edx, 2
 		mov ecx, edx
-        shr edx, 16
-       	call g_lpfnSetDisplayStart
-done:   
-if ?WAITINPM        
+		shr edx, 16
+		call g_lpfnSetDisplayStart
+done:
+if ?WAITINPM
 		test byte ptr dwFlags,DDFLIP_NOVSYNC
-        jnz  novsync
-        cmp  g_Vesa32Options.bNoVSyncWait,0	;ignore DDFLIP_NOVSYNC flag?
-        jnz  novsync
- ife ?CLI        
+		jnz novsync
+		cmp g_Vesa32Options.bNoVSyncWait,0	;ignore DDFLIP_NOVSYNC flag?
+		jnz novsync
+ ife ?CLI
  ife ?NEVERCLI
- 		@noints
- endif        
- endif        
-        mov  dx,3dah
-  if 1        
-@@:        
-        in   al,dx
-        test al,8
-        jnz  @B
-  endif        
-@@:        
-        in   al,dx
-        test al,8
-        jz   @B
- ife ?CLI        
- ife ?NEVERCLI
- 		@restoreints
+		@noints
  endif
  endif
-novsync:        
+		mov  dx,3dah
+  if 1
+@@:
+		in al,dx
+		test al,8
+		jnz @B
+  endif
+@@:
+		in al,dx
+		test al,8
+		jz @B
+ ife ?CLI
+ ife ?NEVERCLI
+		@restoreints
+ endif
+ endif
+novsync:
 endif
-		mov	 eax,dwOffset
-        call MouseSetDisplayStart
+		mov eax,dwOffset
+		call MouseSetDisplayStart
 exit:
 if ?CLI
 		@restoreints
 endif
-        ret
+		ret
 error:
-        xor eax,eax
+		xor eax,eax
 		jmp exit
 		align 4
 
@@ -129,18 +129,18 @@ SetVesaDisplayStart endp
 
 GetVesaDisplayStart proc public uses ebx
 
-        mov     ax,4f07h
-        mov     bx,1
-        int     10h
-        cmp     ax,004Fh
-        jnz     error
-        movzx	eax,dx
-        ret
+		mov ax,4f07h
+		mov bx,1
+		int 10h
+		cmp ax,004Fh
+		jnz error
+		movzx eax,dx
+		ret
 error:
-        mov     eax,-1 
-        ret
+		mov eax,-1 
+		ret
 		align 4
-        
+
 GetVesaDisplayStart endp
 
 
@@ -155,72 +155,69 @@ flipstatusdefault::
 if ?FLIPSTATUS
 flipstatusint::
 		push ebx
-        mov bx,0004		;get flip status
-        mov ax,4F07h
-   	    int 10h
-        movzx eax,cx
-        pop ebx
+		mov bx,0004		;get flip status
+		mov ax,4F07h
+		int 10h
+		movzx eax,cx
+		pop ebx
 		ret
-  if 0        
+  if 0
 flipstatusdirect::
 		push ebx
-        mov bx,0004		;get flip status
-       	call g_lpfnSetDisplayStart
-        movzx eax,cx
-        pop ebx
+		mov bx,0004		;get flip status
+		call g_lpfnSetDisplayStart
+		movzx eax,cx
+		pop ebx
 		ret
-  endif        
+  endif
 endif
 GetVesaFlipStatus endp
-
-
-
 
 ;--- this is called in any case to init display start proc
 
 _SetDisplayStartProc proc public lpfnProc:dword
 
 		mov eax, lpfnProc
-        mov g_lpfnSetDisplayStart, eax
-        mov ecx, offset flipstatusdefault
-        .if (eax)
+		mov g_lpfnSetDisplayStart, eax
+		mov ecx, offset flipstatusdefault
+		.if (eax)
 if ?NOVESA30
-           	mov edx, offset vbe2direct
+			mov edx, offset vbe2direct
 else
-	       	.if (byte ptr g_vesainfo.VESAVersion+1 >= 3)
-	           	mov edx, offset vbe3direct
+			.if (byte ptr g_vesainfo.VESAVersion+1 >= 3)
+				mov edx, offset vbe3direct
 if ?FLIPSTATUS
 				mov ecx, offset flipstatusint
 ;;				mov ecx, offset flipstatusdirect	;doesnt work
 endif
-            .else
-	           	mov edx, offset vbe2direct
-            .endif
-endif                
-        .else
+			.else
+				mov edx, offset vbe2direct
+			.endif
+endif
+		.else
 if ?NOVESA30
-           	mov edx, offset vbe2int
+			mov edx, offset vbe2int
 else
-        	.if (byte ptr g_vesainfo.VESAVersion+1 >= 3)
-            	mov edx, offset vbe3int
+			.if (byte ptr g_vesainfo.VESAVersion+1 >= 3)
+				mov edx, offset vbe3int
 if ?FLIPSTATUS
 				mov ecx, offset flipstatusint
 endif
-            .else
-            	mov edx, offset vbe2int
-            .endif
+			.else
+				mov edx, offset vbe2int
+			.endif
 endif
-        .endif
-    	mov g_dwDisplayStart, edx
+		.endif
+		mov g_dwDisplayStart, edx
 if ?FLIPSTATUS
-        .if (!g_Vesa32Options.bFlipStatus)
-        	mov ecx, offset flipstatusdefault
-        .endif
+		.if (!g_Vesa32Options.bFlipStatus)
+			mov ecx, offset flipstatusdefault
+		.endif
 		mov g_dwFlipStatus, ecx
-endif   
-        ret
+endif
+		ret
 		align 4
 _SetDisplayStartProc endp
 
-        end
+		end
 

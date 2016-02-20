@@ -5,7 +5,7 @@
 # - HDLD16.BIN:   48k stub which includes the DPMI loader and HDPMI
 # tools used:
 # - Assembler: JWasm
-# - Linker:    WLink v1.8 modified
+# - Linker:    JWlink
 
 !ifndef DEBUG
 DEBUG = 0
@@ -52,14 +52,7 @@ STUBX16:
 # create $(OUTDIR)\DPMILD16.EXE
 
 $(OUTDIR)\$(NAME).EXE: $(OUTDIR)\dpmildr.obj $(OUTDIR)\kernel16.obj LIB16\ldr16.lib $(NAME).mak 
-	@wlink @<<
-format dos
-op q
-file {$(OUTDIR)\dpmildr.obj $(OUTDIR)\kernel16.obj}
-name $*.EXE
-op map=$*.map
-lib $(LIBS)
-<<
+	@$(LINK16BIN) format dos file {$(OUTDIR)\dpmildr.obj $(OUTDIR)\kernel16.obj} name $*.EXE op q, map=$*.map lib $(LIBS)
 !if $(DEBUG)==0
 	@copy $*.EXE ..\..\bin >NUL
 !ifdef TOOLSDIR    
@@ -76,14 +69,7 @@ $(OUTDIR)\kernel16.obj: kernel16.asm dpmildr.inc kernel16.inc version.inc trace.
 # create STUB16\DPMILD16.BIN
 
 STUB16\$(NAME).BIN: STUB16\dpmildr.OBJ STUB16\kernel16.obj LIB16\ldr16.lib $(NAME).mak 
-	@jwlink @<<
-format dos
-op q, knoweas 
-file STUB16\dpmildr.obj, STUB16\kernel16.obj 
-name $*.BIN
-op map=$*.map
-lib $(LIBS)
-<<
+	@$(LINK16BIN) format dos file STUB16\dpmildr.obj, STUB16\kernel16.obj name $*.BIN 	op q, knoweas, map=$*.map lib $(LIBS)
 	@copy $*.BIN ..\..\Bin\*.* >NUL
 !ifdef TOOLSDIR
 	@copy $*.BIN $(TOOLSDIR)\*.* >NUL
@@ -101,14 +87,7 @@ STUBX16\HDLD16.BIN: STUBX16\dpmildr.OBJ $(OUTDIR)\kernel16.OBJ LIB16\ldr16.lib $
 #	link16 @<<
 #	/KNOWEAS STUBX16\dpmildr.obj $(OUTDIR)\kernel16.obj, $*.BIN, $*.MAP, $(LIBS);
 #<<
-	@jwlink @<<
-format dos
-op q, knoweas
-file STUBX16\dpmildr.OBJ, $(OUTDIR)\kernel16.OBJ
-name $*.BIN
-op map=$*.MAP
-lib $(LIBS)
-<<
+	@$(LINK16BIN) format dos file STUBX16\dpmildr.OBJ, $(OUTDIR)\kernel16.OBJ name $*.BIN op q, knoweas, map=$*.MAP lib $(LIBS)
 	@copy $*.BIN ..\..\Bin\*.* >NUL
 !ifdef TOOLSDIR
 	@copy $*.BIN $(TOOLSDIR)\*.* >NUL

@@ -9,13 +9,14 @@
 # it expects \WATCOM\TRP_SRC tree to exist!
 # since that source is protected by copyrights, it is not included here!
 
+!include <..\dirs>
 
 !ifndef DEBUG
 DEBUG=0
 !endif
 
 NAME=HXHELP16
-OWPATH=\WATCOM
+OWPATH=$(OWDIR)
 MAKEMZ=0
 
 !if $(DEBUG)==0
@@ -41,15 +42,7 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).EXE: $(OUTDIR)\hxhelp16.obj $(OUTDIR)\privprof.obj HXHELP16.mak hxhelp16.def
-	@wlink @<<
-format os2 dll
-file $*.obj, $(OUTDIR)\privprof.obj
-name $*.EXE
-op q
-op map=$*.MAP
-op stub=..\..\BIN\DPMIST16.BIN
-op stack=0x800
-<<
+	$(LINK16BIN) format os2 dll file $*.obj, $(OUTDIR)\privprof.obj name $*.EXE op q, map=$*.MAP, stub=..\..\BIN\DPMIST16.BIN, stack=0x800
 	@..\..\Bin\patchNE $*.EXE
 	@copy $*.EXE $(OWPATH)\binw\HXHP16.EXE >NUL
 	@copy $*.EXE ..\..\OWSUPP16\HXHP16.EXE >NUL

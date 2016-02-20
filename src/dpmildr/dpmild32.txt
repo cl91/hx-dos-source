@@ -470,6 +470,12 @@
 
 14.  History
 
+ 27.05.2011: version 3.8
+
+ þ minor size reduction.
+ þ failure of DllMain is now assumed if EAX == 0. Previously it was
+   EAX != 1.
+
  16.11.2009: version 3.7
 
  þ bugfix: int 21h, ax=4B81h (GetProcAddress32) didn't check if RVA of

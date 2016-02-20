@@ -34,7 +34,7 @@ endif
 ?DBG2DOS	equ 1	;std=1, 1=output to dos if no debugger present?
 					;should be set to 1 to log output of other dlls 
 
-@setmypsp macro            
+@setmypsp macro
 local nopspchange
 	mov ah,51h
 	int 21h
@@ -44,10 +44,10 @@ local nopspchange
 	mov ebx, cs:g_psp
 	mov ah,50h
 	int 21h
-nopspchange:            
+nopspchange:
 	endm
 
-@restorepsp macro            
+@restorepsp macro
 local nopspchange
 	pop ebx
 	cmp bx,word ptr cs:g_psp
@@ -63,20 +63,20 @@ nopspchange:
 .BASE$IA ENDS
 
 .BASE$XA SEGMENT dword public 'DATA'
-        DD offset DeinstallDebugLog
+;        DD offset DeinstallDebugLog
 .BASE$XA ENDS
 
 	.DATA
 
 g_oldint41	df 0
-g_bInit		db 0        
+g_bInit		db 0
 
 	align 4
-        
+
 if ?DBG2DOS
 g_hLogOut		dd -1
 g_psp			dd 0
-g_dwDebugFlags	dd 0
+g_dwDebugFlags	dd 0	;flags received from DKRNLDBG env variable
 g_dwScrnPos		dd 0
   if ?USEDOSMEM
 g_DosSel		dd 0
@@ -153,7 +153,7 @@ endif
 		mov es:[edi].RMCS.rAX, 4000h
 		mov eax, cs:[g_hLogOut]
 		mov es:[edi].RMCS.rBX, ax
-if ?BUFFERED            
+if ?BUFFERED
 		push ds
 		mov ds,cs:[g_csalias]
 		mov ecx, g_dwCnt
@@ -172,9 +172,9 @@ endif
 		int 31h
 		pop es
 		add esp,sizeof RMCS+2
-if ?BUFFERED            
+if ?BUFFERED
 	.endif
-endif        
+endif
 	ret
 	align 4
 flushDosBuff endp
@@ -187,7 +187,7 @@ OpenLogFile proc uses ds esi ebx
 	mov ecx, cs:[g_csalias]
 	jecxz @F
 	mov ds, ecx
-@@:     
+@@:
 	mov ebx,g_hLogOut
 	.if (bx == 1)		;if current logfile is stdout, we're done
 		jmp exit
@@ -197,7 +197,7 @@ OpenLogFile proc uses ds esi ebx
 		int 21h
 		mov g_hLogOut, -1
 	.endif
-if ?USEAUX        
+if ?USEAUX
 	@mov ebx,3
 	mov ax,4400h
 	int 21h
@@ -207,7 +207,7 @@ if ?USEAUX
 	jz dbgfound			;then assume it is ours!
 	mov ah,3Eh			;else close AUX
 	int 21h
-@@:        
+@@:
 endif
 	mov esi, offset g_szLogFile
 if ?USESHARE
@@ -370,7 +370,7 @@ SetLogPtrToEOF proc uses ebx
 	int 21h
 	ret
 	align 4
-SetLogPtrToEOF endp        
+SetLogPtrToEOF endp
 
 ;--- all registers may be modified!
 ;--- int 41 already set to myint41!
@@ -384,11 +384,11 @@ GetLogFileName proc
 		call InitScr
 	.endif
 	invoke GetEnvironmentVariable, CStr("DKRNLLOG"), addr g_szLogFile, sizeof g_szLogFile
-ifdef _DEBUG        
+ifdef _DEBUG
 	.if (!eax)
 		mov g_hLogOut,1
 	.endif
-endif            
+endif
 	mov ah,51h
 	int 21h
 	mov g_psp, ebx
@@ -468,7 +468,7 @@ CloseLog proc
 	@setmypsp
 if ?USEDOSMEM
   if ?BUFFERED
-	invoke flushDosBuff, 1        
+	invoke flushDosBuff, 1
   endif
 endif
 	mov ebx, g_hLogOut

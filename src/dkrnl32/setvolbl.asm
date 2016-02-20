@@ -1,26 +1,25 @@
 
-        .386
+	.386
 if ?FLAT
-        .MODEL FLAT, stdcall
+	.MODEL FLAT, stdcall
 else
-        .MODEL SMALL, stdcall
+	.MODEL SMALL, stdcall
 endif
-		option casemap:none
+	option casemap:none
 
-        include winbase.inc
-		include macros.inc
+	include winbase.inc
+	include macros.inc
 
-        .DATA
+	.DATA
 
-        .CODE
+	.CODE
 
 SetVolumeLabelA proc public pRoot:dword
 
-        xor     eax,eax
-		@strace	<"SetVolumeLabelA(", pRoot, ")=", eax, " *** unsupp ***">
-        ret
+	xor eax,eax
+	@strace	<"SetVolumeLabelA(", pRoot, ")=", eax, " *** unsupp ***">
+	ret
 
 SetVolumeLabelA endp
 
-        end
-
+	end

@@ -1,33 +1,34 @@
 
-        .386
+	.386
 if ?FLAT
-        .MODEL FLAT, stdcall
+	.MODEL FLAT, stdcall
 else
-        .MODEL SMALL, stdcall
+	.MODEL SMALL, stdcall
 endif
-		option casemap:none
-        option proc:private
+	option casemap:none
+	option proc:private
 
-        include winbase.inc
-        include dkrnl32.inc
-        include macros.inc
+	include winbase.inc
+	include dkrnl32.inc
+	include macros.inc
 
-        .CODE
+	.CODE
 
 ;--- the socket handle is valid for DuplicateHandle() and CloseHandle()
 ;--- so it needs a reference counter
 
 CreateSocketHandle proc public
 
-		invoke KernelHeapAlloc, sizeof SOCKET
-        .if (eax)
-        	mov [eax].SOCKET.dwType, SYNCTYPE_SOCKET
-            mov [eax].SOCKET.dwRefCnt, 1
-        .endif
-        ret
-        align 4
-        
+	invoke KernelHeapAlloc, sizeof SOCKET
+	.if (eax)
+		mov [eax].SOCKET.dwType, SYNCTYPE_SOCKET
+		mov [eax].SOCKET.dwRefCnt, 1
+	.endif
+	@strace <"CreateSocketHandle()=", eax>
+	ret
+	align 4
+
 CreateSocketHandle endp
 
-		end
+	end
 

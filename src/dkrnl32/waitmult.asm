@@ -45,20 +45,20 @@ ClearState proc
 		;
 	.else
 		mov edx, [ebx].SYNCOBJECT.dwType
-		.if (edx == SYNCTYPE_SEMAPHOR)
-			.if ([ebx].SEMAPHORE.dwCurCnt)
-				dec [ebx].SEMAPHORE.dwCurCnt
-			.endif
-		.elseif (edx == SYNCTYPE_MUTEX)
+		.if (edx == SYNCTYPE_MUTEX)
 			.if (![ebx].MUTEX.dwOwner)
 				invoke _GetCurrentThread
 				mov [ebx].MUTEX.dwOwner, eax
 			.endif
-			inc [ebx].MUTEX.dwCnt
+			inc [ebx].MUTEX.wCnt
 		.elseif (edx == SYNCTYPE_EVENT)
-			mov [ebx].EVENT.dwThread, 0
+			mov [ebx].EVENT.hThread, 0
 			.if (!([ebx].EVENT.bFlags & EVNT_MANRESET))
 				and [ebx].EVENT.bFlags, not EVNT_SIGNALED
+			.endif
+		.elseif (edx == SYNCTYPE_SEMAPHOR)
+			.if ([ebx].SEMAPHORE.dwCurCnt)
+				dec [ebx].SEMAPHORE.dwCurCnt
 			.endif
 		.elseif (edx == SYNCTYPE_TIMER)
 			.if (![ebx].TIMER.bManReset)
@@ -178,7 +178,7 @@ endif
 if ?EVENTOPT
 				.else
 					mov eax, g_hCurThread
-					mov [ebx].EVENT.dwThread, eax
+					mov [ebx].EVENT.hThread, eax
 endif
 				.endif
 
@@ -190,6 +190,7 @@ endif
 
 			.elseif ([ebx].SYNCOBJECT.dwType == SYNCTYPE_MUTEX)
 
+				;--- a Mutex is signaled when it's not owned
 				invoke _GetCurrentThread
 				.if ((![ebx].MUTEX.dwOwner) || (eax == [ebx].MUTEX.dwOwner))
 					inc edi
@@ -280,6 +281,7 @@ timeout:
 	@mov eax, WAIT_TIMEOUT
 	jmp exit
 error:
+	invoke SetLastError, ERROR_INVALID_HANDLE
 	@mov eax, WAIT_FAILED
 	jmp exit
 	align 4

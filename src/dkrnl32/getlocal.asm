@@ -54,7 +54,7 @@ bInit	db 0
 	.CODE
 
 GetLocaleInfoA proc public uses ebx edi lcid:dword,
-			 lctype:dword, pString:dword, cString:dword
+			 lctype:dword, pString:ptr BYTE, cString:dword
 
 local	szTmp[64]:byte
 

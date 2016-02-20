@@ -9,7 +9,7 @@ ifndef ?DLL
 endif
 
 		.486
-if ?FLAT        
+if ?FLAT
         .model flat, stdcall
 @flat	equ <ds>
 @flatrd equ <cs>
@@ -858,15 +858,15 @@ nextitem:
         test	al,0Fh
         jz		@F
         inc		ebx
-@@:        
+@@:
 		mov		ax,0100h
-        int		31h
-        jc		error2
-        movzx	eax,ax
-        shl		eax, 4
+		int		31h
+		jc		error2
+		movzx	eax,ax
+		shl		eax, 4
 		mov		g_dwRMAddr, eax
-        movzx	edx,dx
-        mov		g_dwRMData, edx
+		movzx	edx,dx
+		mov		g_dwRMData, edx
 
 		invoke	String2File, CStr(<"RM helper linear address: ">)
         invoke	DWord2File, eax
@@ -1045,22 +1045,22 @@ error5:
 InitRMDbgHelper endp
 
 DeinitRMDbgHelper proc
-        call	untraprm21
-		cmp		g_bRMIntsTrapped,0
-        jz		done
-		mov		esi, offset g_rminttab
-        .while	(byte ptr [esi] != -1)
-    	    mov		bl, [esi+0]
-	        mov		dx, [esi+1]
-    	    mov		cx, [esi+3]
-	        mov		ax,0201h
-            @callint31
-            add		esi,5
-        .endw
-done:        
-        mov		ebx,g_dwRMData
-        mov		ax,0101h
-        @callint31
+		call untraprm21
+		cmp g_bRMIntsTrapped,0
+		jz done
+		mov esi, offset g_rminttab
+		.while (byte ptr [esi] != -1)
+			mov bl, [esi+0]
+			mov dx, [esi+1]
+			mov cx, [esi+3]
+			mov ax,0201h
+			@callint31
+			add esi,5
+		.endw
+done:
+		mov ebx,g_dwRMData
+		mov ax,0101h
+		@callint31
 		ret
 DeinitRMDbgHelper endp
 
@@ -1071,7 +1071,7 @@ rm2pm	proc
 if ?INTRMEXC
 	   	cmp		[bExecuting],0
         jz		rmintintrap
-endif        
+endif
         lss		esp,fword ptr [DebuggerESP]
 ife ?FLAT
 		mov		@flat,[g_flatsel]
@@ -1166,9 +1166,9 @@ if ?DEBUGLEVEL
 		invoke	String2File, CStr(<"rm2pm eax=">)
         invoke	DWord2File, eax
 		invoke	String2File, CStr(<13,10>)
-endif        
+endif
         ret
-if ?INTRMEXC        
+if ?INTRMEXC
 rmintintrap:
 ;--- a real mode exception occured while trap was active
 ;--- not much can be done, just display a message and wait for a key
@@ -1198,9 +1198,9 @@ pm2rm	proc
         pop		es
         mov		edi,g_dwRMAddr
         add		edi,offset DEBRMVAR.rm
-if ?DEBUGLEVEL        
+if ?DEBUGLEVEL
 		invoke	String2File, CStr(<"pm2rm",13,10>)
-endif        
+endif
 		cld
 if ?DPMI16
 		push	es
@@ -1243,7 +1243,7 @@ endif
 if ?DPMI16
 		pop		es
 endif
-pm2rmEx::        
+pm2rmEx::
         mov		edi,g_dwRMAddr
 		mov		dx, @flat:[edi].DEBRMVAR.rm.rSS
 		mov		bx, @flat:[edi].DEBRMVAR.rm.rSP
@@ -6455,9 +6455,9 @@ else
         cmp		word ptr [oldint21+?SEGOFS],0
         jz		@F
         @callint21
-@@:        
+@@:
         int		21h
-endif        
+endif
 mainCRTStartup endp
 
         end mainCRTStartup

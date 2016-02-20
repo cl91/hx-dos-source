@@ -131,9 +131,14 @@
  SetKernelObjectSecurity           Y
  SetSecurityDescriptorDacl         Y
  StartServiceA                     Y
+ SystemFunction036
 
 
  3. History
+
+ 2011/05/27:  V2.11
+
+ þ SystemFunction036 added (RtlGenRandom).
 
  2009/11/16:  V2.10
 

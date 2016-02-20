@@ -37,6 +37,7 @@ OBJMODS = $(OBJMODS:.\=RELEASE\)
 !ifndef MASM
 MASM=0
 !endif
+MSLINK=0
 
 ASMOPT= -c -coff -nologo -Cp -Sg -D?FLAT=1 -D_USER32_=1 $(AOPTD) -I$(INC32DIR) -Fl$* -Fo$*
 !if $(MASM)
@@ -45,12 +46,7 @@ ASM=@ml.exe $(ASMOPT)
 ASM=@jwasm.exe $(ASMOPT)
 !endif
 
-LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL /NODEFAULTLIB /LIBPATH:$(LIBCOFF) /OPT:NOWIN98
-
-#LINKBIN=link.exe
-#LINKBIN=polink.exe
-#LIBBIN=lib.exe /NOLOGO 
-#LIBBIN=polib.exe
+LOPTS= /NOLOGO /MAP /DLL /NODEFAULTLIB /LIBPATH:$(LIBCOFF) /OPT:NOWIN98
 
 NAME=DUSER32
 LIBNAME=DUSER32S
@@ -67,11 +63,21 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).lib $(OUTDIR)\$(NAME).obj $(NAME).def $(OUTDIR)\$(NAME).res Makefile
-	@$(LINKBIN) @<<
+!if $(MSLINK)
+	@link @<<
 $(OUTDIR)\$(NAME).obj $(OUTDIR)\$(NAME).RES $(OUTDIR)\$(LIBNAME).LIB $(LIBS)
 $(LOPTS) $(LOPTD)
 /DEF:$(NAME).DEF /OUT:$*.DLL
 <<
+!else
+	@$(LINKBIN) format win pe dll name $*.DLL @<<
+f $(OUTDIR)\$(NAME).obj
+res $(OUTDIR)\$(NAME).RES
+libpath $(LIBCOFF)
+lib { $(OUTDIR)\$(LIBNAME).LIB $(LIBS) }
+op q, map=$*, implib=$*.lib @$(NAME).rsp
+<<
+!endif
 !if $(DEBUG)==0
 	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR

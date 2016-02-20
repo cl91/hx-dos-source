@@ -25,7 +25,7 @@ endif
 ?SRBSIZE	equ 64
 
 	public	_APIX
-_APIX	equ 12345678h        
+_APIX	equ 12345678h
 
 .BASE$DA segment dword public 'DATA'
 	VXDENTRY <offset apixcompare>
@@ -33,7 +33,7 @@ _APIX	equ 12345678h
 
 .BASE$XA SEGMENT dword public 'DATA'
 	DD offset Deinstall
-.BASE$XA      ENDS
+.BASE$XA ENDS
 
 ife ?FLAT
 DGROUP	group .BASE$DA
@@ -463,10 +463,10 @@ endif
 	mov es:[edi].RMCS.rCSIP, eax
 	mov es:[edi].RMCS.rSP, si
 if 0;def _DEBUG 
-	or	byte ptr es:[edi].RMCS.rFlags+1,1	;set trace flag to stop in rm
+	or byte ptr es:[edi].RMCS.rFlags+1,1	;set trace flag to stop in rm
 endif
 	lodsd							;get the real-mode SRB address
-	mov ds,cs:[g_csalias]
+	mov ds, cs:[g_csalias]
 	push ds
 	pop es
 	shr eax,12						;offset is always 0000

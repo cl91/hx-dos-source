@@ -16,6 +16,7 @@
  The menu which will be displayed is:
  
     ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+    ³  F3: Maximize main window         ³
     ³  F4: Send close request to window ³
     ³  F5: Save screen in BMP file      ³
     ³  F6: Save main window in BMP file ³
@@ -26,6 +27,10 @@
  
 
  2. History
+
+ 05/27/2011: V2.5
+ 
+ ş "Maximize main window" added to menu.
 
  01/20/2009: V2.4
  

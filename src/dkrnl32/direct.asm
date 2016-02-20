@@ -22,7 +22,7 @@ endif
 extern	__CHECKOS:abs
 
 
-		.CODE
+	.CODE
 
 if ?SAVEEBX
 CreateDirectoryA proc public uses ebx pName:ptr BYTE, pSecurity:dword

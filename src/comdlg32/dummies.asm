@@ -27,6 +27,13 @@ GetOpenFileNameA proc public lpOFN:ptr
 	align 4
 GetOpenFileNameA endp
 
+GetOpenFileNameW proc public lpOFN:ptr
+	xor eax, eax
+	@strace <"GetOpenFileNameW(", lpOFN, ")=", eax>
+	ret
+	align 4
+GetOpenFileNameW endp
+
 GetSaveFileNameA proc public lpSFN:ptr
 	xor eax, eax
 	@strace <"GetSaveFileNameA(", lpSFN, ")=", eax>

@@ -346,6 +346,7 @@ DestroyFileCacheEntry proc public uses ebx esi edi pFC:ptr FCENTRY
 
 	mov edi, pFC
 	.if ([edi].FCENTRY.pCacheMem)
+		@strace <"DestroyFileCacheEntry: pCacheMem=", [edi].FCENTRY.pCacheMem>
 		.if ([edi].FCENTRY.bModified)
 			mov esi, [edi].FCENTRY.pCacheMem
 			invoke CreateFileA, esi, GENERIC_WRITE, 0, 0, CREATE_ALWAYS,\

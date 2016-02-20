@@ -39,9 +39,9 @@ $(OUTDIR)\$(NAME).EXE: $*.obj Makefile
 #/OUT:$*.EXE
 #/MAP:$*.MAP $(LIBS)
 #<<
-	@wlink @<<
-format windows nt
-runtime console
+	jwlink @<<
+format windows pe
+ru console
 file $*.obj
 name $*.EXE
 op stub=..\..\Bin\LoadPE.bin

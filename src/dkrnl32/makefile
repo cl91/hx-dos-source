@@ -52,6 +52,7 @@ OTHERMODS=.\int21lfn.obj
 !ifndef MASM
 MASM=0
 !endif
+MSLINK=0
 
 ASMOPT1= -c -coff -nologo -Sg -D_KERNEL32_=1 $(AOPTD) -I$(INC32DIR) -D?FLAT=1 -Fl$* -Fo$*
 ASMOPT2= -c -coff -nologo -Sg -D_KERNEL32_=1 $(AOPTD) -I$(INC32DIR) -D?FLAT=1 -Fl$* -Fo$* -D?DIRECTDISP=1 
@@ -59,8 +60,8 @@ ASMOPT2= -c -coff -nologo -Sg -D_KERNEL32_=1 $(AOPTD) -I$(INC32DIR) -D?FLAT=1 -F
 # option -zze for JWasm is required for IsProcessorFeaturePresent
 
 !if $(MASM)
-ASM1=@ml800.exe $(ASMOPT1)
-ASM2=@ml800.exe $(ASMOPT2)
+ASM1=@ml.exe $(ASMOPT1)
+ASM2=@ml.exe $(ASMOPT2)
 !else
 ASM1=@jwasm.exe -zze $(ASMOPT1)
 ASM2=@jwasm.exe -zze $(ASMOPT2)
@@ -86,9 +87,13 @@ $(OUTD1):
 # modules containing optional exports (IsProcessorFeaturePresent)
 # must be included explicitely!
 
-$(OUTD1)\$(NAME).DLL: $(OUTD1)\$(LIBNAME).lib $(OUTD1)\$(NAME).obj $(NAME).def
-#	@$(LINKBIN) $(OUTD1)\$(NAME).obj $(OUTD1)\$(LIBNAME).lib $(LOPTS) $(LOPTD) /DEF:$(NAME).def /merge:.BASE=.data /OUT:$*.DLL /BASE:0xBFF00000
-	@$(LINKBIN) $(OUTD1)\$(NAME).obj $(OUTD1)\procfeat.obj $(OUTD1)\$(LIBNAME).lib $(LOPTS) $(LOPTD) /DEF:$(NAME).def /merge:.BASE=.data /OUT:$*.DLL
+$(OUTD1)\$(NAME).DLL: $(OUTD1)\$(LIBNAME).lib $(OUTD1)\$(NAME).obj $(NAME).def $(NAME).rsp
+#	@link $(OUTD1)\$(NAME).obj $(OUTD1)\$(LIBNAME).lib $(LOPTS) $(LOPTD) /DEF:$(NAME).def /merge:.BASE=.data /OUT:$*.DLL /BASE:0xBFF00000
+!if $(MSLINK)
+	@link $(OUTD1)\$(NAME).obj $(OUTD1)\procfeat.obj $(OUTD1)\$(LIBNAME).lib $(LOPTS) $(LOPTD) /DEF:$(NAME).def /merge:.BASE=.data /OUT:$*.DLL
+!else
+	@$(LINKBIN) format windows pe dll f { $(OUTD1)\$(NAME).obj $(OUTD1)\procfeat.obj } lib $(OUTD1)\$(LIBNAME).lib name $*.DLL op q, map=$(OUTD1)\$(NAME).map @dkrnl32.rsp
+!endif
 
 ######################################################
 
@@ -97,13 +102,13 @@ OBJMODS2 = $(OUTD2)\thread.obj $(OUTD2)\thread3.obj
 $(OUTD2):
 	@mkdir $(OUTD2)
 
-$(OUTD2)\$(NAME).DLL: $(OBJMODS2) $(OUTD2)\$(LIBNAME).lib $(OUTD1)\$(NAME).obj $(NAME).def
+$(OUTD2)\$(NAME).DLL: $(OBJMODS2) $(OUTD2)\$(LIBNAME).lib $(OUTD1)\$(NAME).obj $(NAME).def $(NAME).rsp
 #	@if exist $*.DLL erase $*.DLL
-	@$(LINKBIN) @<<
-$(OUTD1)\$(NAME).obj $(OUTD1)\procfeat.obj $(OUTD2)\$(LIBNAME).lib 
-$(LOPTS) $(LOPTD)
-/DEF:$(NAME).def /merge:.BASE=.data /OUT:$*.DLL
-<<
+!if $(MSLINK)
+	@link.exe $(OUTD1)\$(NAME).obj $(OUTD1)\procfeat.obj $(OUTD2)\$(LIBNAME).lib $(LOPTS) $(LOPTD) /DEF:$(NAME).def /merge:.BASE=.data /OUT:$*.DLL
+!else
+	@$(LINKBIN) format windows pe dll name $*.DLL f { $(OUTD1)\$(NAME).obj $(OUTD1)\procfeat.obj } lib $(OUTD1)\$(LIBNAME).lib op q, map=$*, implib=$* @dkrnl32.rsp
+!endif
 !if $(DEBUG)==0
 	@copy $*.DLL ..\..\Bin\*.* >NUL
 !ifdef DLL32DIR

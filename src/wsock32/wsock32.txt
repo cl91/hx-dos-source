@@ -68,8 +68,14 @@
  
  4. History
 
+ 2011/05/27 V1.8
+
+ þ bugfix: ioctlsocket() with parameter FIONBIO didn't work due to
+   a bug in WATT32.
+ þ tcp_fsm module from WATT32 v2.2r10 is now used.
+
  2009/11/16 V1.7
- 
+
  þ inet_addr() did return bytes in wrong order, inet_ntoa() used them
    in wrong order.
  þ field iMaxUdpDg in WSADATA is now initialized to 1472, which is the
@@ -95,6 +101,7 @@
  2006/02/28 V1.4
  
  þ now using WatTCP/Watt-32 to implement WinSocket emulation.
+   (WATT32 v2.2r9).
  
  2006/01/06 V1.3
  

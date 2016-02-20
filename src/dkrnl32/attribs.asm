@@ -106,7 +106,7 @@ GetFileAttributesExA endp
 ;--- 10:directory
 ;--- 20:archive
 
-SetFileAttributesA proc public uses ebx pName:dword,attribs:dword
+SetFileAttributesA proc public uses ebx pName:ptr BYTE, attribs:dword
 
 	mov edx,pName
 	mov ecx,attribs

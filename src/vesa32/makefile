@@ -36,6 +36,7 @@ OBJMODS = $(OBJMODS:.\=RELEASE\)
 !ifndef MASM
 MASM=0
 !endif
+MSLINK=0
 
 ASMOPT= -c -coff -nologo -D?FLAT=1 -Fl$* -Fo$* -Sg $(AOPTD) -D_VESA32_=1 -I$(INC32DIR)
 !if $(MASM)
@@ -65,11 +66,15 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).lib $(OUTDIR)\$(NAME).obj $(NAME).def Makefile
-	@$(LINKBIN) @<<
+!if $(MSLINK)
+	@link @<<
 $(OUTDIR)\$(NAME).obj $(OUTDIR)\$(LIBNAME).LIB $(LIBS)
-$(LOPTS) $(LOPTD)
+$(LOPTS)
 /DEF:$(NAME).def /OUT:$*.DLL
 <<
+!else
+	@$(LINKBIN) format win pe dll name $*.DLL f $(OUTDIR)\$(NAME).obj lib {$(OUTDIR)\$(LIBNAME).LIB $(LIBS)} op q, map=$*, implib=$* @$(NAME).rsp
+!endif
 !if $(DEBUG)==0
 	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR

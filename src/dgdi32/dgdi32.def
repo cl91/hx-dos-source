@@ -2,6 +2,7 @@
 LIBRARY GDI32
 
 EXPORTS
+ AbortDoc
  AddFontResourceA
  AnimatePalette
  Arc
@@ -159,6 +160,7 @@ EXPORTS
  RealizePalette
  Rectangle
  RectVisible
+ ResetDCA
  ResizePalette
  RestoreDC
  SaveDC
@@ -167,6 +169,7 @@ EXPORTS
  SelectClipRgn
  SelectObject
  SelectPalette
+ SetAbortProc
  SetBitmapBits
  SetBitmapDimensionEx
  SetBkColor

@@ -1,26 +1,30 @@
 
-        .386
+;--- almost certainly this was never used
+
+	.386
+
+if 0 
 
 ifndef ?FLAT
 ?FLAT=0
 endif
-        
+
 if ?FLAT
-        .MODEL FLAT
+	.MODEL FLAT
 else
-        .MODEL SMALL
+	.MODEL SMALL
 endif
-		option casemap:none
-        option proc:private
+	option casemap:none
+	option proc:private
 
-@defpub	macro name_, stk
-		public name_
-        externdef _&name_&@&stk:near
+@defpub macro name_, stk
+	public name_
+	externdef _&name_&@&stk:near
 name_:
-		jmp _&name_&@&stk	
-		endm
+	jmp _&name_&@&stk
+	endm
 
-        .CODE
+	.CODE
 
  @defpub Beep, 8
  @defpub CloseHandle, 4
@@ -80,10 +84,12 @@ name_:
  
 ; @defpub MessageBoxA, 16
 
-		public MessageBoxA
+	public MessageBoxA
 
 MessageBoxA:
-		ret 16
+	ret 16
 
-        end
+endif
+
+	end
 

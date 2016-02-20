@@ -32,6 +32,7 @@ OBJMODS = $(OBJMODS:.\=RELEASE\)
 !ifndef MASM
 MASM=0
 !endif
+MSLINK=0
 
 ASMOPT= -c -coff -nologo -Cp -Sg -D_GDI32_=1 $(AOPTD) -I$(INC32DIR) -D?FLAT=1 -Fl$* -Fo$*
 !if $(MASM)
@@ -39,8 +40,6 @@ ASM=@ml.exe $(ASMOPT)
 !else
 ASM=@jwasm.exe $(ASMOPT) 
 !endif
-
-LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL /LIBPATH:$(LIBCOFF)
 
 NAME=DGDI32
 LIBNAME=DGDI32S
@@ -59,12 +58,12 @@ ALL: $(OUTDIR) $(OUTDIR)\$(NAME).DLL
 $(OUTDIR):
 	@mkdir $(OUTDIR)
 
-$(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).LIB $(OUTDIR)\$(NAME).obj $(NAME).def Makefile
-	@$(LINKBIN) @<<
-$(OUTDIR)\$(NAME).obj $(OUTDIR)\$(LIBNAME).LIB $(LIBS)
-$(LOPTS) $(LOPTD)
-/DEF:$(NAME).def /OUT:$*.DLL
-<<
+$(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).LIB $(OUTDIR)\$(NAME).obj $(NAME).rsp $(NAME).def Makefile
+!if $(MSLINK)
+	@link.exe /NOLOGO /MAP /DLL /LIBPATH:$(LIBCOFF) /OUT:$*.DLL $(OUTDIR)\$(NAME).obj $(OUTDIR)\$(LIBNAME).LIB $(LIBS) /DEF:$(NAME).def
+!else
+	@$(LINKBIN) format win pe dll f $(OUTDIR)\$(NAME).obj name $*.DLL libpath $(LIBCOFF) lib { $(OUTDIR)\$(LIBNAME).LIB $(LIBS) } op q, map=$*, implib=$* @$(NAME).rsp
+!endif
 !if $(DEBUG)==0
 	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR

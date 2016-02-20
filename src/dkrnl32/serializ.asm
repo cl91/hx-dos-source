@@ -1,15 +1,15 @@
 
-        .386
+	.386
 if ?FLAT
-        .MODEL FLAT, stdcall
+	.MODEL FLAT, stdcall
 else
-        .MODEL SMALL, stdcall
+	.MODEL SMALL, stdcall
 endif
-		option casemap:none
+	option casemap:none
 
-        include winbase.inc
-		include macros.inc
-		include dkrnl32.inc
+	include winbase.inc
+	include macros.inc
+	include dkrnl32.inc
 
 if ?USERTC
 ?MASKRTC	equ 1
@@ -17,7 +17,7 @@ else
 ?MASKRTC	equ 0
 endif
 
-        .CODE
+	.CODE
 
 ;--- dont change edx, ebx, esi, edi
 
@@ -30,48 +30,51 @@ endif
 ;--- because it doesnt save the previous interrupt state!
 
 EnterSerialization proc
-        test	g_bDispatchFlags,FTI_INIT		;multiple threads?
-        jnz		@F
-        ret
-@@:        
+	test g_bDispatchFlags,FTI_INIT		;multiple threads?
+	jnz @F
+	ret
+@@:
 if ?USECLISTI
-		cli
+	cli
 else
-		push	eax
+	push eax
   if ?MASKRTC
-		in		al,0A1h
-        or		al, 1
-        out		0A1h,al
+	in al,0A1h
+	or al, 1
+	out 0A1h,al
   else
-		mov		ax,0900h
-        int		31h
+	mov ax,0900h
+	int 31h
   endif
-  		pop		eax
-endif  
-		ret
+	pop eax
+endif
+	ret
+	align 4
 EnterSerialization endp
 
-LeaveSerialization proc        
-        test	g_bDispatchFlags,FTI_INIT
-        jnz		@F
-        ret
-@@:        
+LeaveSerialization proc
+
+	test g_bDispatchFlags,FTI_INIT
+	jnz @F
+	ret
+@@:
 if ?USECLISTI
-		sti
+	sti
 else
-		push	eax
+	push eax
   if ?MASKRTC
-		in		al,0A1h
-        and 	al,not 1
-        out		0A1h,al
+	in al,0A1h
+	and al,not 1
+	out 0A1h,al
   else
-		mov		ax,0901h
-        int		31h
+	mov ax,0901h
+	int 31h
   endif
-        pop		eax
-endif  
-		ret
+	pop eax
+endif
+	ret
+	align 4
 LeaveSerialization endp
 
-        end
+	end
 

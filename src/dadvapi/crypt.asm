@@ -183,4 +183,26 @@ CryptEnumProvidersA proc public dwIndex:DWORD, pdwReserved:ptr DWORD, dwFlags:DW
 	align 4
 CryptEnumProvidersA endp
 
+SystemFunction036 proc public uses edi ebx buffer:ptr, dwLen:DWORD
+
+	.data
+wOfs dw 0
+	.code
+	movzx ebx, wOfs
+	mov ecx, dwLen
+	mov edi, buffer
+	.while (ecx)
+		mov al,[ebx+0F0000h]
+		neg al
+		stosb
+		inc bx
+		dec ecx
+	.endw
+	mov wOfs, bx
+	mov eax, 1
+	@strace <"SystemFunction036( ", buffer, ", ", dwLen, ")=", eax>
+	ret
+	align 4
+SystemFunction036 endp
+
 	end

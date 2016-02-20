@@ -54,7 +54,7 @@ ifdef _DEBUG
 		@strace <"-----------------------------------------">
 		@strace <"kernel32 DllMain(", hModule, ", ", reason, ", ", reserved, ") enter">
 endif
-		or [g_bIntFl],IKF_DPMILDR
+		or [g_bIntFl],IKF_PELDR
 		xor edx,edx
 		mov ax,4B82h	;get module handle into EAX, stack into EDX,
 		int 21h			;start of module list in ECX

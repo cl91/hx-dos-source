@@ -38,23 +38,12 @@ CreateFileMappingA proc public uses ebx hFile:DWORD, lpFileMappingAttributes:DWO
 	@strace <"CreateFileMappingA enter">
 ;----------------------------- if it's a named object, check existance
 	.if (lpName)
-		invoke KernelHeapFindObject, lpName
+		invoke KernelHeapFindObject, lpName, SYNCTYPE_FILEMAPP
 		.if (eax)
-			.if ([eax].SYNCOBJECT.dwType == SYNCTYPE_FILEMAPP)
-;-------------------------------- currently a reference counter is used
-;-------------------------------- that's no proper solution, but should work
-;-------------------------------- for many cases
-				inc [eax].FILEMAPOBJ.dwCnt	
-				push eax
-				invoke SetLastError, ERROR_ALREADY_EXISTS
-				pop eax
-				jmp done
-			.else
-				invoke SetLastError, ERROR_INVALID_HANDLE
-				xor eax,eax
-				jmp done
-			.endif
+			mov eax, edx
+			jmp done
 		.endif
+		invoke SetLastError, ERROR_SUCCESS
 	.endif
 	.if (hFile != -1)
 		mov ecx, dwMaximumSizeLow
@@ -94,12 +83,7 @@ CreateFileMappingA proc public uses ebx hFile:DWORD, lpFileMappingAttributes:DWO
 		mov [ebx].FILEMAPOBJ.dwSize, ecx
 		mov [ebx].FILEMAPOBJ.pView, NULL
 		mov [ebx].FILEMAPOBJ.dwFlags, NULL
-		mov [ebx].FILEMAPOBJ.dwCnt, 1
-		xor eax, eax
-		.if (lpName)
-			lea eax, [ebx + sizeof FILEMAPOBJ]
-		.endif
-		mov [ebx].FILEMAPOBJ.lpName, eax
+		mov [ebx].FILEMAPOBJ.dwRefCnt, 1
 		mov ecx, dwProtect
 		mov [ebx].FILEMAPOBJ.dwProtect, ecx
 		mov eax, ebx
@@ -217,11 +201,14 @@ destructor proc uses ebx pThis:DWORD
 	@strace <"destructor filemapobj enter">
 	mov ebx, pThis
 	xor eax, eax
-	cmp [ebx].FILEMAPOBJ.dwCnt,eax
+	cmp [ebx].FILEMAPOBJ.dwRefCnt,eax
 	jz @F
-	dec [ebx].FILEMAPOBJ.dwCnt
+	dec [ebx].FILEMAPOBJ.dwRefCnt
 	jnz done					;exit, there are more references
 @@:
+	.if ( [ebx].NAMEDOBJECT.lpName )
+		invoke KernelHeapUnlinkObject, ebx
+	.endif
 	or [ebx].FILEMAPOBJ.dwFlags, FMO_CLOSED
 	.if ([ebx].FILEMAPOBJ.dwFlags & FMO_MAPPED)
 		jmp done				;it's mapped, dont free it
@@ -338,11 +325,11 @@ UnmapViewOfFile proc public uses ebx lpBaseAddress:ptr
 local	phe:PROCESS_HEAP_ENTRY
 
 	mov phe.lpData,0
-	.while (1)
-		invoke KernelHeapWalk, addr phe, SYNCTYPE_FILEMAPP
+	invoke KernelHeapWalk, addr phe, SYNCTYPE_FILEMAPP
+	.while (eax)
 		.break .if (!eax)
 		mov ecx, lpBaseAddress
-		.if (ecx == [eax].FILEMAPOBJ.pView) 
+		.if (ecx == [eax].FILEMAPOBJ.pView)
 			and [eax].FILEMAPOBJ.dwFlags, NOT FMO_MAPPED
 			.if ([eax].FILEMAPOBJ.dwFlags & FMO_CLOSED)
 				invoke KernelHeapFree, eax
@@ -350,6 +337,7 @@ local	phe:PROCESS_HEAP_ENTRY
 			@mov eax, 1
 			.break
 		.endif
+		invoke KernelHeapWalk, addr phe, SYNCTYPE_FILEMAPP
 	.endw
 	@strace <"UnmapViewOfFile(", lpBaseAddress, ")=", eax>
 	ret
@@ -362,9 +350,8 @@ FlushViewOfFile proc public uses ebx lpBaseAddress:ptr, dwBytes:DWORD
 local	phe:PROCESS_HEAP_ENTRY
 
 	mov phe.lpData,0
-	.while (1)
-		invoke KernelHeapWalk, addr phe, SYNCTYPE_FILEMAPP
-		.break .if (!eax)
+	invoke KernelHeapWalk, addr phe, SYNCTYPE_FILEMAPP
+	.while (eax)
 		mov ecx, lpBaseAddress
 		.if (ecx == [eax].FILEMAPOBJ.pView) 
 			mov ebx, eax
@@ -374,6 +361,7 @@ local	phe:PROCESS_HEAP_ENTRY
 			@mov eax, 1
 			.break
 		.endif
+		invoke KernelHeapWalk, addr phe, SYNCTYPE_FILEMAPP
 	.endw
 	@strace <"FlushViewOfFile(", lpBaseAddress, ", ", dwBytes, ")=", eax>
 	ret
@@ -384,18 +372,8 @@ FlushViewOfFile endp
 
 OpenFileMappingA proc public dwDesiredAccess:DWORD, bInheritHandle:DWORD, lpName:ptr BYTE
 
-	invoke KernelHeapFindObject, lpName
-	and eax, eax
-	jz @exit
-	.if ([eax].SYNCOBJECT.dwType == SYNCTYPE_FILEMAPP)
-;-------------------------------- currently a reference counter is used
-;-------------------------------- that's no proper solution, but should work
-;-------------------------------- for many cases
-		inc [eax].FILEMAPOBJ.dwCnt	
-	.else
-		xor eax, eax
-	.endif
-@exit:
+	invoke KernelHeapFindObject, lpName, SYNCTYPE_FILEMAPP
+	mov eax, edx
 	@strace <"OpenFileMappingA(", dwDesiredAccess, ", ", bInheritHandle, ", ", &lpName, ")=", eax>
 	ret
 	align 4

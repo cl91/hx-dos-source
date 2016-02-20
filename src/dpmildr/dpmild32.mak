@@ -5,7 +5,7 @@
 # - HDLD32.BIN:   stub which includes the DPMI loader and HDPMI
 # tools used:
 # - Assembler: JWasm
-# - Linker:    JWLink v1.8 modified
+# - Linker:    JWlink
 
 !ifndef DEBUG
 DEBUG = 0
@@ -60,19 +60,13 @@ STUBX32:
 # create $(OUTDIR)\DPMILD32.EXE
 
 $(OUTDIR)\$(NAME).EXE: $(DEPS) $(NAME).mak
-	@wlink @<<
-format dos
-op q
-file {$(DEPS)}
-name $*.EXE
-op map=$*.MAP
-<<
+	@$(LINK16BIN) format dos file {$(DEPS)} name $*.EXE op q, map=$*.MAP
 !if $(DEBUG)==0
 	@copy $*.EXE ..\..\Bin\*.* >NUL
 !ifdef TOOLSDIR
 	@copy $*.EXE $(TOOLSDIR)\*.* >NUL
 !endif
-!endif    
+!endif
 
 $(OUTDIR)\dpmildr.OBJ: dpmildr.asm dpmildr.inc peload.inc kernel16.inc version.inc trace.inc
 	$(ASM) dpmildr.asm
@@ -86,13 +80,7 @@ $(OUTDIR)\peload.OBJ: peload.asm dpmildr.inc peload.inc mzhdr32.inc
 # create NOLFN32\DPMILD32.EXE
 
 NOLFN32\$(NAME).EXE: $(DEPSNOLFN) $(NAME).mak
-	@wlink @<<
-format dos
-op q
-file {$(DEPSNOLFN)}
-name $*.EXE
-op map=$*.MAP
-<<
+	@$(LINK16BIN) format dos file {$(DEPSNOLFN)} name $*.EXE op q, map=$*.MAP
 	@copy $*.EXE ..\..\Unsupp\*.* >NUL
 
 NOLFN32\dpmildr.obj: dpmildr.asm dpmildr.inc peload.inc kernel16.inc version.inc trace.inc
@@ -107,13 +95,7 @@ NOLFN32\peload.obj: peload.asm dpmildr.inc peload.inc mzhdr32.inc
 # create STUB32\DPMILD32.BIN
 
 STUB32\$(NAME).BIN: $(DEPSSTUB) $(NAME).mak
-	@jwlink @<<
-format dos
-op knoweas, q
-file { $(DEPSSTUB) }
-name $*.BIN
-op map=$*.MAP
-<<
+	@$(LINK16BIN) format dos file { $(DEPSSTUB) } name $*.BIN op q, knoweas, map=$*.MAP
 	@copy $*.BIN ..\..\Bin\*.* >NUL
 !ifdef TOOLSDIR
 	@copy $*.BIN $(TOOLSDIR)\*.* >NUL
@@ -131,13 +113,7 @@ STUB32\peload.obj: peload.asm dpmildr.inc peload.inc mzhdr32.inc dpmild32.mak
 # create STUBX32\HDLD32.BIN
 
 STUBX32\HDLD32.BIN: $(DEPSSTUBX) STUB32\peload.obj $(NAME).mak
-	@jwlink @<<
-format dos
-op q, knoweas
-file $(DEPSSTUBX), STUB32\peload.obj
-name $*.BIN
-op map=$*.MAP
-<<
+	@$(LINK16BIN) format dos file $(DEPSSTUBX), STUB32\peload.obj name $*.BIN op q, map=$*.MAP, knoweas 
 	@copy $*.BIN ..\..\Bin\*.* >NUL
 !ifdef TOOLSDIR
 	@copy $*.BIN $(TOOLSDIR)\*.* >NUL

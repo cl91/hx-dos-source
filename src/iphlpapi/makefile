@@ -32,6 +32,7 @@ OBJMODS = $(OBJMODS:.\=RELEASE\)
 !ifndef MASM
 MASM=0
 !endif
+MSLINK=0
 
 ASMOPT= -c -nologo -coff -Cp -Sg -D?INGDI=1 $(AOPTD) -I$(INC32DIR) -D?FLAT=1 -Fl$* -Fo$* 
 !if $(MASM)
@@ -40,7 +41,6 @@ ASM=@ml.exe $(ASMOPT)
 ASM=@jwasm.exe $(ASMOPT)
 !endif
 LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL /ENTRY:DllMain /LIBPATH:$(LIBCOFF) /OPT:NOWIN98 /merge:.edata=.text
-LINK=link.exe 
 
 NAME=IPHLPAPI
 LIBNAME=IPHLPAPS
@@ -57,11 +57,15 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).dll: $(OUTDIR)\$(NAME).obj $(NAME).def Makefile
-	@$(LINK) @<<
+!if $(MSLINK)
+	@link @<<
 $(OUTDIR)\$(NAME).obj $(LIBS)
 $(LOPTS) $(LOPTD)
 /DEF:$(NAME).def /OUT:$*.DLL
 <<
+!else
+	@$(LINKBIN) format win pe dll name $*.DLL f $(OUTDIR)\$(NAME).obj libpath $(LIBCOFF) lib {$(LIBS)} op q, map=$*, implib=$* @$(NAME).rsp
+!endif
 !if $(DEBUG)==0
 	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR    

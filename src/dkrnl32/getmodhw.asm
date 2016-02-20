@@ -22,7 +22,7 @@ GetModuleHandleW proc public pName:ptr WORD
 		call ConvertWStr
 	.endif
 	invoke GetModuleHandleA, eax
-	@strace	<"GetModuleHandleW(",pName, ")=", eax>
+	@strace <"GetModuleHandleW(",pName, ")=", eax>
 	ret
 	align 4
 GetModuleHandleW endp

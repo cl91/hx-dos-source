@@ -2,8 +2,6 @@
 ;--- implements:
 ;--- + VirtualAlloc()
 ;--- + VirtualFree()
-;--- + VirtualLock()
-;--- + VirtualUnlock()
 
 	.386
 if ?FLAT
@@ -514,19 +512,25 @@ VirtualAlloc endp
 
 RemoveBlock proc
 	push eax
-	mov esi,[eax].MBLOCK.dwHandle
-	mov edi, esi
-	shr esi,16		;DPMI handle in SI:DI
+	@strace <"RemoveBlock: mblock item=", eax, " addr=", [eax].MBLOCK.dwAddr, " siz=", [eax].MBLOCK.dwSize, " hdl=", [eax].MBLOCK.dwHandle>
+	@strace <"RemoveBlock: mdesc item=", edx, " nxt=", [edx].MDESC.pNext, " cnt=", [edx].MDESC.dwCnt, " hdl=", [edx].MDESC.dwHdl>
+	mov edi,[eax].MBLOCK.dwHandle
+	shld esi, edi, 16	;DPMI handle in SI:DI
 	mov ax,0502h
 	int 31h
 	pop edi
-	lea esi,[edi+sizeof MBLOCK]
+	lea esi,[edi+sizeof MBLOCK]	;esi -> MBLOCK behind the deleted one
 	mov eax, edi
 	sub eax, edx
 	sub eax, sizeof MDESC
-	shr eax, 4				;size of MBLOCK is 16!
+	shr eax, 4				;size of MBLOCK is 16!, MBLOCK index into EAX
+if 1
+	dec [edx].MDESC.dwCnt	;changed for v3.5 (GPF in Lynx)
 	mov ecx,[edx].MDESC.dwCnt
+else
+	mov ecx,[edx].MDESC.dwCnt  
 	dec [edx].MDESC.dwCnt
+endif
 	sub ecx, eax
 	shl ecx, 2				;1 item needs 4 DWORD to be copied
 	rep movsd
@@ -569,12 +573,14 @@ VirtualFree endp
 ;--- on termination: free all memory blocks of current process
 
 _FreeAllRegions proc public
+	@strace <"_FreeAllRegions enter">
 	pushad
 ;	@noints
 	invoke GetCurrentProcess
 	xor edx, edx
 	xchg edx, [eax].PROCESS.pVirtual
 	.while (edx)
+		@strace <"_FreeAllRegions: block=", edx, " cnt=", [edx].MDESC.dwCnt, " hdl=", [edx].MDESC.dwHdl>
 		mov ecx, [edx].MDESC.dwCnt
 		jecxz noitem
 		mov eax, ecx
@@ -599,47 +605,10 @@ noitem:
 	.endw
 ;	@restoreints
 	popad
+	@strace <"_FreeAllRegions exit">
 	ret
 	align 4
 _FreeAllRegions endp
-
-VirtualLock proc public pStart:dword,dwSize:dword
-
-	@trace <"VirtualLock",13,10>
-	xor eax,eax
-	pushad
-	mov cx,word ptr pStart+0
-	mov bx,word ptr pStart+2
-	mov di,word ptr dwSize+0
-	mov si,word ptr dwSize+2
-	mov ax,0600h
-	int 31h
-	popad
-	jc @F
-	inc eax
-@@:
-	ret
-	align 4
-VirtualLock endp
-
-VirtualUnlock proc public pStart:dword,dwSize:dword
-
-	@trace <"VirtualUnlLock",13,10>
-	xor eax,eax
-	pushad
-	mov cx,word ptr pStart+0
-	mov bx,word ptr pStart+2
-	mov di,word ptr dwSize+0
-	mov si,word ptr dwSize+2
-	mov ax,0601h
-	int 31h
-	popad
-	jc @F
-	inc eax
-@@:
-	ret
-	align 4
-VirtualUnlock endp
 
 end
 

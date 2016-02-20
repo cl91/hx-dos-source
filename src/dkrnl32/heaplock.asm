@@ -1,30 +1,30 @@
 
-        .386
+	.386
 if ?FLAT
-        .MODEL FLAT, stdcall
+	.MODEL FLAT, stdcall
 else
-        .MODEL SMALL, stdcall
+	.MODEL SMALL, stdcall
 endif
-		option proc:private
-        option casemap:none
+	option proc:private
+	option casemap:none
 
-        include winbase.inc
-        include dkrnl32.inc
-        include heap32.inc
-		include macros.inc
+	include winbase.inc
+	include dkrnl32.inc
+	include heap32.inc
+	include macros.inc
 
 ?EXTCHK	equ 0
 
-        .CODE
+	.CODE
 
 HeapLock proc public heap:dword
 
 	mov eax,heap
 	test byte ptr [eax].HEAPDESC.flags, HEAP_NO_SERIALIZE
 	jnz @F
-	invoke WaitForSingleObject,[eax].HEAPDESC.semaphor,INFINITE
+	invoke WaitForSingleObject,[eax].HEAPDESC.mutex,INFINITE
 @@:
-	@strace	<"HeapLock(", heap, ")=", eax>
+	@strace <"HeapLock(", heap, ")=", eax>
 	ret
 	align 4
 HeapLock endp
@@ -34,7 +34,7 @@ HeapUnlock proc public heap:dword
 	mov eax,heap
 	test byte ptr [eax].HEAPDESC.flags, HEAP_NO_SERIALIZE
 	jnz @F
-	invoke ReleaseSemaphore,[eax].HEAPDESC.semaphor,1,0
+	invoke ReleaseMutex,[eax].HEAPDESC.mutex
 @@:
 	@strace <"HeapUnlock(", heap, ")=", eax>
 	ret

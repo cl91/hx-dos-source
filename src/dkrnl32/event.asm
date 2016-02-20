@@ -19,42 +19,30 @@ endif
 	include macros.inc
 	include dkrnl32.inc
 
-	.DATA
-        
-pNamedEvents	dd 0
-
 	.CODE
 
-CreateEventA proc public uses edi esi ebx security:dword,
-			bManualReset:dword, bInitialState:dword, lpName:ptr BYTE
+;--- todo!!!!!
+;--- if an auto-reset event is signaled, it remains signaled
+;--- until a waiting thread is released. It is set to non-signaled
+;--- then, but only if further threads are waiting.
+
+CreateEventA proc public uses ebx security:dword,
+		bManualReset:dword, bInitialState:dword, lpName:ptr BYTE
 
 	mov eax, sizeof EVENT
 	mov ebx, lpName
 	.if (ebx && byte ptr [ebx])	;NULL or szNull is allowed
-		lea edi, pNamedEvents
-		mov esi, [edi]
-		.while (esi)
-			mov ecx, [esi+4]
-			lea ecx, [ecx+sizeof EVENT]
-			invoke lstrcmp, ecx, ebx
-			.if (!eax)
-				invoke SetLastError, ERROR_ALREADY_EXISTS
-				mov eax, [esi+4]
-				inc [eax].EVENT.bCount
-				jmp done
-			.endif
-			mov edi, esi
-			mov esi, [edi]
-		.endw
-		invoke lstrlen, ebx
-		add eax, sizeof EVENT + 1
-	.else
-		xor ebx,ebx
+		invoke KernelHeapFindObject, lpName, SYNCTYPE_EVENT
+		.if (eax)
+			mov eax, edx
+			jmp done
+		.endif
+		invoke SetLastError, ERROR_SUCCESS
 	.endif
-	invoke KernelHeapAlloc, eax
+	invoke KernelHeapAllocObject, sizeof EVENT, lpName
 	and eax,eax
 	jz done
-;;	mov [eax].SYNCOBJECT.dwType, SYNCTYPE_SEMAPHOR
+	mov [eax-4], offset destructor
 	mov [eax].EVENT.dwType, SYNCTYPE_EVENT
 	mov ecx, bManualReset
 	and ecx, 1
@@ -63,24 +51,7 @@ CreateEventA proc public uses edi esi ebx security:dword,
 	mov ecx, bInitialState
 	and ecx, 1
 	or [eax].EVENT.bFlags, cl
-;	mov [eax].EVENT.bNamed, 0
-	mov [eax].EVENT.bCount, 1
-	push eax
-	.if (ebx)
-		mov [eax-4], offset destructor
-		or [eax].EVENT.bFlags, EVNT_NAMED
-		lea ecx, [eax+sizeof EVENT]
-		invoke	lstrcpy, ecx, ebx
-		invoke KernelHeapAlloc, 8
-		and eax, eax
-		jz done
-		mov [edi], eax
-		mov dword ptr [eax], 0
-		mov ecx, [esp]
-		mov [eax+4], ecx
-	.endif
-	invoke SetLastError, 0
-	pop eax
+	mov [eax].EVENT.bRefCnt, 1
 done:
 ifdef _DEBUG
 	mov ecx,lpName
@@ -94,47 +65,26 @@ endif
 
 CreateEventA endp
 
-destructor proc uses esi pThis:DWORD
+destructor proc pThis:DWORD
 
-	xor eax, eax
 	mov ecx, pThis
-	dec [ecx].EVENT.bCount
-	jnz exit
-	lea edx, pNamedEvents
-	mov esi, [edx]
-	.while (esi)
-		.if (ecx == [esi+4])
-			mov ecx,[esi]
-			mov [edx],ecx
-			invoke KernelHeapFree, esi
-			.break
-		.endif
-		mov edx, esi
-		mov esi, [esi]
-	.endw
-	@mov eax, 1
-exit:
+	dec [ecx].EVENT.bRefCnt
+	setz al
+	.if ( al && [ecx].NAMEDOBJECT.lpName )
+		invoke KernelHeapUnlinkObject, ecx
+		mov al,1
+	.endif
+	movzx eax,al
+	@strace <"event destructor: obj=", pThis, " rc=", eax>
 	ret
 	align 4
 
 destructor endp
 
-OpenEventA proc public uses esi dwDesiredAccess:DWORD, bInheritHandle:DWORD, lpName:ptr BYTE
+OpenEventA proc public dwDesiredAccess:DWORD, bInheritHandle:DWORD, lpName:ptr BYTE
 
-	mov esi, pNamedEvents
-	.while (esi)
-		mov ecx, [esi+4]
-		lea ecx, [ecx+sizeof EVENT]
-		invoke lstrcmp, ecx, lpName
-		.if (!eax)
-			mov eax, [esi+4]
-			inc [eax].EVENT.bCount
-			jmp exit
-		.endif
-		mov esi, [esi]
-	.endw
-	xor eax, eax
-exit:
+	invoke KernelHeapFindObject, lpName, SYNCTYPE_EVENT
+	mov eax, edx
 	@strace <"OpenEventA(", dwDesiredAccess, ", ", bInheritHandle, ", ", &lpName, ")=", eax>
 	ret
 	align 4
@@ -155,15 +105,17 @@ SetEvent proc public hEvent:DWORD
 	bts dword ptr [ecx].EVENT.bFlags, EVNT_SIGNALED_BIT
 if ?EVENTOPT
 	jc done
-	mov eax,[ecx].EVENT.dwThread
+	mov eax,[ecx].EVENT.hThread
 	and eax, eax
-	jz @F
+	jz idle
  if 1
 	cmp [eax].THREAD.bPriority, THREAD_PRIORITY_TIME_CRITICAL
 	jnz @F
  endif
 	call [g_dwBoostProc]
 @@:
+	invoke SwitchToThread	;added for v3.5
+idle:
 endif
 done:
 	@mov eax, 1
@@ -178,15 +130,19 @@ SetEvent endp
 
 ResetEvent proc public hEvent:DWORD
 
-	xor eax, eax
 	mov ecx, hEvent
+	jecxz error
 	cmp [ecx].EVENT.dwType, SYNCTYPE_EVENT
-	jnz exit
+	jnz error
 	and [ecx].EVENT.bFlags, not EVNT_SIGNALED
 	@mov eax, 1
 exit:
 	@strace <"ResetEventA(", hEvent, ")=", eax>
 	ret
+error:
+	invoke SetLastError, ERROR_INVALID_HANDLE
+	xor eax, eax
+	jmp exit
 	align 4
 
 ResetEvent endp

@@ -4,7 +4,7 @@
 ;
 
 HEAPDESC  struct
-    semaphor        dd  ?   ; heap semaphore
+    mutex           dd  ?   ; heap mutex
     flags           dd  ?   ; flags
     pNextRegion     dd  ?   ; heap has more than 1 region
     start           dd  ?   ; offset of first heap entry

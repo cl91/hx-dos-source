@@ -20,6 +20,7 @@
   ShellExecuteA
   ShellExecuteExA               y
   SHBrowseForFolderA            y
+  SHCreateDirectoryExW
   SHFileOperationA
   SHGetDesktopFolder            y 
   SHGetFileInfoA                y
@@ -34,6 +35,11 @@
 
  3. History
 
+ 05/27/2011:  V1.8
+ 
+ þ CommandLineToArgvW implemented
+ þ SHCreateDirectoryExW added
+ 
  11/16/2009:  V1.7
  
  þ added ShellExecuteExA, FindExecutableA, SHGetFolderPathA,

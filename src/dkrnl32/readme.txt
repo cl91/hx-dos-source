@@ -116,7 +116,6 @@ EXCEPT.ASM   EXCEPTION RaiseException
                        InitException (set DPMI exception handlers)
                        ExitException (reset DPMI exception handlers)
 EXITPROC.ASM PROCESS   ExitProcess
-                       GetExitCodeProcess
 EXPENVS.ASM  PROCESS   ExpandEnvironmentStringsA
                        ExpandEnvironmentStringsW
 FATEXIT.ASM  PROCESS   FatalAppExitA
@@ -162,6 +161,7 @@ GETCMDL.ASM  MODUL     GetCommandLineA
 GETCMDLW.ASM MODUL     GetCommandLineW
 GETCPINF.ASM DIV       GetCPInfo
 GETCPROC.ASM PROCESS   GetCurrentProcess
+                       GetCurrentProcessId
 GETCTHRD.ASM THREAD    GetCurrentThread
 GETCURD.ASM  DIR       GetCurrentDirectoryA
                        GetCurrentDirectoryW
@@ -236,10 +236,10 @@ LCMAPSTR.ASM HELP      LCMapStringA
 LLSEEK.ASM   FILE      _llseek
                        SetFilePointer
 LOADLIB.ASM  MODUL     LoadLibraryA
-                       LoadLibraryW
                        FreeLibrary
                        GetProcAddress
 LOADLIBX.ASM MODUL     LoadLibraryExA
+LOADLIBW.ASM MODUL     LoadLibraryW
                        LoadLibraryExW
 LOCK.ASM     THREAD    InterLockedIncrement
                        InterLockedDecrement
@@ -279,9 +279,8 @@ PIPES.ASM    FILE      CreatePipe
 PRIVPROF.ASM PROCESS   GetPrivateProfileString
                        WritePrivateProfileString
 PROCESS.ASM  PROCESS   CreateProcessA
-                       CreateProcessW
                        GetExitCodeProcess
-                       GetCurrentProcessId
+PROCESSW.ASM PROCESS   CreateProcessW
 PROCWSS.ASM  PROCESS   SetProcessWorkingSetSize
 QPERFCNT.ASM DIV       QueryPerformanceCounter
 READCONS.ASM CONSOLE   ReadConsoleA

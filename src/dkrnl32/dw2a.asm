@@ -1,29 +1,31 @@
 
-        .386
+	.386
 if ?FLAT
-        .MODEL FLAT, stdcall
+	.MODEL FLAT, stdcall
 else
-        .MODEL SMALL, stdcall
+	.MODEL SMALL, stdcall
 endif
-		option casemap:NONE
-        option proc:private
+	option casemap:NONE
+	option proc:private
 
-;        include winbase.inc
-;		include dkrnl32.inc
+;	include winbase.inc
+;	include dkrnl32.inc
 
-        .CODE
+	.CODE
 
 ;--- convert an integer in eax to ascii, stores in edi
 ;--- 
 
-__dw2aX	proc public
+	public byt2asc
+
+__dw2aX proc public
 	mov dl, 0
 	jmp dw2a
-__dw2aX	endp
+__dw2aX endp
 
-__dw2a	proc public
+__dw2a proc public
 	mov dl,1		;suppress leading zeros
-__dw2a	endp
+__dw2a endp
 
 dw2a proc
 	xor ecx, ecx
@@ -34,9 +36,9 @@ dw2a proc
 w2asc:
 	push eax
 	shr eax, 8
-	call b2asc
+	call byt2asc
 	pop eax
-b2asc:
+byt2asc::       ;<- render AL into [edi], dl=0
 	mov ah,al
 	shr al, 4
 	call nib2asc
@@ -136,12 +138,12 @@ endif
 local szNum[12];byte
 
 	lea edi, szNum
-    mov esi, edi
+	mov esi, edi
 	call __dw2a
 	mov al, 0
 	stosb
 	mov ax,2
-    int 41h
+	int 41h
 ;	invoke OutputDebugString, addr szNum
 	ret
 __dw2aDebug endp

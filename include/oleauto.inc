@@ -24,7 +24,7 @@ VariantCopy					PROTO stdcall :ptr VARIANT,:ptr VARIANT
 VariantCopyInd				PROTO stdcall :ptr VARIANT,:ptr VARIANT
 VariantInit					PROTO stdcall :ptr VARIANT
 VariantTimeToDosDateTime	PROTO stdcall :DWORD,:DWORD,:DWORD,:DWORD
-VariantTimeToSystemTime		PROTO stdcall :REAL8,:DWORD
+VariantTimeToSystemTime		PROTO stdcall :REAL8,:ptr SYSTEMTIME
 
 BstrFromVector PROTO :DWORD,:DWORD
 ClearCustData PROTO :DWORD
@@ -40,7 +40,7 @@ DispInvoke PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
 DosDateTimeToVariantTime PROTO :DWORD,:DWORD,:DWORD
 GetActiveObject PROTO :DWORD,:DWORD,:DWORD
 GetAltMonthNames PROTO :DWORD,:DWORD
-GetErrorInfo PROTO :DWORD,:DWORD
+GetErrorInfo PROTO :DWORD,:ptr ptr
 GetRecordInfoFromGuids PROTO :DWORD,:DWORD,:DWORD,:DWORD,:DWORD,:DWORD
 GetRecordInfoFromTypeInfo PROTO :DWORD,:DWORD
 LHashValOfNameSysA PROTO :DWORD,:DWORD,:DWORD

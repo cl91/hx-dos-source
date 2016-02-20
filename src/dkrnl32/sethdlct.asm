@@ -1,31 +1,30 @@
 
-        .386
+	.386
 if ?FLAT
-        .MODEL FLAT, stdcall
+	.MODEL FLAT, stdcall
 else
-        .MODEL SMALL, stdcall
+	.MODEL SMALL, stdcall
 endif
-		option proc:private
-        option casemap:none
+	option proc:private
+	option casemap:none
 
-        include winbase.inc
-		include macros.inc
+	include winbase.inc
+	include macros.inc
 
-        .CODE
+	.CODE
 
 SetHandleCount proc public uses ebx newsize:dword
 
-        mov     ah,67h
-        mov     ebx,newsize
-        int     21h
-        mov     eax,newsize
-        jnc     @F
-        xor     eax,eax
+	mov ah,67h
+	mov ebx,newsize
+	int 21h
+	mov eax,newsize
+	jnc @F
+	xor eax,eax
 @@:
- 		@strace	<"SetHandleCount(", newsize, ")=", eax>
-        ret
-        
+	@strace <"SetHandleCount(", newsize, ")=", eax>
+	ret
+
 SetHandleCount endp
 
-end
-
+	end

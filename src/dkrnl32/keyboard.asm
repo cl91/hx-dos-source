@@ -76,12 +76,12 @@ endif
 	.CODE
 
 _WriteKbdEvent proto
-        
-handler_disabled:        		;jmt to previous IRQ1 handler
-	jmp cs:g_oldirq1
+
+handler_disabled:			;jmt to previous IRQ1 handler
+	jmp cs:[g_oldirq1]
 	align 4
-        
-myirq1	proc
+
+myirq1 proc
 	cmp cs:[g_bIsActive],1
 	jb handler_disabled
 if ?FLAT
@@ -152,18 +152,18 @@ notnormal: ;<--- for 46h (scroll lock) and 53h without ctrl
 	push eax
 	and word ptr @flat:[BKEYSTAT],not 208h
 	@pushf
-	call g_oldirq1
+	call [g_oldirq1]
 	pop eax
 	or word ptr @flat:[BKEYSTAT],ax
 	jmp after_processing
 if ?FKEYS
-fkeys: 
+fkeys:
 	mov ax,@flat:[BKEYSTAT]
 	and ax,30Fh					;reset ALT, SHIFT, CTRL
 	push eax
 	and word ptr @flat:[BKEYSTAT],not 30Fh
 	@pushf
-	call g_oldirq1
+	call [g_oldirq1]
 	pop eax
 	or word ptr @flat:[BKEYSTAT],ax
 	jmp after_processing
@@ -190,9 +190,9 @@ is45:
 @@:
 if ?DISABLEKBD
 	call ReenableKbd
-endif   
+endif
 	pop eax
-	call _WriteKbdEvent
+	call _WriteKbdEvent		;expects [esp+4] == ds:[41Ah]
 	pop eax  ;skip saved @flat:[41a]
 	pop eax
 ife ?FLAT
@@ -295,7 +295,7 @@ endif
 	align 4
 
 if ?DISABLEKBD
-ReenableKbd:        
+ReenableKbd:
 	test byte ptr [g_dwFlags],DKF_DISABLEKBD
 	jz @F
 	mov al,0AEh
@@ -305,7 +305,7 @@ ReenableKbd:
 endif
 	align 4
 
-myirq1  endp
+myirq1 endp
 
 ;--- install an IRQ1 handler
 ;--- purpose is to reset "ALT-pressed" flags before

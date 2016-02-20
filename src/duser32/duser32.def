@@ -5,6 +5,7 @@ EXPORTS
  AdjustWindowRect
  AdjustWindowRectEx
  AppendMenuA
+ AppendMenuW
  AttachThreadInput
  BeginPaint
  BroadcastSystemMessage
@@ -63,6 +64,7 @@ EXPORTS
  DestroyWindow
  DialogBoxIndirectParamA
  DialogBoxParamA
+ DialogBoxParamW
  DispatchMessageA
  DispatchMessageW
  DrawAnimatedRects
@@ -78,6 +80,7 @@ EXPORTS
  EndPaint
  EnumChildWindows
  EnumClipboardFormats
+ EnumDisplayDevicesA
  EnumDisplaySettingsA
  EnumThreadWindows
  EnumWindows
@@ -126,6 +129,7 @@ EXPORTS
  GetKeyNameTextA
  GetKeyState
  GetLastActivePopup
+ GetLastInputInfo
  GetMenu
  GetMenuCheckMarkDimensions
  GetMenuItemCount
@@ -201,6 +205,7 @@ EXPORTS
  LoadAcceleratorsA
  LoadBitmapA
  LoadCursorA
+ LoadCursorW
  LoadIconA
  LoadImageA
  LoadKeyboardLayoutA
@@ -219,6 +224,7 @@ EXPORTS
  ModifyMenuA
  MoveWindow
  MsgWaitForMultipleObjects
+ OemKeyScan
  OemToCharA
  OemToCharBuffA
  OemToCharBuffW
@@ -250,6 +256,7 @@ EXPORTS
  RemovePropA
  ReplyMessage
  ScreenToClient
+ ScrollWindow
  ScrollWindowEx
  SendDlgItemMessageA
  SendMessageA
@@ -264,6 +271,7 @@ EXPORTS
  SetCursorPos
  SetDlgItemInt
  SetDlgItemTextA
+ SetDlgItemTextW
  SetFocus
  SetForegroundWindow
  SetKeyboardState
@@ -275,6 +283,8 @@ EXPORTS
  SetPropA
  SetRect
  SetRectEmpty
+ SetScrollPos
+ SetScrollRange
  SetSysColors
  SetTimer
  SetWindowsHookExA
@@ -291,6 +301,7 @@ EXPORTS
  ShowWindow
  ShowWindowAsync
  SystemParametersInfoA
+ SystemParametersInfoW
  TabbedTextOutA
  ToAscii
  ToAsciiEx

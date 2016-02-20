@@ -1,25 +1,24 @@
 
-        .386
+	.386
 if ?FLAT
-        .MODEL FLAT, stdcall
-else		
-        .MODEL SMALL, stdcall
+	.MODEL FLAT, stdcall
+else
+	.MODEL SMALL, stdcall
 endif
-		option proc:private
-        option casemap:none
+	option proc:private
+	option casemap:none
 
-        include winbase.inc
-        include macros.inc
+	include winbase.inc
+	include macros.inc
 
-        .CODE
+	.CODE
 
 SetHandleInformation proc public hObject:dword, hMask:dword, hFlags:dword
 
-        xor eax, eax
-		@strace <"SetHandleInformation(", hObject, ", ", hMask, ", ", hFlags, ")=", eax, " *** unsupp ***">
-		ret
+	xor eax, eax
+	@strace <"SetHandleInformation(", hObject, ", ", hMask, ", ", hFlags, ")=", eax, " *** unsupp ***">
+	ret
 
 SetHandleInformation endp
 
-       end
-
+	end

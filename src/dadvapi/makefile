@@ -37,6 +37,7 @@ OBJMODS = $(OBJMODS:.\=RELEASE\)
 !ifndef MASM
 MASM=0
 !endif
+MSLINK=0
 
 ASMOPT= -c -nologo -coff -D?FLAT=1 -Fl$* -Fo$* -Sg $(AOPTD) -D_ADVAPI32_=1 -I$(INC32DIR)
 !if $(MASM)
@@ -45,7 +46,7 @@ ASM=@ml.exe $(ASMOPT)
 ASM=@jwasm.exe $(ASMOPT)
 !endif
 
-LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL /NODEFAULTLIB /LIBPATH:$(LIBCOFF) /OPT:NOWIN98
+#LOPTS= /NOLOGO /MAP /SUBSYSTEM:CONSOLE /DLL /NODEFAULTLIB /LIBPATH:$(LIBCOFF) /OPT:NOWIN98
 
 NAME=DADVAPI
 LIBNAME=DADVAPIS
@@ -62,23 +63,17 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).LIB $(OUTDIR)\$(NAME).obj $(NAME).def
-	@$(LINKBIN) @<<
+!if $(MSLINK)
+	@link @<<
 $(OUTDIR)\$(NAME).obj $(OUTDIR)\$(LIBNAME).LIB $(LIBS)
 $(LOPTS) $(LOPTD)
 /DEF:$(NAME).def /merge:.BASE=.data /OUT:$*.DLL
 <<
-#	@jwlink @<<
-#format windows nt dll 
-#file $(OUTDIR)\$(NAME).obj
-#lib  $(OUTDIR)\$(LIBNAME).lib
-#libpath $(LIBCOFF)
-#lib { $(LIBS) }
-#name $*.DLL
-#op map=$(OUTDIR)\$(NAME).map
-#op implib=$(OUTDIR)\$(NAME).lib
-#op NOSTDCALL
-#@$(NAME).exp
-#<<
+!else
+	@$(LINKBIN) format windows pe dll name $*.DLL f $(OUTDIR)\$(NAME).obj lib { $(OUTDIR)\$(LIBNAME).lib $(LIBCOFF)\$(LIBS) } @<<
+op q, map=$*, implib=$* @$(NAME).rsp
+<<
+!endif
 !if $(DEBUG)==0
 	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR    

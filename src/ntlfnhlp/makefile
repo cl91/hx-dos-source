@@ -36,6 +36,7 @@ OBJMODS = $(OBJMODS:.\=RELEASE\)
 !ifndef MASM
 MASM=0
 !endif
+MSLINK=0
 
 .SUFFIXES: .asm .obj
 
@@ -66,11 +67,14 @@ $(OUTDIR):
 # put all sections in one physical section to reduce memory load
 
 $(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).lib $(OUTDIR)\$(NAME).obj makefile
-	@$(LINKBIN) @<<
-$(LOPTS) $(OUTDIR)\$(NAME).obj $(OUTDIR)\$(LIBNAME).lib $(LIBS)
-$(LOPTD)
+!if $(MSLINK)
+	@link @<<
+$(OUTDIR)\$(NAME).obj $(LOPTS) $(OUTDIR)\$(LIBNAME).lib $(LIBS)
 /DEF:$(NAME).DEF /SECTION:.text,ERW /MERGE:.rdata=.text /MERGE:.data=.text /OUT:$*.DLL
 <<
+!else
+	@$(LINKBIN) format win pe dll f $(OUTDIR)\$(NAME).obj lib {$(OUTDIR)\$(LIBNAME).lib $(LIBS)} op q, map=$*, implib=$*
+!endif
 !if $(DEBUG)==0
 	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR    

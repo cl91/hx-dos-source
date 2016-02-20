@@ -181,6 +181,12 @@
 
  3. History
 
+ 2011/05/27:  V1.13
+
+ þ BitBlt: allow negative numbers for x-coord and/or y-coord or destination.
+ þ BitBlt: direction flag is cleared on entry (SDL.DLL might set it!?).
+ þ AbortDoc(), SetAbortProc() added (dummies)
+ 
  2009/01/20:  V1.12
 
  þ source assembled with JWasm.

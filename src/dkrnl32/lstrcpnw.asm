@@ -1,33 +1,33 @@
 
-        .386
+	.386
 if ?FLAT
-        .model flat, stdcall
+	.model flat, stdcall
 else
-        .model small, stdcall
+	.model small, stdcall
 endif
-		option casemap:none
+	option casemap:none
 
-        include winbase.inc
+	include winbase.inc
 
-        .code
+	.code
 
 lstrcpynW proc uses esi edi pDest:ptr word,pSrc:ptr word,len:dword
 
-        mov     edi,pDest    ;destination
-        mov     esi,pSrc     ;source
-        mov     edx,edi
-        mov     ecx,len      ;get output buffer size
-        jecxz   done
+	mov edi,pDest	;destination
+	mov esi,pSrc	;source
+	mov edx,edi
+	mov ecx,len 	;get output buffer size
+	jecxz done
 @@:
-        lodsw
-        stosw
-        or      AX,AX        ;end of string?
-        loopnz  @B
+	lodsw
+	stosw
+	or AX,AX		;end of string?
+	loopnz @B
 done:
-        mov     eax,edx
-        ret
+	mov eax,edx
+	ret
 
 lstrcpynW endp
 
-        end
+	end
 

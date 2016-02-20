@@ -11,9 +11,9 @@ EXPORTS
  getsockopt     =_getsockopt     @7
  htonl          =_htonl          @8
  htons          =_htons          @9
- inet_addr      =_inet_addr      @10
- inet_ntoa      =_inet_ntoa      @11
- ioctlsocket    =_ioctlsocket    @12
+ ioctlsocket    =_ioctlsocket    @10
+ inet_addr      =_inet_addr      @11
+ inet_ntoa      =_inet_ntoa      @12
  listen         =_listen         @13
  ntohl          =_ntohl          @14
  ntohs          =_ntohs          @15
@@ -25,7 +25,7 @@ EXPORTS
  setsockopt     =_setsockopt     @21
  shutdown       =_shutdown       @22
  socket         =_socket         @23
- 
+
  WSAAddressToStringA   @27
  WSACloseEvent         @29
  WSACreateEvent        @31

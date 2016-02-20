@@ -18,7 +18,7 @@
 
         public  DOSSETSIGHANDLER
 
-DOSXXX    segment word public 'CODE'
+DOSXXX segment word public 'CODE'
 
 externdef   __csalias:word
 
@@ -35,7 +35,7 @@ tab1    label dword
         dd 0
         dd 0
         dd 0
-        
+
 actab   label word          ;action (0,1,2)
         dw offset action0
         dw offset action1
@@ -54,7 +54,7 @@ DOSSETSIGHANDLER:
         jbe     @F
         mov     AX,1
         jmp     exit        ;error 1
-@@:        
+@@:
         mov     BX,[BP+6]   ;signumber (1,3,4)
         cmp     BX,1        ;CTRL-C ?
         je      @F
@@ -91,9 +91,9 @@ DOSSETSIGHANDLER:
         jmp     storeit
 @@:
 		mov     AX,2
-storeit:    
+storeit:
 		stosw
-        
+
 prevactiondone:
 		mov     SI,[BP+8]              ;action
         shl     SI,1
@@ -129,7 +129,7 @@ action2:                               ;action 2 (receive control)
         pop     ds
 ok:
 		xor     AX,AX	;ok
-exit:   
+exit:
 		pop     ES
         pop		DI
         pop     SI
@@ -262,14 +262,14 @@ event1:
         push    BX
         mov     BX,0*4
         jmp     dispatchevent
-        
+
 event2:
         pushf
         cmp     AH,04Ch		;program termination?
         je      @F
         popf
         jmp     dword ptr cs:[tab1+2*4]
-        
+
 @@:     push    AX
         push    BX
         mov     BX,2*4
@@ -281,8 +281,8 @@ event3:
         mov     BX,3*4
         jmp     dispatchevent
 
-;--- event caught, now call event proc        
-        
+;--- event caught, now call event proc
+
 dispatchevent:
         cmp     word ptr cs:[BX+tab0+2],0
         je      defhandler
@@ -311,7 +311,7 @@ dispatchevent:
         cmp     BX,8
         jne     @F
         call    resintvec
-@@:   
+@@:
 		pop     ES
         pop     DS
         pop     BP
@@ -319,13 +319,13 @@ dispatchevent:
         pop     SI
         pop     DX
         pop     CX
-defhandler:   
+defhandler:
 		pop     BX
         pop     AX
         popf
         jmp     dword ptr cs:[defvec]
-        
-DOSXXX    ends
+
+DOSXXX ends
 
 end
 

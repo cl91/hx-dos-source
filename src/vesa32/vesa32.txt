@@ -54,6 +54,12 @@
 
   4. History
  
+  2011/05/27: version 1.13
+
+  þ wheel mouse supported
+  þ bugfix: when saving the VESA video state, there was no check whether
+    the call did succeed. However, it may fail for VGA text modes.
+
   2009/01/20: version 1.12
 
   þ source assembled with JWasm.

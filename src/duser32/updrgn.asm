@@ -20,7 +20,7 @@ endif
 		.DATA
 
 		.CODE
-        
+
 InvalidateRect proc public hwnd:DWORD, prect:ptr RECT, bErase:DWORD
 
 		mov ecx, hwnd

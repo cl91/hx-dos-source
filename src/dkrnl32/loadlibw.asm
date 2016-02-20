@@ -1,33 +1,42 @@
 
 ;*** implements LoadLibraryW()
 
-        .386
+	.386
 if ?FLAT
-        .MODEL FLAT, stdcall
+	.MODEL FLAT, stdcall
 else
-        .MODEL SMALL, stdcall
+	.MODEL SMALL, stdcall
 endif
-		option proc:private
-        option casemap:none
+	option proc:private
+	option casemap:none
 
-        include winbase.inc
-        include dkrnl32.inc
-		include macros.inc
+	include winbase.inc
+	include dkrnl32.inc
+	include macros.inc
 
-        .CODE
+	.CODE
 
 if ?FLAT
 
 LoadLibraryW proc public fname:ptr WORD
-		mov eax, fname
-		call ConvertWStr
-        invoke LoadLibraryA, eax
- 		@strace	<"LoadLibraryW(", fname, ")=", eax>
-		ret
-        align 4
+	mov eax, fname
+	call ConvertWStr
+	invoke LoadLibraryA, eax
+	@strace <"LoadLibraryW(", fname, ")=", eax>
+	ret
+	align 4
 LoadLibraryW endp
+
+LoadLibraryExW proc public fname:ptr WORD, hFile:DWORD, dwFlags:DWORD
+	mov eax, fname
+	call ConvertWStr
+	invoke LoadLibraryExA, eax, hFile, dwFlags
+	@strace <"LoadLibraryExW(", fname, ", ", hFile, ", ", dwFlags, ")=", eax>
+	ret
+	align 4
+LoadLibraryExW endp
 
 endif
 
-        end
+	end
 

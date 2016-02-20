@@ -1,5 +1,6 @@
 
 ;--- implements:
+;--- [Global]AddAtomW
 ;--- [Global]GetAtomNameW
 
 	.386
@@ -18,6 +19,17 @@ endif
 	include macros.inc
 
 	.CODE
+
+GlobalAddAtomW proc public lpString:ptr WORD
+
+	mov eax, lpString
+	call ConvertWStr
+	invoke GlobalAddAtomA, eax
+	@strace <"GlobalAddAtomW(", lpString, ")=", eax>
+	ret
+	align 4
+
+GlobalAddAtomW endp
 
 GlobalGetAtomNameW proc public atom:DWORD, lpBuffer:ptr WORD, nSize:DWORD
 

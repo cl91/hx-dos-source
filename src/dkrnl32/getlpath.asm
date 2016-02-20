@@ -92,7 +92,7 @@ local	pszAStr:dword
 	sub esp, ecx
 	sub esp, ecx
 	mov pszAStr, esp
-	invoke	GetLongPathNameA, eax, pszAStr, ecx
+	invoke GetLongPathNameA, eax, pszAStr, ecx
 	.if (eax)
 		invoke ConvertAStrN, pszAStr, lpszwLongPath, cchBuffer
 	.endif

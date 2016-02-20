@@ -7,25 +7,22 @@
 # --------------------------------------------------------------
 # Make                      MS NMake          OW WMake -ms
 # Assembler    $(ASM)       JWasm             Masm v6.14+
-# COFF linker  $(LINKBIN)   MS LINK           -
+# COFF linker               JWlink            MS LINK
 # COFF lib     $(LIBBIN)    OW WLib           MS LIB
 # COFF RC      $(RCBIN)     OW WRC            MS RC
-# OMF linker   $(LINK16BIN) OW WLink          MS LINK (OMF)
+# OMF linker   $(LINK16BIN) JWlink            MS LINK (OMF)
 # OMF lib      $(LIB16BIN)  OW WLib           MS LIB (OMF)
 
-# Besides WLink there's also JWLink, can be found at
-# http://www.japheth.de/HX.html. It's needed for a few
-# binaries, the most important of which is HDPMI,
-# but works for the rest as well.
-
-# All tools are available for free.
+# JWasm and JWlink can be found at http://www.japheth.de.
+# The Open Watcom (OW) tools WLib and WRC may also be found
+# there - or just download the full OW package.
 
 # About WSOCK32 target:
 # The WSOCK32 target has to be excluded, because some object
 # modules are currently missing due to copyright restrictions.
 # WSOCK32 is written in C, and requires:
 # - OW 32bit C compiler (wcc386.exe)
-# - OW WLink (wlink.exe)
+# - JWlink (jwlink.exe)
 # - watt-32 library (WATTCPWD.LIB) compiled with open watcom,
 # - OW CRT with register calling convention (clib3r.lib)
 
@@ -36,147 +33,147 @@ DEBUG = 0
 !endif
 
 ALL: 
-    @cd    HDPMI
+    cd    HDPMI
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\DPMILDR
+    cd ..\DPMILDR
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\NTLFNHLP
+    cd ..\NTLFNHLP
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\DKRNL32
+    cd ..\DKRNL32
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\DADVAPI
+    cd ..\DADVAPI
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\DGDI32
+    cd ..\DGDI32
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\DUSER32
+    cd ..\DUSER32
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\DDDRAW
+    cd ..\DDDRAW
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\OLE32
+    cd ..\OLE32
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\OLEAUT32
+    cd ..\OLEAUT32
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\VERSION
+    cd ..\VERSION
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\VESA32
+    cd ..\VESA32
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\HXLDR32
+    cd ..\HXLDR32
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\PESTUB
+    cd ..\PESTUB
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\HXGUIHLP
+    cd ..\HXGUIHLP
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\SB16
+    cd ..\SB16
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\WINMM
+    cd ..\WINMM
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\DINPUT
+    cd ..\DINPUT
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\DSOUND
+    cd ..\DSOUND
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\WSOCK32
+    cd ..\WSOCK32
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\WS2_32
+    cd ..\WS2_32
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\DCIMAN32
+    cd ..\DCIMAN32
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\MSACM32
+    cd ..\MSACM32
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\MPR
+    cd ..\MPR
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\IPHLPAPI
+    cd ..\IPHLPAPI
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\SHELL32
+    cd ..\SHELL32
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\COMCTL32
+    cd ..\COMCTL32
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\COMDLG32
+    cd ..\COMDLG32
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\STUBS
+    cd ..\STUBS
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\MZSUPP
+    cd ..\MZSUPP
     @$(MAKE) DEBUG=$(DEBUG) 
-#    @cd ..\NESUPP
+#    cd ..\NESUPP
 #    @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\HXHELP
+    cd ..\HXHELP
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\PATCHPE
+    cd ..\PATCHPE
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\PATCHNE
+    cd ..\PATCHNE
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..\SHDPMI
+    cd ..\SHDPMI
     @$(MAKE) DEBUG=$(DEBUG) 
-    @cd ..
+    cd ..
 
 clean: 
-    @cd    HDPMI
+    cd    HDPMI
     @$(MAKE) DEBUG=$(DEBUG) clean
-    @cd ..\DPMILDR
+    cd ..\DPMILDR
     @$(MAKE) DEBUG=$(DEBUG) clean
-    @cd ..\NTLFNHLP
+    cd ..\NTLFNHLP
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\DKRNL32
+    cd ..\DKRNL32
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\DADVAPI
+    cd ..\DADVAPI
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\DGDI32
+    cd ..\DGDI32
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\DUSER32
+    cd ..\DUSER32
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\DDDRAW
+    cd ..\DDDRAW
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\OLE32
+    cd ..\OLE32
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\OLEAUT32
+    cd ..\OLEAUT32
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\VERSION
+    cd ..\VERSION
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\VESA32
+    cd ..\VESA32
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\HXLDR32
+    cd ..\HXLDR32
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\PESTUB
+    cd ..\PESTUB
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\HXGUIHLP
+    cd ..\HXGUIHLP
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\SB16
+    cd ..\SB16
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\WINMM
+    cd ..\WINMM
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\DINPUT
+    cd ..\DINPUT
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\DSOUND
+    cd ..\DSOUND
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\WSOCK32
+    cd ..\WSOCK32
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\WS2_32
+    cd ..\WS2_32
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\DCIMAN32
+    cd ..\DCIMAN32
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\MSACM32
+    cd ..\MSACM32
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\MPR
+    cd ..\MPR
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\IPHLPAPI
+    cd ..\IPHLPAPI
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\MZSUPP
+    cd ..\MZSUPP
     @$(MAKE) DEBUG=$(DEBUG) clean 
-#    @cd ..\NESUPP
+#    cd ..\NESUPP
 #    @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\STUBS
+    cd ..\STUBS
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\HXHELP
+    cd ..\HXHELP
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\PATCHPE
+    cd ..\PATCHPE
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\PATCHNE
+    cd ..\PATCHNE
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\SHDPMI
+    cd ..\SHDPMI
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\SHELL32
+    cd ..\SHELL32
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\COMCTL32
+    cd ..\COMCTL32
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..\COMDLG32
+    cd ..\COMDLG32
     @$(MAKE) DEBUG=$(DEBUG) clean 
-    @cd ..
+    cd ..

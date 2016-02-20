@@ -18,11 +18,11 @@ endif
 
 GetModuleFileNameW proc public handle:dword,pBuffer:ptr word,lBuffer:dword
 
-	invoke	GetModuleFileNameA, handle, pBuffer, lBuffer
+	invoke GetModuleFileNameA, handle, pBuffer, lBuffer
 	.if (eax)
 		invoke ConvertAStr, pBuffer
 	.endif
-	@strace	<"GetModuleFileNameW(", handle, ", ", pBuffer, ", ", lBuffer, ")=", eax>
+	@strace <"GetModuleFileNameW(", handle, ", ", pBuffer, ", ", lBuffer, ")=", eax>
 	ret
 	align 4
 

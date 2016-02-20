@@ -26,21 +26,22 @@ endif
 
 TIBSEG segment use16
 TIBSEG ends
+
 	assume fs:TIBSEG	;declare FS=TIB a 16 bit segment (saves space)
 
 ?NOSEH		equ 0	;std=0, 1=dont install SEH
 
 ?CHECKKD    equ 0	;std=0, 1=dont install if kernel debugger present.
 					;this shouldnt be set normally because an app
-                    ;may rely on exceptions. The debugger will always
-                    ;be notified if UnhandledExceptionFilter is called
+					;may rely on exceptions. The debugger will always
+					;be notified if UnhandledExceptionFilter is called
 ?CATCHEXC01	equ 1	;std=1, catch debug exceptions
 ?CATCHEXC03	equ 1	;std=1, catch breakpoint opcodes
 ?CATCHEXC04	equ 1	;std=1, catch integer overflow exceptions
 ?CATCHEXC05	equ 1	;std=1, catch bound exceptions
 ?CATCHEXC0C equ 1	;std=1, stack overflows will generate an exc 0E,
 					;but accessing SS:[0-3FFh] when ED bit is set will cause 
-                    ;exc 0C!
+					;exc 0C!
 ?CATCHEXC11 equ 1	;std=1, support alignment exceptions 11h
 ?FLOATSUPP	equ 1	;std=1, support floating point exceptions 10h
 
@@ -49,7 +50,7 @@ TIBSEG ends
 
 ?IRQ0DSUPP	equ 0	;std=0, 1=install handler for int 75h.
 					;since there is no way to switch stacks back
-                    ;it's a not so good idea to use INT 75h at all.
+					;it's a not so good idea to use INT 75h at all.
 
 ?USECLIENTSTACK	equ 0	;std=0, dont set to 1!
 
@@ -59,6 +60,8 @@ DEBUG_FAULT_TYPE_LAST	equ 10h
 DS_TrapFault  equ 83h	;fault at CX:EDX, fault=BX esi=error code edi=flags            
 						;returns replacement CS:EIP in CX:EDX
 
+?CONTEIP equ 1	;test
+?CONTESP equ 1	;test
 
 ife ?FLAT
         public _USESEH            ;um dies fuer NE/MZ-Files einzubinden
@@ -68,10 +71,10 @@ endif
 ife ?NOSEH
 
 .BASE$IA segment dword public 'DATA'
-        dd offset InitException
+	dd offset InitException
 .BASE$IA ends
 .BASE$XA segment dword public 'DATA'
-        dd offset ExitException
+	dd offset ExitException
 .BASE$XA ends
 
 
@@ -81,26 +84,25 @@ endif
 
 endif
 
-
 EXCDESC struct
-bException  db ?
+bException db ?
 oldhandler dq ?
 newhandler dd ?
 win32exc   dd ?
 EXCDESC ends
 
-MYEXC	struct
+MYEXC struct
 rEip	dd ?
 rCS		dd ?
 dwExcNo	dd ?	;4 parameters for RaiseException
 dwFlags	dd ?
 numArgs	dd ?
 pArgs	dd ?
-MYEXC	ends
+MYEXC ends
 
 RtlUnwind proto stdcall :ptr EXCEPTION_REGISTRATION, :DWORD, :ptr EXCEPTION_RECORD, :DWORD
 
-        .DATA
+	.DATA
 
 g_dwCurrEsp dd 0
 
@@ -152,7 +154,7 @@ endif
 g_cntStack	db 0
 g_bDebug	db 0
 
-		align 4
+	align 4
 
 g_Args		dd 0, 0
 
@@ -162,34 +164,35 @@ g_Eflags dd ?
 ;g_ErrCode dd ?
 endif
 
-		public g_defaultregistration
+	public g_defaultregistration
 
 g_defaultregistration label dword
-		dd -1
-		dd offset _defaultexceptionhandler
-		dd 0
-		dd -1
+	dd -1
+	dd offset _defaultexceptionhandler
+	dd 0
+	dd -1
 
-		.CONST
+	.CONST
 
 szFatalExit	db "dkrnl32: fatal exit!",lf,0
 excstr	db lf
-		db "dkrnl32: exception %X, flags=%X occured at %X:%X",lf
-		db 9,"ax=%X bx=%X cx=%X dx=%X",lf
-		db 9,"si=%X di=%X bp=%X sp=%X",lf
-		db 0
+	db "dkrnl32: exception %X, flags=%X occured at %X:%X",lf
+	db 9,"ax=%X bx=%X cx=%X dx=%X",lf
+	db 9,"si=%X di=%X bp=%X sp=%X",lf
+	db 0
 
-		.CODE
+	.CODE
 
 ?PROTECT equ 1	;don't allow exceptions during module search
+?EXTMOD equ 0	;std=0
 
 GetModuleForEip proc rEip:dword, pME:ptr MODULEENTRY32        
 
 if ?PROTECT
-	xor 	edx, edx
-	push	offset exception_read
-	push	fs:[edx]
-	mov 	fs:[edx], esp
+	xor edx, edx
+	push offset exception_read
+	push fs:[edx]
+	mov fs:[edx], esp
 endif
 
 	mov edx, pME
@@ -212,6 +215,15 @@ endif
 			mov eax, 1
 			.break
 		.endif
+if ?EXTMOD
+		sub esp,120h
+		mov ecx, esp
+		lea edx, [eax].MODULEENTRY32.szModule
+		invoke _sprintf, ecx, CStr(<9,"%X Siz=%X Name='%s'",lf>), \
+			[eax].MODULEENTRY32.modBaseAddr, [eax].MODULEENTRY32.modBaseSize, edx
+		invoke Display_szString, esp
+		add esp,120h
+endif
 		invoke Module32Next, 0, pME
 	.endw
 if ?PROTECT
@@ -263,6 +275,8 @@ MakeErrorString proc uses ebx pExceptInfo:dword, pszText:ptr BYTE
 
 MakeErrorString endp
 
+;--- no need to preserve ebx, esi, edi inside the next proc
+
 myueproc proc pExceptInfo:dword
 
 local szText[160]:byte
@@ -280,7 +294,9 @@ endif
 			dword ptr [ecx].EXCEPTION_RECORD.ExceptionInformation+4
 		invoke Display_szString, addr szText
 	.endif
-if 1        
+
+if 1
+;--- display module where exception happened
 	mov ecx, pExceptInfo
 	mov ecx, [ecx].EXCEPTION_POINTERS.ExceptionRecord
 	sub esp, sizeof MODULEENTRY32
@@ -297,13 +313,85 @@ if 1
 	.endif
 	add esp, sizeof MODULEENTRY32
 endif
+
+if ?CONTEIP
+
+externdef byt2asc:near ;display AL into [edi]
+
+;--- display [eip], 12 bytes
+	invoke lstrcpy, addr szText, CStr(<9,"[eip] = ">)
+	mov ecx, pExceptInfo
+	mov ecx, [ecx].EXCEPTION_POINTERS.ExceptionRecord
+	mov ebx, [ecx].EXCEPTION_RECORD.ExceptionAddress
+	invoke IsBadReadPtr, ebx, 12
+	and eax, eax
+	jnz @F
+	mov ecx, 12
+	lea edi, szText+9
+	.repeat
+		push ecx
+		mov al, [ebx]
+		inc ebx
+		mov dl,0
+		call byt2asc
+		mov al,' '
+		stosb
+		pop ecx
+	.untilcxz
+	mov ax, 0Ah
+	stosw
+	invoke Display_szString, addr szText
+@@:
+endif
+
+if ?CONTESP
+
+externdef __dw2aX:near ;display EAX into [edi]
+
+;--- display [esp], 6 dwords
+	invoke lstrcpy, addr szText, CStr(<9,"[esp] = ">)
+	mov ecx, pExceptInfo
+	mov esi, [ecx].EXCEPTION_POINTERS.ContextRecord
+if 1
+	mov ebx, [esi].CONTEXT.SegSs
+	xor edi, edi
+	mov ax,6	;in case SS isn't flat (pretty rare)
+	int 31h
+	jc @F
+	shrd edi, ecx, 16
+	mov di, dx
+@@:
+	mov ebx, edi
+	add ebx, [esi].CONTEXT.rEsp
+else
+	mov ebx, [esi].CONTEXT.rEsp
+endif
+	invoke IsBadReadPtr, ebx, 6*4
+	and eax, eax
+	jnz @F
+	mov ecx, 6
+	lea edi, szText+9
+	.repeat
+		push ecx
+		mov eax, [ebx]
+		add ebx, 4
+		mov dl,0
+		call __dw2aX
+		pop ecx
+		mov al,' '
+		stosb
+	.untilcxz
+	mov ax, 10
+	stosw
+	invoke Display_szString, addr szText
+@@:
+endif
+
 ife ?FLAT
 	mov ax,6
 	mov ebx,cs
 	int 31h
-	push cx
-	push dx
-	pop edx
+	shrd edx, ecx, 16
 	invoke _sprintf, addr szText, CStr(<9,"base address=%X",lf>), edx
 	invoke Display_szString, addr szText
 endif
@@ -389,6 +477,8 @@ endif
 	@strace <"UnhandledExceptionFilter(", ecx, " [ER=", edx, ", CR=", [ecx].EXCEPTION_POINTERS.ContextRecord, "]">
 	@strace <"ExcRec: Code=", [ecx].EXCEPTION_RECORD.ExceptionCode, " Flgs=", [ecx].EXCEPTION_RECORD.ExceptionFlags, " Addr=", [ecx].EXCEPTION_RECORD.ExceptionAddress, " cntP=", [ecx].EXCEPTION_RECORD.NumberParameters>
 
+;--- if a debugger has been detected, notify it of the exception
+
 	.if (g_bDebug)
 		invoke GetExcNo, pExceptInfo
 		mov bx, ax
@@ -400,6 +490,7 @@ endif
 		mov ax,DS_CheckFault
 		int 41h
 		.if (ax)
+			push edi
 			mov edx, pExceptInfo
 			mov ecx, [edx].EXCEPTION_POINTERS.ContextRecord
 			mov edx, [ecx].CONTEXT.rEip
@@ -407,6 +498,7 @@ endif
 			mov ecx, [ecx].CONTEXT.SegCs
 			mov ax, DS_TrapFault
 			int 41h
+			pop edi
 			mov eax, pExceptInfo
 			mov eax, [eax].EXCEPTION_POINTERS.ContextRecord
 			.if (edx != [eax].CONTEXT.rEip)
@@ -427,7 +519,14 @@ endif
 ;		.if (g_bFPUPresent)
 ;			fninit
 ;		.endif
-		.if (eax == EXCEPTION_CONTINUE_SEARCH)
+		test byte ptr g_dwDebugFlags, DBGF_TEXTMODE
+		jz @F
+		push eax
+		mov ax,3
+		int 10h
+		pop eax
+@@:
+		.if ( eax == EXCEPTION_CONTINUE_SEARCH )
 			@strace <"calling default UEF proc">
 			invoke myueproc, pExceptInfo
 			@strace <"calling FatalAppExitA">
@@ -448,99 +547,99 @@ UnhandledExceptionFilter endp
 
 InitException proc
 
-		pushad
+	pushad
 
-		invoke	IsDebuggerPresent
-		test	eax,eax
-		setnz	al
-		mov		g_bDebug,al
+	invoke IsDebuggerPresent
+	test eax,eax
+	setnz al
+	mov g_bDebug,al
 if ?CHECKKD
-		.if (al)
-			jmp done
-		.endif
+	.if (al)
+		jmp done
+	.endif
 endif
-		test	byte ptr g_dwFlags,DKF_NODBGHOOK
-		jz		@F
-		mov		exc01.bException,-2
-		mov		exc03.bException,-2
+	test byte ptr g_dwFlags,DKF_NODBGHOOK
+	jz @F
+	mov exc01.bException,-2
+	mov exc03.bException,-2
 @@:
-		mov 	esi,offset exclist
+	mov esi,offset exclist
 @@:
-		mov 	bl,[esi].EXCDESC.bException
-		cmp 	bl,-1
-		jz		exit
-		cmp 	bl,-2
-		jz		skip
-		mov 	ax,0202h
-		int 	31h
-		mov 	dword ptr [esi].EXCDESC.oldhandler+0,edx
-		mov 	dword ptr [esi].EXCDESC.oldhandler+4,ecx
-		test	byte ptr g_dwFlags,DKF_NOEXCHOOK
-		jnz		skip
-		mov 	ecx,cs
-		mov 	edx,[esi].EXCDESC.newhandler
-		mov 	ax,0203h
-		int 	31h
+	mov bl,[esi].EXCDESC.bException
+	cmp bl,-1
+	jz exit
+	cmp bl,-2
+	jz skip
+	mov ax,0202h
+	int 31h
+	mov dword ptr [esi].EXCDESC.oldhandler+0,edx
+	mov dword ptr [esi].EXCDESC.oldhandler+4,ecx
+	test byte ptr g_dwFlags,DKF_NOEXCHOOK
+	jnz skip
+	mov ecx,cs
+	mov edx,[esi].EXCDESC.newhandler
+	mov ax,0203h
+	int 31h
 skip:
-		add 	esi,sizeof EXCDESC
-		jmp 	@B
+	add esi,sizeof EXCDESC
+	jmp @B
 exit:
 if ?FLOATSUPP
-		mov		ax,0E00h	;this function will fail on NT platforms
-		int		31h
-		jnc 	@F
-		int		11h			;here FPU is bit 1
-		shl		al,1		;so shift it to bit 2
-@@: 	   
-		and		al,4		;FPU present?
-		mov		g_bFPUPresent,al
+	mov ax,0E00h	;this function will fail on NT platforms
+	int 31h
+	jnc @F
+	int 11h			;here FPU is bit 1
+	shl al,1		;so shift it to bit 2
+@@:
+	and al,4		;FPU present?
+	mov g_bFPUPresent,al
 if ?IRQ0DSUPP
-		in		al,0A1h
-		and		al,not 20h	;unmask int 75h
-		out		0A1h,al
-		mov		bl,75h		;int 75h is a IRQ! SS will be LPMS!
-		mov		ax,0204h
-		int		31h
-		mov		dword ptr oldint75+0,edx
-		mov		word ptr oldint75+4,cx
-		mov		ecx, cs
-		mov		edx, offset myint75
-		mov		ax,0205h
-		int		31h
+	in al,0A1h
+	and al,not 20h	;unmask int 75h
+	out 0A1h,al
+	mov bl,75h		;int 75h is a IRQ! SS will be LPMS!
+	mov ax,0204h
+	int 31h
+	mov dword ptr oldint75+0,edx
+	mov word ptr oldint75+4,cx
+	mov ecx, cs
+	mov edx, offset myint75
+	mov ax,0205h
+	int 31h
 else
-		mov		ax,0e00h	;get FPU status
-		int		31h
-		mov		ebx,eax
-		or		bl,1		;client uses FPU
-		mov		ax,0e01h
-		int		31h
+	mov ax,0e00h	;get FPU status
+	int 31h
+	mov ebx,eax
+	or bl,1		;client uses FPU
+	mov ax,0e01h
+	int 31h
 ;--- one cannot rely on NE bit causing exception 10h for dpmi clients
 ;--- but at least mask IRQ 13 for HDPMI
-		smsw	ax
-		test	al,20h		;NE bit set?
-		jz		@F
+	smsw ax
+	test al,20h		;NE bit set?
+	jz @F
 if 0
-		cmp		g_bHost, HF_HDPMI
-		jnz		@F
-endif		 
-		in		al,0A1h
-		test	al,20h		;is masked already?
-		jnz		@F
-		or		al,20h
-		out		0A1h,al		;mask IRQ 0D
-		mov		bIrq0DMasked, 1
+	cmp g_bHost, HF_HDPMI
+	jnz @F
+endif
+	in al,0A1h
+	test al,20h		;is masked already?
+	jnz @F
+	or al,20h
+	out 0A1h,al		;mask IRQ 0D
+	mov bIrq0DMasked, 1
 @@:
 endif
 endif
 if 0
 ;--- this should happen for every task/thread
 ;--- so moved now to kernel32.asm
-;		 mov	 fs:[THREAD_INFORMATION_BLOCK.pvExcept],-1
+;	mov fs:[THREAD_INFORMATION_BLOCK.pvExcept],-1
 endif
 done:
-		popad
-		ret
-		align 4
+	popad
+	ret
+	align 4
 
 InitException endp
 
@@ -672,171 +771,171 @@ local   excrec:EXCEPTION_RECORD
 
 ;--- for _SaveContext, build a CONTEXT_CTRL on the stack
 
-		push ss						;current SS
-		push esp 					;esp (to be adjusted yet)
-		pushfd						;current EFlags
-		push except.rCS				;current CS 
-		push except.rEip			;current eip
-		push [ebp+0]				;current ebp
+	push ss						;current SS
+	push esp 					;esp (to be adjusted yet)
+	pushfd						;current EFlags
+	push except.rCS				;current CS 
+	push except.rEip			;current eip
+	push [ebp+0]				;current ebp
 ifdef _DEBUG
-		pushad
-		@trace <"*** exception ">
-		@tracedw except.dwExcNo
-		@trace <" EIP=">
-		@tracedw except.rEip
-		@trace <" EAX=">
-		@tracedw eax
-		@trace <" EBX=">
-		@tracedw ebx
-		@trace <" ECX=">
-		@tracedw ecx
-		@trace <" EDX=">
-		@tracedw edx
-		@trace <13,10," ESI=">
-		@tracedw esi
-		@trace <" EDI=">
-		@tracedw edi
-		mov ebx,fs
-		movzx ebx,bx
-		@trace <" FS=">
-		@tracedw ebx
-		@trace <" BaseFS=">
-		mov ax,6
-		int 31h
-		push cx
-		push dx
-		pop eax
-		@tracedw eax
-		@trace <" FS:[0]=">
-		@tracedw fs:[THREAD_INFORMATION_BLOCK.pvExcept]
-		.if (except.numArgs)
-			@trace <" arg[1]=">
-			mov eax, except.pArgs
-			@tracedw [eax+4]
-		.endif
-		@trace <13,10>
-		popad
+	pushad
+	@trace <"*** exception ">
+	@tracedw except.dwExcNo
+	@trace <" EIP=">
+	@tracedw except.rEip
+	@trace <" EAX=">
+	@tracedw eax
+	@trace <" EBX=">
+	@tracedw ebx
+	@trace <" ECX=">
+	@tracedw ecx
+	@trace <" EDX=">
+	@tracedw edx
+	@trace <13,10," ESI=">
+	@tracedw esi
+	@trace <" EDI=">
+	@tracedw edi
+	mov ebx,fs
+	movzx ebx,bx
+	@trace <" FS=">
+	@tracedw ebx
+	@trace <" BaseFS=">
+	mov ax,6
+	int 31h
+	push cx
+	push dx
+	pop eax
+	@tracedw eax
+	@trace <" FS:[0]=">
+	@tracedw fs:[THREAD_INFORMATION_BLOCK.pvExcept]
+	.if (except.numArgs)
+		@trace <" arg[1]=">
+		mov eax, except.pArgs
+		@tracedw [eax+4]
+	.endif
+	@trace <13,10>
+	popad
 endif
-		push eax
-		mov eax, cs:g_dwCurrEsp
-		and eax, eax
-		jnz @F
-		lea eax,except + sizeof MYEXC
+	push eax
+	mov eax, cs:g_dwCurrEsp
+	and eax, eax
+	jnz @F
+	lea eax,except + sizeof MYEXC
 @@:
-		mov [esp+4].CONTEXT_CTRL.rEsp,eax
-		pop eax
+	mov [esp+4].CONTEXT_CTRL.rEsp,eax
+	pop eax
 if ?GBLCURRENT        
-		push cs:[g_hCurThread]
+	push cs:[g_hCurThread]
 else
-		sub esp,4
-		push eax
-		mov eax, fs:[THREAD_INFORMATION_BLOCK.pProcess]
-		mov eax,[eax].PROCESS.hThread
-		mov [esp+4],eax
-		pop eax
+	sub esp,4
+	push eax
+	mov eax, fs:[THREAD_INFORMATION_BLOCK.pProcess]
+	mov eax,[eax].PROCESS.hThread
+	mov [esp+4],eax
+	pop eax
 endif
-		call _SaveContext
+	call _SaveContext
 
-		invoke GetCurrentProcess
-		or byte ptr [eax].PROCESS.wFlags, PF_LOCKED
+	invoke GetCurrentProcess
+	or byte ptr [eax].PROCESS.wFlags, PF_LOCKED
         
-		mov eax, except.dwExcNo
-		.if (eax >= STATUS_FLOAT_DENORMAL_OPERAND) && (eax <= STATUS_FLOAT_UNDERFLOW)
-			fninit
-		.endif
-		mov g_dwCurrEsp, 0
+	mov eax, except.dwExcNo
+	.if (eax >= STATUS_FLOAT_DENORMAL_OPERAND) && (eax <= STATUS_FLOAT_UNDERFLOW)
+		fninit
+	.endif
+	mov g_dwCurrEsp, 0
 
-		mov ax, 0901h	;enable interrupts
-		int 31h
+	mov ax, 0901h	;enable interrupts
+	int 31h
 
 if 0;def _DEBUG
-		sub esp, sizeof MODULEENTRY32
-		invoke GetModuleForEip, except.rEip, esp
-		add esp, sizeof MODULEENTRY32
-		invoke _FlushLogFile
+	sub esp, sizeof MODULEENTRY32
+	invoke GetModuleForEip, except.rEip, esp
+	add esp, sizeof MODULEENTRY32
+	invoke _FlushLogFile
 endif
-		mov ecx, except.dwExcNo
-		mov eax, except.dwFlags
-		mov excrec.ExceptionCode, ecx
-		mov excrec.ExceptionFlags, eax
-		mov ecx, 0
-		mov eax, except.rEip
-		mov excrec.ExceptionRecord, ecx
-		mov excrec.ExceptionAddress, eax
-		mov ecx, except.numArgs
-		mov excrec.NumberParameters, ecx
-		mov esi, except.pArgs
-		.if (esi)
-			lea edi, excrec.ExceptionInformation
-			rep movsd
-		.endif
+	mov ecx, except.dwExcNo
+	mov eax, except.dwFlags
+	mov excrec.ExceptionCode, ecx
+	mov excrec.ExceptionFlags, eax
+	mov ecx, 0
+	mov eax, except.rEip
+	mov excrec.ExceptionRecord, ecx
+	mov excrec.ExceptionAddress, eax
+	mov ecx, except.numArgs
+	mov excrec.NumberParameters, ecx
+	mov esi, except.pArgs
+	.if (esi)
+		lea edi, excrec.ExceptionInformation
+		rep movsd
+	.endif
         
 if 0;def _DEBUG
 ;--- if an exception occured while in process heap, make it free now
-		invoke GetProcessHeap
-		test [eax].HEAPDESC.flags, HEAP_NO_SERIALIZE
-		jnz @F
-		invoke ReleaseSemaphore, [eax].HEAPDESC.semaphor,1,0
+	invoke GetProcessHeap
+	test [eax].HEAPDESC.flags, HEAP_NO_SERIALIZE
+	jnz @F
+	invoke ReleaseSemaphore, [eax].HEAPDESC.semaphor,1,0
 @@:        
 endif
-		mov edi, fs:[THREAD_INFORMATION_BLOCK.pvExcept]
+	mov edi, fs:[THREAD_INFORMATION_BLOCK.pvExcept]
 nextframe:
-		or eax, -1
-		cmp edi, eax
-		jz exitloop
+	or eax, -1
+	cmp edi, eax
+	jz exitloop
 ifdef _DEBUG
-		lea eax, [edi].EXCEPTION_REGISTRATION.ExceptionHandler
-		invoke IsBadReadPtr, eax, 4
-		.if (eax)
-			invoke _GetCurrentThread
-			invoke _defaultexceptionhandler, addr excrec, edi, [eax].THREAD.pContext
-		.endif
-		cmp [edi].EXCEPTION_REGISTRATION.ExceptionHandler, -1
-else
-		cmp [edi].EXCEPTION_REGISTRATION.ExceptionHandler, eax
-endif
-		jz exitloop
-		@strace <"calling exception handler ", [edi].EXCEPTION_REGISTRATION.ExceptionHandler, ", esp=", esp>
-if 1
-		push ebp
-endif
-		mov esi, esp
-ifdef _DEBUG
-		invoke IsBadCodePtr, [edi].EXCEPTION_REGISTRATION.ExceptionHandler
-		.if (eax)
-			invoke _GetCurrentThread
-			invoke _defaultexceptionhandler, addr excrec, edi, [eax].THREAD.pContext
-		.endif
-endif
+	lea eax, [edi].EXCEPTION_REGISTRATION.ExceptionHandler
+	invoke IsBadReadPtr, eax, 4
+	.if (eax)
 		invoke _GetCurrentThread
-		lea ecx, excrec
-if 1 ;let EBP point to the very same stack frame (Borland C++!)
-		lea ebp, [esp-6*4]
+		invoke _defaultexceptionhandler, addr excrec, edi, [eax].THREAD.pContext
+	.endif
+	cmp [edi].EXCEPTION_REGISTRATION.ExceptionHandler, -1
+else
+	cmp [edi].EXCEPTION_REGISTRATION.ExceptionHandler, eax
 endif
-		invoke [edi].EXCEPTION_REGISTRATION.ExceptionHandler, ecx,\
-			edi, [eax].THREAD.pContext, 0
-		@strace  <"returned from exception handler, eax=", eax, " esp=", esp>
-		mov esp, esi
+	jz exitloop
+	@strace <"calling exception handler ", [edi].EXCEPTION_REGISTRATION.ExceptionHandler, ", esp=", esp>
 if 1
-		pop ebp
+	push ebp
+endif
+	mov esi, esp
+ifdef _DEBUG
+	invoke IsBadCodePtr, [edi].EXCEPTION_REGISTRATION.ExceptionHandler
+	.if (eax)
+		invoke _GetCurrentThread
+		invoke _defaultexceptionhandler, addr excrec, edi, [eax].THREAD.pContext
+	.endif
+endif
+	invoke _GetCurrentThread
+	lea ecx, excrec
+if 1 ;let EBP point to the very same stack frame (Borland C++!)
+	lea ebp, [esp-6*4]
+endif
+	invoke [edi].EXCEPTION_REGISTRATION.ExceptionHandler, ecx,\
+		edi, [eax].THREAD.pContext, 0
+	@strace  <"returned from exception handler, eax=", eax, " esp=", esp>
+	mov esp, esi
+if 1
+	pop ebp
 endif
 ;--- may exit with
 ;--- eax == XCPT_CONTINUE_EXECUTION        
 ;--- eax == XCPT_CONTINUE_SEARCH
 
-		cmp eax, _XCPT_CONTINUE_EXECUTION
-		jz done
-		mov edi, [edi].EXCEPTION_REGISTRATION.prev_structure
-		jmp nextframe
+	cmp eax, _XCPT_CONTINUE_EXECUTION
+	jz done
+	mov edi, [edi].EXCEPTION_REGISTRATION.prev_structure
+	jmp nextframe
 exitloop:
 done:
-		call _GetCurrentThread
-		push eax
-		invoke GetCurrentProcess
-		cli
-		and byte ptr [eax].PROCESS.wFlags, not PF_LOCKED
-		call _LoadContext
-		align 4
+	call _GetCurrentThread
+	push eax
+	invoke GetCurrentProcess
+	cli
+	and byte ptr [eax].PROCESS.wFlags, not PF_LOCKED
+	call _LoadContext
+	align 4
 
 doexc2  endp
 
@@ -880,24 +979,24 @@ if ?CATCHEXC0C
 endif
 	@exchandler 0D
 _exc0E:
-		.if (cs:g_cntStack)
-			push ds
-			mov ds, cs:g_csalias
-			dec g_cntStack
-			pop ds
+	.if (cs:g_cntStack)
+		push ds
+		mov ds, cs:g_csalias
+		dec g_cntStack
+		pop ds
 if ?CLEARHIGHEBP
-			push ebp
-			movzx ebp,sp
-			mov [ebp+4].DPMIEXC.rEip, LOWWORD(offset afterstacktest)
-			pop ebp
-			db 66h
+		push ebp
+		movzx ebp,sp
+		mov [ebp+4].DPMIEXC.rEip, LOWWORD(offset afterstacktest)
+		pop ebp
+		db 66h
 else
-			mov [esp].DPMIEXC.rEip, offset afterstacktest
+		mov [esp].DPMIEXC.rEip, offset afterstacktest
 endif
-			retf
-		.endif
-		push offset exc0E
-		jmp  doexception
+		retf
+	.endif
+	push offset exc0E
+	jmp doexception
 if ?FLOATSUPP
 	@exchandler 10
 endif
@@ -910,46 +1009,46 @@ endif
 
 doexception proc
 
-		cmp cs:[g_bIsActive],1
-		jnb @F
-		push eax
-		mov eax,[esp+1*4]
-		push dword ptr cs:[eax].EXCDESC.oldhandler+4
-		push dword ptr cs:[eax].EXCDESC.oldhandler+0
-		mov eax, [esp+2*4]
-		retf 2*4
+	cmp cs:[g_bIsActive],1
+	jnb @F
+	push eax
+	mov eax,[esp+1*4]
+	push dword ptr cs:[eax].EXCDESC.oldhandler+4
+	push dword ptr cs:[eax].EXCDESC.oldhandler+0
+	mov eax, [esp+2*4]
+	retf 2*4
 @@:
-		pushad
+	pushad
 if ?FLAT
-		mov ebx,fs					;check for valid tib
-		mov ax,0006
-		int 31h
-		jc notib
-		push cx
-		push dx
-		pop esi
-		cmp esi,fs:[THREAD_INFORMATION_BLOCK.ptibSelf]
-		jz @F
+	mov ebx,fs					;check for valid tib
+	mov ax,0006
+	int 31h
+	jc notib
+	push cx
+	push dx
+	pop esi
+	cmp esi,fs:[THREAD_INFORMATION_BLOCK.ptibSelf]
+	jz @F
 notib:
 ;--- exception handler called without a valid TIB in FS
 ;--- this is possibly due to an exception in an IRQ handler
 ;--- and cannot be handled properly
 
-		mov eax, cs:[g_hCurThread]        
-		mov fs, cs:[eax].THREAD.dwTibSel
+	mov eax, cs:[g_hCurThread]        
+	mov fs, cs:[eax].THREAD.dwTibSel
         
-	if ?CLEARTIBPTR        
-		mov esi, fs:[THREAD_INFORMATION_BLOCK.ptibSelf]
-	endif        
+ if ?CLEARTIBPTR        
+	mov esi, fs:[THREAD_INFORMATION_BLOCK.ptibSelf]
+ endif        
 
 @@:        
 endif
 
 if ?CLEARHIGHEBP
-		movzx ebp,sp
-		add ebp,8*4+1*4
+	movzx ebp,sp
+	add ebp,8*4+1*4
 else
-		lea ebp,[esp+8*4+1*4]	;pushad, ExceptionCode
+	lea ebp,[esp+8*4+1*4]	;pushad, ExceptionCode
 endif
 
 ?EXCPARM equ <dword ptr [ebp-4]>
@@ -958,51 +1057,51 @@ endif
 ;--------------------- of an invalid client stack
 
 if ?CLEARTIBPTR
-		mov fs:[THREAD_INFORMATION_BLOCK.ptibSelf], 0
+	mov fs:[THREAD_INFORMATION_BLOCK.ptibSelf], 0
 endif
 
 ;--- debugger first chance exception
 
 if 1
-		.if (cs:g_bDebug)
+	.if (cs:g_bDebug)
+		mov ebx, ?EXCPARM
+		movzx bx, cs:[ebx].EXCDESC.bException
+		mov cx, DEBUG_FAULT_TYPE_FIRST
+		mov ax, DS_CheckFault
+		int 41h
+		.if (ax)
+if ?CLEARHIGHEBP
+			movzx edx, [ebp].DPMIEXC.rEip
+			movzx ecx, [ebp].DPMIEXC.rCS
+else
+			mov edx, [ebp].DPMIEXC.rEip
+			mov ecx, [ebp].DPMIEXC.rCS
+endif
 			mov ebx, ?EXCPARM
 			movzx bx, cs:[ebx].EXCDESC.bException
-			mov cx, DEBUG_FAULT_TYPE_FIRST
-			mov ax, DS_CheckFault
+if ?CLEARHIGHEBP
+			movzx esi, [ebp].DPMIEXC.errc
+			movzx edi, [ebp].DPMIEXC.rEflags
+else
+			mov esi, [ebp].DPMIEXC.errc
+			mov edi, [ebp].DPMIEXC.rEflags
+endif
+			mov ax, DS_TrapFault
 			int 41h
-			.if (ax)
 if ?CLEARHIGHEBP
-				movzx edx, [ebp].DPMIEXC.rEip
-				movzx ecx, [ebp].DPMIEXC.rCS
+			.if ((dx != [ebp].DPMIEXC.rEip) || (cx != [ebp].DPMIEXC.rCS)) 
+				mov [ebp].DPMIEXC.rEip, dx
+				mov [ebp].DPMIEXC.rCS, cx
 else
-				mov edx, [ebp].DPMIEXC.rEip
-				mov ecx, [ebp].DPMIEXC.rCS
+			.if ((edx != [ebp].DPMIEXC.rEip) || (ecx != [ebp].DPMIEXC.rCS)) 
+				mov [ebp].DPMIEXC.rEip, edx
+				mov [ebp].DPMIEXC.rCS, ecx
 endif
-				mov ebx, ?EXCPARM
-				movzx bx, cs:[ebx].EXCDESC.bException
-if ?CLEARHIGHEBP
-				movzx esi, [ebp].DPMIEXC.errc
-				movzx edi, [ebp].DPMIEXC.rEflags
-else
-				mov esi, [ebp].DPMIEXC.errc
-				mov edi, [ebp].DPMIEXC.rEflags
-endif
-				mov ax, DS_TrapFault
-				int 41h
-if ?CLEARHIGHEBP
-				.if ((dx != [ebp].DPMIEXC.rEip) || (cx != [ebp].DPMIEXC.rCS)) 
-					mov [ebp].DPMIEXC.rEip, dx
-					mov [ebp].DPMIEXC.rCS, cx
-else
-				.if ((edx != [ebp].DPMIEXC.rEip) || (ecx != [ebp].DPMIEXC.rCS)) 
-					mov [ebp].DPMIEXC.rEip, edx
-					mov [ebp].DPMIEXC.rCS, ecx
-endif
-					and byte ptr [ebp].DPMIEXC.rEflags+1,not 1
-					jmp doexc_exit
-				.endif
+				and byte ptr [ebp].DPMIEXC.rEflags+1,not 1
+				jmp doexc_exit
 			.endif
 		.endif
+	.endif
 
 endif
 
@@ -1015,172 +1114,172 @@ endif
 ;--- 4. return to DPMI
 ;--- and then build the MYEXC frame when we're back onto our stack!
 
-		push ds
+	push ds
 if ?USECLIENTSTACK	;this only works if a switch to LPMS has occured
   ife ?CLEARHIGHEBP
-		lds edi, fword ptr [ebp.DPMIEXC.rESP]	;get SS:ESP into ES:EDI
-		sub edi,sizeof MYEXC			;make room for MYEXC
-		mov [ebp.DPMIEXC.rESP],edi
+	lds edi, fword ptr [ebp.DPMIEXC.rESP]	;get SS:ESP into ES:EDI
+	sub edi,sizeof MYEXC			;make room for MYEXC
+	mov [ebp.DPMIEXC.rESP],edi
   else
-		lds di, dword ptr [ebp.DPMIEXC.rESP]
-		movzx edi, di
-		sub edi,sizeof MYEXC			;make room for MYEXC
-		mov [ebp.DPMIEXC.rESP],di
+	lds di, dword ptr [ebp.DPMIEXC.rESP]
+	movzx edi, di
+	sub edi,sizeof MYEXC			;make room for MYEXC
+	mov [ebp.DPMIEXC.rESP],di
   endif
-        and byte ptr [ebp].DPMIEXC.rEflags+1,0FEH	;clear TF
+	and byte ptr [ebp].DPMIEXC.rEflags+1,0FEH	;clear TF
 else
-		mov edi, offset g_myexc
-		mov ds, cs:g_csalias
+	mov edi, offset g_myexc
+	mov ds, cs:g_csalias
   ife ?CLEARHIGHEBP
-		mov edx,[ebp.DPMIEXC.rEflags]
-;		mov ebx,[ebp.DPMIEXC.errc]
+	mov edx,[ebp.DPMIEXC.rEflags]
+;	mov ebx,[ebp.DPMIEXC.errc]
   else
-		movzx edx,[ebp.DPMIEXC.rEflags]
-;		mov bx,[ebp.DPMIEXC.errc]
+	movzx edx,[ebp.DPMIEXC.rEflags]
+;	mov bx,[ebp.DPMIEXC.errc]
   endif
   if ?CATCHEXC01
-		and dh,not 1		;clear TF in any case
+	and dh,not 1		;clear TF in any case
   endif
-		mov g_Eflags,edx
-;		mov g_ErrCode,ebx
-		and byte ptr [ebp].DPMIEXC.rEflags+1,0FCH	;clear TF/IF
+	mov g_Eflags,edx
+;	mov g_ErrCode,ebx
+	and byte ptr [ebp].DPMIEXC.rEflags+1,0FCH	;clear TF/IF
 endif
 
-		mov eax,offset calldoexc		;set new EIP
-		mov ecx,cs
+	mov eax,offset calldoexc		;set new EIP
+	mov ecx,cs
 ife ?CLEARHIGHEBP
-		xchg eax,[ebp.DPMIEXC.rEip]
-		xchg ecx,[ebp.DPMIEXC.rCS]
+	xchg eax,[ebp.DPMIEXC.rEip]
+	xchg ecx,[ebp.DPMIEXC.rCS]
 else
-		xchg ax,[ebp.DPMIEXC.rEip]
-		xchg cx,[ebp.DPMIEXC.rCS]
+	xchg ax,[ebp.DPMIEXC.rEip]
+	xchg cx,[ebp.DPMIEXC.rCS]
 endif
-		mov [edi].MYEXC.rEip,eax
-		mov [edi].MYEXC.rCS,ecx
-		mov ebx, ?EXCPARM
-		mov ecx,[ebx].EXCDESC.win32exc
-		.if (!ecx)
-		   call getfloatexc
-		.endif
-		mov [edi].MYEXC.dwExcNo,ecx
+	mov [edi].MYEXC.rEip,eax
+	mov [edi].MYEXC.rCS,ecx
+	mov ebx, ?EXCPARM
+	mov ecx,[ebx].EXCDESC.win32exc
+	.if (!ecx)
+		call getfloatexc
+	.endif
+	mov [edi].MYEXC.dwExcNo,ecx
 
-		xor eax,eax
-		mov [edi].MYEXC.dwFlags,eax
-		.if (([ebx].EXCDESC.bException == 0Eh) || ([ebx].EXCDESC.bException == 0Ch))
-			mov [edi].MYEXC.numArgs,2
-			mov [edi].MYEXC.pArgs,offset g_Args
-			.if (g_bHost == HF_HDPMI)
-				mov edx, cr2
-				mov g_Args+1*4,edx
+	xor eax,eax
+	mov [edi].MYEXC.dwFlags,eax
+	.if (([ebx].EXCDESC.bException == 0Eh) || ([ebx].EXCDESC.bException == 0Ch))
+		mov [edi].MYEXC.numArgs,2
+		mov [edi].MYEXC.pArgs,offset g_Args
+		.if (g_bHost == HF_HDPMI)
+			mov edx, cr2
+			mov g_Args+1*4,edx
 if ?FLAT
-				and dx,0f000h
-				lea ecx,[edx+1000h]
-				cmp ecx,fs:[8]	;just one page below stack bottom?
-				jnz @F
-				invoke GetCurrentThread
-				mov ecx,[eax].THREAD.hStack
-				add ecx,2000h	;skip the reserved region
-				cmp edx,ecx
-				jb @F
-				push es
-				push ds
-				pop es
-				mov esi, edx
-				mov ecx, 1000h
-				invoke _SearchRegion, 0
-				pop es
-				and eax, eax
-				jz @F
-				mov ebx, esi
-				mov esi, [eax].MBLOCK.dwBase
-				sub ebx, esi
-				mov ecx, 1
-				push es
-				push 9
-				mov edx, esp
-				push ss
-				pop es
-				mov ax,0507h
-				int 31h
-				pop edx
-				pop es
-				jc @F
-				mov eax,[edi].MYEXC.rEip
-				mov ecx,[edi].MYEXC.rCS
-				mov [ebp].DPMIEXC.rEip, eax
-				mov [ebp].DPMIEXC.rCS, ecx
-				sub dword ptr fs:[8], 1000h
-				jmp doexc_exit2
+			and dx,0f000h
+			lea ecx,[edx+1000h]
+			cmp ecx,fs:[8]	;just one page below stack bottom?
+			jnz @F
+			invoke GetCurrentThread
+			mov ecx,[eax].THREAD.hStack
+			add ecx,2000h	;skip the reserved region
+			cmp edx,ecx
+			jb @F
+			push es
+			push ds
+			pop es
+			mov esi, edx
+			mov ecx, 1000h
+			invoke _SearchRegion, 0
+			pop es
+			and eax, eax
+			jz @F
+			mov ebx, esi
+			mov esi, [eax].MBLOCK.dwBase
+			sub ebx, esi
+			mov ecx, 1
+			push es
+			push 9
+			mov edx, esp
+			push ss
+			pop es
+			mov ax,0507h
+			int 31h
+			pop edx
+			pop es
+			jc @F
+			mov eax,[edi].MYEXC.rEip
+			mov ecx,[edi].MYEXC.rCS
+			mov [ebp].DPMIEXC.rEip, eax
+			mov [ebp].DPMIEXC.rCS, ecx
+			sub dword ptr fs:[8], 1000h
+			jmp doexc_exit2
 @@:
 endif
-			.endif
+		.endif
 
 ;--- test if the page access error is due to a stack overflow
 
-			mov g_cntStack,1
-			push ds
+		mov g_cntStack,1
+		push ds
 if ?CLEARHIGHEBP
-			lds dx, [ebp].DPMIEXC.rSSSP
-			movzx edx,dx
+		lds dx, [ebp].DPMIEXC.rSSSP
+		movzx edx,dx
 else
-			lds edx, [ebp].DPMIEXC.rSSESP
+		lds edx, [ebp].DPMIEXC.rSSESP
 endif
-			mov eax, [edx-4]
-			mov [edx-4], eax
+		mov eax, [edx-4]
+		mov [edx-4], eax
 afterstacktest::            
-			pop ds
-			mov al,g_cntStack
-			mov g_cntStack,0
-			.if (!al)
+		pop ds
+		mov al,g_cntStack
+		mov g_cntStack,0
+		.if (!al)
 if ?CLEARHIGHEBP
-				movzx eax,[ebp].DPMIEXC.rEsp
+			movzx eax,[ebp].DPMIEXC.rEsp
 else
-				mov eax,[ebp].DPMIEXC.rEsp
+			mov eax,[ebp].DPMIEXC.rEsp
 endif
-				mov g_dwCurrEsp, eax
-				call gethelperstack
-				jnc @F
+			mov g_dwCurrEsp, eax
+			call gethelperstack
+			jnc @F
 ;--- a fatal exit because esp cannot be used and no memory available
-				invoke	FatalAppExitA, 0, addr szFatalExit
+			invoke FatalAppExitA, 0, addr szFatalExit
 @@:
 if ?CLEARHIGHEBP
-				mov [ebp].DPMIEXC.rEsp, ax
+			mov [ebp].DPMIEXC.rEsp, ax
 else
-				mov [ebp].DPMIEXC.rEsp, eax
+			mov [ebp].DPMIEXC.rEsp, eax
 endif
-				mov [edi].MYEXC.dwExcNo, EXCEPTION_STACK_OVERFLOW
-			.endif
-		.else
-			mov [edi].MYEXC.numArgs,eax
-			mov [edi].MYEXC.pArgs,eax
+			mov [edi].MYEXC.dwExcNo, EXCEPTION_STACK_OVERFLOW
+		.endif
+	.else
+		mov [edi].MYEXC.numArgs,eax
+		mov [edi].MYEXC.pArgs,eax
 if ?CATCHEXC0C
 ;--- this usually is NOT a stack overflow but an access of SS outside
 ;--- segment limits. With DKRNL32 this can only occur if SS descriptor
 ;--- has ED bit set.
   if 0
-			.if ([ebx].EXCDESC.bException == 0Ch)
-				mov eax,[ebp].DPMIEXC.rEsp
-				mov g_dwCurrEsp, eax
-				call gethelperstack
-				mov [ebp].DPMIEXC.rEsp, eax
-			.endif
+		.if ([ebx].EXCDESC.bException == 0Ch)
+			mov eax,[ebp].DPMIEXC.rEsp
+			mov g_dwCurrEsp, eax
+			call gethelperstack
+			mov [ebp].DPMIEXC.rEsp, eax
+		.endif
   endif
 endif
-		.endif
+	.endif
 doexc_exit2:
-		pop ds
+	pop ds
 
 if ?CLEARTIBPTR
-		mov fs:[THREAD_INFORMATION_BLOCK.ptibSelf], esi
+	mov fs:[THREAD_INFORMATION_BLOCK.ptibSelf], esi
 endif
 doexc_exit:
-		popad
-		add esp,4	 ;skip ?EXCPARM parameter
+	popad
+	add esp,4	 ;skip ?EXCPARM parameter
 if ?CLEARHIGHEBP
-		db 66h
+	db 66h
 endif
-		retf
-		align 4
+	retf
+	align 4
         
 doexception endp
 
@@ -1189,52 +1288,52 @@ if ?FLOATSUPP
 if ?IRQ0DSUPP
 
 myint75:
-;------------------------- the "real" eip may be on the stack, at least in
-;------------------------- XP, 9X and HDPMI. But modifying it to return to
-;------------------------- another address doesnt work - except for HDPMI.
-;------------------------- But even then it's a bad idea, because it only
-;------------------------- works if a stack switch has been done. This is
-;------------------------- *not* always true.
+;--- the "real" eip may be on the stack, at least in
+;--- XP, 9X and HDPMI. But modifying it to return to
+;--- another address doesnt work - except for HDPMI.
+;--- But even then it's a bad idea, because it only
+;--- works if a stack switch has been done. This is
+;--- *not* always true.
 if 0
-		cmp cs:[g_bHost], HF_HDPMI
-		jnz nohdpmi
-		pushad
+	cmp cs:[g_bHost], HF_HDPMI
+	jnz nohdpmi
+	pushad
  if ?CLEARHIGHEBP
-		movzx ebp,sp
+	movzx ebp,sp
  else
-		mov ebp,esp
+	mov ebp,esp
  endif
-		push ds
-		mov ds,cs:g_csalias
+	push ds
+	mov ds,cs:g_csalias
  ifdef _DEBUG
-		mov byte ptr ds:[0B8000h+24*80*2-4],'#'
+	mov byte ptr ds:[0B8000h+24*80*2-4],'#'
  endif
-		mov eax, [ebp+8*4].IRETDS.rCS
-		test al,4							;CS in LDT?
-		mov eax, [ebp+8*4].IRETDS.rEip		;then get eip of IRET frame
-		jnz @F								;else a stack switch has occured
-		mov eax, [ebp+8*4+sizeof IRETDS]	;and EIP is above IRET frame
+	mov eax, [ebp+8*4].IRETDS.rCS
+	test al,4							;CS in LDT?
+	mov eax, [ebp+8*4].IRETDS.rEip		;then get eip of IRET frame
+	jnz @F								;else a stack switch has occured
+	mov eax, [ebp+8*4+sizeof IRETDS]	;and EIP is above IRET frame
 @@:     
-		mov [dwExcEip], eax
+	mov [dwExcEip], eax
  if ?CLEARHIGHEBP		 
-		mov word ptr [ebp+8*4+sizeof IRETDS], offset myint75ex
+	mov word ptr [ebp+8*4+sizeof IRETDS], offset myint75ex
  else
-		mov dword ptr [ebp+8*4+sizeof IRETDS], offset myint75ex
+	mov dword ptr [ebp+8*4+sizeof IRETDS], offset myint75ex
  endif
-		pop ds
-		popad
+	pop ds
+	popad
 nohdpmi:
 endif        
-		push eax
-		fninit		;clear the exception and continue
-		mov al,00
-		out 0F0h,al	;clear FPU interrupt
-		mov al,20h
-		out 0A0h,al
-		out 20h,al
-		pop eax
-		@iret
-		align 4
+	push eax
+	fninit		;clear the exception and continue
+	mov al,00
+	out 0F0h,al	;clear FPU interrupt
+	mov al,20h
+	out 0A0h,al
+	out 20h,al
+	pop eax
+	@iret
+	align 4
         
 ;--- hopefully the server has switched to our stack
 ;--- now build a MYEXC frame and call doexc2
@@ -1242,59 +1341,59 @@ endif
 
 myint75ex:
 ifdef _DEBUG
-		push ds
-		mov ds,cs:g_csalias
-		mov byte ptr ds:[0B8000h+24*80*2-2],'+'
-		pop ds
+	push ds
+	mov ds,cs:g_csalias
+	mov byte ptr ds:[0B8000h+24*80*2-2],'+'
+	pop ds
 endif
-		push 0			;pArgs		
-		push 0			;nArgs
-		push 0			;flags
-		push ecx
-		call getfloatexc
-		xchg ecx, [esp]	;excno	
-		push eax
-		mov eax, cs:[g_hCurThread]
-		mov	fs, cs:[eax].THREAD.dwTibSel
-		pop eax
-		push cs
-		push cs:[dwExcEip]
-		sti					;we only get called if interrupts were enabled
-		call doexc2
+	push 0			;pArgs
+	push 0			;nArgs
+	push 0			;flags
+	push ecx
+	call getfloatexc
+	xchg ecx, [esp]	;excno	
+	push eax
+	mov eax, cs:[g_hCurThread]
+	mov fs, cs:[eax].THREAD.dwTibSel
+	pop eax
+	push cs
+	push cs:[dwExcEip]
+	sti					;we only get called if interrupts were enabled
+	call doexc2
 endif						;endif IRQ0DSUPP
 
 ;--- return win32 exception in ECX
 
 getfloatexc proc 
 
-		push eax
-		fnstsw ax
-		mov ecx, EXCEPTION_FLT_STACK_CHECK
-		test al,20h		;stack fault?
-		jz @F
-		mov ecx, EXCEPTION_FLT_INVALID_OPERATION
-		test al,1		;invalid operation?
-		jz @F
-		mov ecx, EXCEPTION_FLT_DENORMAL_OPERAND
-		test al,2		;denormal?
-		jz @F
-		mov ecx, EXCEPTION_FLT_DIVIDE_BY_ZERO
-		test al,4		;zero divide?
-		jz @F
-		mov ecx, EXCEPTION_FLT_OVERFLOW
-		test al,8		;overflow?
-		jz @F
-		mov ecx, EXCEPTION_FLT_UNDERFLOW
-		test al,10h		;underflow?
-		jz @F
-		mov ecx, EXCEPTION_FLT_INEXACT_RESULT	;precision
+	push eax
+	fnstsw ax
+	mov ecx, EXCEPTION_FLT_STACK_CHECK
+	test al,20h		;stack fault?
+	jz @F
+	mov ecx, EXCEPTION_FLT_INVALID_OPERATION
+	test al,1		;invalid operation?
+	jz @F
+	mov ecx, EXCEPTION_FLT_DENORMAL_OPERAND
+	test al,2		;denormal?
+	jz @F
+	mov ecx, EXCEPTION_FLT_DIVIDE_BY_ZERO
+	test al,4		;zero divide?
+	jz @F
+	mov ecx, EXCEPTION_FLT_OVERFLOW
+	test al,8		;overflow?
+	jz @F
+	mov ecx, EXCEPTION_FLT_UNDERFLOW
+	test al,10h		;underflow?
+	jz @F
+	mov ecx, EXCEPTION_FLT_INEXACT_RESULT	;precision
 @@:
-		pop eax
-		ret
-		align 4
+	pop eax
+	ret
+	align 4
 
 getfloatexc endp        
 
 endif
 
-		end
+	end

@@ -28,7 +28,7 @@ endif
 	include dkrnl32.inc
 	include macros.inc
 
-extern	__DEFCTRLHANDLER:abs    
+extern	__DEFCTRLHANDLER:abs
 
 externdef g_asciitable:byte
 
@@ -61,35 +61,35 @@ GetCtrlKeyState proc
 	jz @F
 	or cl,SHIFT_PRESSED
 @@:
-	test  [edi].KEYEVNT.bStat17,10h
+	test [edi].KEYEVNT.bStat17,10h
 	jz @F
 	or cl,SCROLLLOCK_ON
 @@:
-	test  [edi].KEYEVNT.bStat17,20h
+	test [edi].KEYEVNT.bStat17,20h
 	jz @F
 	or cl,NUMLOCK_ON
 if 1
 ;--- translate VK_HOME - VK_DELETE to VK_NUMPAD0-VK_NUMPAD9
-	test  [edi].KEYEVNT.bStat96,2	;enhanced key?
+	test [edi].KEYEVNT.bStat96,2	;enhanced key?
 	jnz @F
-	cmp   dl,47h   ;home
+	cmp dl,47h   ;home
 	jb @F
-	cmp   dl,53h   ;separator
+	cmp dl,53h   ;separator
 	ja @F
 	movzx eax,dl
 	sub al,47h
 	mov al,[eax+numpadx]
 endif
 @@:
-	test  [edi].KEYEVNT.bStat17,40h
+	test [edi].KEYEVNT.bStat17,40h
 	jz @F
 	or cl,CAPSLOCK_ON
 @@:
-	test  [edi].KEYEVNT.bStat96,4
+	test [edi].KEYEVNT.bStat96,4
 	jz @F
 	or cl,RIGHT_CTRL_PRESSED
 @@:
-	test  [edi].KEYEVNT.bStat96,8
+	test [edi].KEYEVNT.bStat96,8
 	jz @F
 if ?RIGHTALTCTRL
 	or cl,RIGHT_ALT_PRESSED or LEFT_CTRL_PRESSED
@@ -97,16 +97,16 @@ else
 	or cl,RIGHT_ALT_PRESSED
 endif
 @@:
-	test  [edi].KEYEVNT.bStat18,1
+	test [edi].KEYEVNT.bStat18,1
 	jz @F
 	or cl,LEFT_CTRL_PRESSED
 @@:
-	test  [edi].KEYEVNT.bStat18,2
+	test [edi].KEYEVNT.bStat18,2
 	jz @F
 	or cl,LEFT_ALT_PRESSED
 @@:
-;	test  [edi].KEYEVNT.bStat96,1+2
-	test  [edi].KEYEVNT.bStat96,2
+;	test [edi].KEYEVNT.bStat96,1+2
+	test [edi].KEYEVNT.bStat96,2
 	jz @F
 	or ch,1	;ENHANCED_KEY
 @@:
@@ -131,10 +131,10 @@ SIZESTATUSKEYTAB equ ($ - statuskeytab)
 
 IsStatusKey proc uses edi eax
 
-	mov   edi, offset statuskeytab
-	mov   ecx, SIZESTATUSKEYTAB
-	mov   al, [eax].KEYEVNT.bScan
-	and   al, 7Fh
+	mov edi, offset statuskeytab
+	mov ecx, SIZESTATUSKEYTAB
+	mov al, [eax].KEYEVNT.bScan
+	and al, 7Fh
 	repnz scasb
 	ret
 	align 4
@@ -204,14 +204,14 @@ notab:
 	ret
 	align 4
 
-getvirtualkeycode endp        
+getvirtualkeycode endp
 
 ;--- this table helps to undo some of the scan code translations
 ;--- the keyboard driver has done. dkrnl32 relies on the installed keyboard
 ;--- driver to some extent. As a disadvantage some of the scancode
 ;--- translations of control keys must now be undone
 
-ytab    label byte
+ytab label byte
 	db __CTRL_TAB_MAKE
 	db __CTRL_CURSOR_UP,__CTRL_CURSOR_DOWN,__CTRL_CURSOR_LEFT,__CTRL_CURSOR_RIGHT
 	db __CTRL_INS_MAKE,__CTRL_DEL_MAKE
@@ -225,7 +225,7 @@ ife ?FKEYS
 	db __F11_CTRL, __F12_CTRL
 endif
 
-lytab   equ $ - ytab
+lytab equ $ - ytab
 
 	db __TAB_MAKE
 	db __CURSOR_UP, __CURSOR_DOWN, __CURSOR_LEFT, __CURSOR_RIGHT
@@ -384,6 +384,8 @@ _GetNumberOfQueuedEvents proc
 
 _GetNumberOfQueuedEvents endp
 
+;--- fill a KEYEVNT struct with BIOS values
+;--- AH=scancode
 
 FillKeyState proc
 	mov [edi].KEYEVNT.bScan,ah
@@ -417,44 +419,44 @@ endif
 	.else
 		invoke _PeekKbdEvent, index
 	.endif
-	mov   edi, eax
-	and   eax, eax
-	jz	  nokeyevent1		;dont exit, may be someone has modified
+	mov edi, eax
+	and eax, eax
+	jz nokeyevent1			;dont exit, may be someone has modified
 							;the BIOS key buffer
-	call  IsStatusKey
-	mov   al,00					;no ascii
+	call IsStatusKey
+	mov al,00				;no ascii
 	jz setvalues
 	movzx eax,[edi].KEYEVNT.bScan
-	test  al,80h
+	test al,80h
 	jz @F
-	and   al,7Fh
-	mov   al, [eax + g_asciitable]
-	jmp   setvalues				
+	and al,7Fh
+	mov al, [eax + g_asciitable]
+	jmp setvalues
 @@:
-	mov   ah,al
-	mov   al,[edi].KEYEVNT.bAscii
+	mov ah,al
+	mov al,[edi].KEYEVNT.bAscii
 	movzx ebx,word ptr @flat:[041Ah]
-	cmp   BX,@flat:[041Ch]
+	cmp BX,@flat:[041Ch]
 	jz setvalues
 	mov al,@flat:[ebx+400h]
-	call  setascii
-	cmp   al,[edi].KEYEVNT.bAscii
+	call setascii
+	cmp al,[edi].KEYEVNT.bAscii
 	jz @F
-	mov   al,[edi].KEYEVNT.bAscii
-	jmp   setvalues
+	mov al,[edi].KEYEVNT.bAscii
+	jmp setvalues
 nokeyevent1:
 	movzx ebx,word ptr @flat:[041Ah]
-	cmp   BX,@flat:[041Ch]
+	cmp BX,@flat:[041Ch]
 	jz nokeyevent2
-	mov   ax,@flat:[ebx+400h]
+	mov ax,@flat:[ebx+400h]
 @@:
 if ?NONULLHDL
 	movzx edx, word ptr handle
 else
-	mov   edx, handle
+	mov edx, handle
 endif
 	bt g_bProcessed, edx
-	setc  dl
+	setc dl
 	.if (al == 3)
 		inc dl
 ife ?LOWLEVEL_CTRLBRK
@@ -463,13 +465,13 @@ ife ?LOWLEVEL_CTRLBRK
 endif
 	.endif
 	.if (bRemove || (dl == 2))
-		INC   ebx
-		INC   ebx
-		CMP   BX,@flat:[0482h]
-		JNZ   @F
-		MOV   BX,@flat:[0480h]
+		INC ebx
+		INC ebx
+		CMP BX,@flat:[0482h]
+		JNZ @F
+		MOV BX,@flat:[0480h]
 @@:
-		MOV   @flat:[041Ah],BX
+		MOV @flat:[041Ah],BX
 	.endif
 	.if (dl == 2)
 		int 23h			;and exec int 23h
@@ -481,31 +483,31 @@ endif
 	.endif
 setvalues:
 ;--- ascii in AL
-	mov   ebx,pBuffer
-	mov   [ebx].INPUT_RECORD.Event.KeyEvent.bKeyDown,TRUE
-	test  [edi].KEYEVNT.bScan,80h
+	mov ebx,pBuffer
+	mov [ebx].INPUT_RECORD.Event.KeyEvent.bKeyDown,TRUE
+	test [edi].KEYEVNT.bScan,80h
 	jz @F
-	mov   [ebx].INPUT_RECORD.Event.KeyEvent.bKeyDown,FALSE
+	mov [ebx].INPUT_RECORD.Event.KeyEvent.bKeyDown,FALSE
 @@:
-	call  setascii
-	mov   ah,0
-	mov   [ebx].INPUT_RECORD.Event.KeyEvent.AsciiChar,ax
-	mov   ah,al
+	call setascii
+	mov ah,0
+	mov [ebx].INPUT_RECORD.Event.KeyEvent.AsciiChar,ax
+	mov ah,al
 	mov al,[edi].KEYEVNT.bScan
 	and al,7Fh
-	call  getvirtualscancode
-	mov   [ebx].INPUT_RECORD.Event.KeyEvent.wVirtualScanCode, dx
-	call  getvirtualkeycode
-	mov   ah,00
-	call  GetCtrlKeyState
-	mov   [ebx].INPUT_RECORD.EventType,KEY_EVENT
-	mov   [ebx].INPUT_RECORD.Event.KeyEvent.wVirtualKeyCode,ax
-	mov   [ebx].INPUT_RECORD.Event.KeyEvent.dwControlKeyState,ecx
-	@mov  eax,1
-	mov   [ebx].INPUT_RECORD.Event.KeyEvent.wRepeatCount,ax
-	jmp   exit
+	call getvirtualscancode
+	mov [ebx].INPUT_RECORD.Event.KeyEvent.wVirtualScanCode, dx
+	call getvirtualkeycode
+	mov ah,00
+	call GetCtrlKeyState
+	mov [ebx].INPUT_RECORD.EventType,KEY_EVENT
+	mov [ebx].INPUT_RECORD.Event.KeyEvent.wVirtualKeyCode,ax
+	mov [ebx].INPUT_RECORD.Event.KeyEvent.dwControlKeyState,ecx
+	@mov eax,1
+	mov [ebx].INPUT_RECORD.Event.KeyEvent.wRepeatCount,ax
+	jmp exit
 nokeyevent2:
-	xor   eax,eax
+	xor eax,eax
 exit:
 	ret
 	align 4
@@ -525,16 +527,25 @@ local	tmpevnt:KEYEVNT
 	jz exit
 	mov edi, eax
 	mov ebx, pBuffer
-	mov [ebx].INPUT_RECORD.EventType,MOUSE_EVENT
+	mov [ebx].INPUT_RECORD.EventType, MOUSE_EVENT
 	mov edx, dword ptr [edi].MOUEVNT.wPosX	;XPos & YPos
-	movzx eax, [edi].MOUEVNT.wState
+
+;--- the wheel pos is returned in the hiword(buttonstate)
+	mov ax, [edi].MOUEVNT.wPosZ
+	shl eax,16
+	mov ax, [edi].MOUEVNT.wState
 	mov [ebx].INPUT_RECORD.Event.MouseEvent.dwMousePosition, edx
 	mov [ebx].INPUT_RECORD.Event.MouseEvent.dwButtonState, eax
 	mov [ebx].INPUT_RECORD.Event.MouseEvent.dwEventFlags, 0
-	test [edi].MOUEVNT.wMask,1
+	test [edi].MOUEVNT.wMask,80h
 	jz @F
-	mov [ebx].INPUT_RECORD.Event.MouseEvent.dwEventFlags, MOUSE_MOVED
+	mov [ebx].INPUT_RECORD.Event.MouseEvent.dwEventFlags, MOUSE_WHEELED
+	jmp done
 @@:
+	test [edi].MOUEVNT.wMask,1
+	jz done
+	mov [ebx].INPUT_RECORD.Event.MouseEvent.dwEventFlags, MOUSE_MOVED
+done::
 	lea edi, tmpevnt
 	call FillKeyState
 	call GetCtrlKeyState
@@ -554,28 +565,28 @@ PeekConsoleInputA proc public uses esi ebx edi handle:dword, pBuffer:ptr INPUT_R
 	.while (edi < nSize)
 		invoke PeekKbdDevice, handle, ebx, esi, FALSE
 		.break .if (!eax)
-		add   ebx, sizeof INPUT_RECORD
-		inc   esi
-		inc   edi
+		add ebx, sizeof INPUT_RECORD
+		inc esi
+		inc edi
 	.endw
 	xor esi, esi
 	.while (edi < nSize)
 		invoke PeekMouDevice, handle, ebx, esi, FALSE
 		.break .if (!eax)
-		add   ebx, sizeof INPUT_RECORD
-		inc   esi
-		inc   edi
+		add ebx, sizeof INPUT_RECORD
+		inc esi
+		inc edi
 	.endw
 	xor esi, esi
 	.while (edi < nSize)
 		invoke PeekSystemQueue, ebx, esi, FALSE
 		.break .if (!eax)
-		add   ebx, sizeof INPUT_RECORD
-		inc   esi
-		inc   edi
+		add ebx, sizeof INPUT_RECORD
+		inc esi
+		inc edi
 	.endw
-	mov   ecx,pRead
-	mov   [ecx], edi
+	mov ecx,pRead
+	mov [ecx], edi
 	@mov eax, 1
 ifdef _DEBUG
 	mov edx, pBuffer
@@ -604,14 +615,14 @@ ReadConsoleInputA proc public uses ebx esi handle:dword, pBuffer:ptr INPUT_RECOR
 			.endif
 		.endif
 		.if (eax)
-			mov   ecx,pRead
-			inc   dword ptr [ecx]
+			mov ecx,pRead
+			inc dword ptr [ecx]
 if 1
-			xor   eax, eax
-			call  [g_dwBoostProc]		;boost current thread
-endif		 
-			add   ebx, sizeof INPUT_RECORD
-			dec   esi
+			xor eax, eax
+			call [g_dwBoostProc]		;boost current thread
+endif
+			add ebx, sizeof INPUT_RECORD
+			dec esi
 		.else
 			.break .if (esi != nSize)
 			invoke Sleep, 0

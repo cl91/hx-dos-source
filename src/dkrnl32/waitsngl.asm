@@ -123,13 +123,13 @@ endif
 					and [ebx].EVENT.bFlags, not EVNT_SIGNALED
 				.endif
 if ?EVENTOPT
-				mov [ebx].EVENT.dwThread, 0
+				mov [ebx].EVENT.hThread, 0
 endif
 				.break
 if ?EVENTOPT
 			.else
 				mov eax, g_hCurThread
-				mov [ebx].EVENT.dwThread, eax
+				mov [ebx].EVENT.hThread, eax
 endif
 			.endif
 
@@ -142,19 +142,19 @@ endif
 				.break
 			.endif
 
-		.elseif ([ebx].SYNCOBJECT.dwType == SYNCTYPE_SEMAPHOR)
-
-			.if ([ebx].SEMAPHORE.dwCurCnt)
-				dec [ebx].SEMAPHORE.dwCurCnt
-				.break
-			.endif
-
 		.elseif ([ebx].SYNCOBJECT.dwType == SYNCTYPE_MUTEX)
 
 			invoke GetCurrentThread
 			.if ((![ebx].MUTEX.dwOwner) || (eax == [ebx].MUTEX.dwOwner))
 				mov [ebx].MUTEX.dwOwner, eax
-				inc [ebx].MUTEX.dwCnt
+				inc [ebx].MUTEX.wCnt
+				.break
+			.endif
+
+		.elseif ([ebx].SYNCOBJECT.dwType == SYNCTYPE_SEMAPHOR)
+
+			.if ([ebx].SEMAPHORE.dwCurCnt)
+				dec [ebx].SEMAPHORE.dwCurCnt
 				.break
 			.endif
 
@@ -217,6 +217,7 @@ timeout:
 	@mov eax, WAIT_TIMEOUT
 	jmp exit
 error:
+	invoke SetLastError, ERROR_INVALID_HANDLE
 	@mov eax, WAIT_FAILED
 	jmp exit
 	align 4

@@ -406,6 +406,7 @@
   GetModuleHandleW
   GetNamedPipeHandleStateA       dummy
   GetNumberFormatA               dummy
+  GetNumberFormatW               dummy
   GetNumberOfConsoleInputEvents
   GetNumberOfConsoleMouseButtons
   GetOEMCP
@@ -465,6 +466,8 @@
   GetVolumeInformationW
   GetWindowsDirectoryA
   GetWindowsDirectoryW
+  GlobalAddAtomA
+  GlobalAddAtomW
   GlobalAlloc
   GlobalCompact                  dummy
   GlobalFlags                    dummy
@@ -548,6 +551,7 @@
   OpenMutexW                     dummy
   OpenProcess                    dummy
   OpenSemaphoreA
+  OpenWaitableTimerA
   OutputDebugStringA
   OutputDebugStringW
   PeekConsoleInputA
@@ -721,6 +725,27 @@
 
 
   6. History
+
+  05/27/2011: version 3.5
+
+  þ bugfix: DuplicateHandle() didn't work for mutexes and waitable timers.
+  þ bugfix: the kernel heap was defined incorrectly, which raised the risk
+    that part of its content was corrupted if an application created lots
+    of kernel objects.
+  þ bugfix: low-level disk write access (LBA) was often rejected because
+    invalid flags may have been set for int 13h, ah=43h.
+  þ GlobalAddAtomW() added.
+  þ GetNumberFormatW() added (stub).
+  þ GetCurrencyFormatA() + GetCurrencyFormatW() added (stubs).
+  þ OpenWaitableTimerA() added.
+  þ heaps are now serialized with a mutex instead of a semaphore.
+  þ the default exception handler will display contents of CS:EIP and SS:ESP.
+  þ SetEvent() will switch threads if a thread is waiting for the event.
+  þ mouse wheel events supported
+  þ save/restore FS register when another program is launched. This is needed
+    when DPMILD32 is to run another Win32 application in the same client.
+  þ bugfix: WaitForSingleObject/WaitForMultipleObjects didn't set last error
+    when returning WAIT_FAILED.
 
   11/16/2009: version 3.4
 

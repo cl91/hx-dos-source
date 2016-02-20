@@ -6,6 +6,7 @@ EXPORTS
  CLSIDFromString
  CoCreateGuid
  CoCreateInstance
+ CoGetClassObject
  CoGetMalloc
  CoInitialize
  CoInitializeEx
@@ -14,7 +15,9 @@ EXPORTS
  CoTaskMemFree
  CoTaskMemRealloc
  CoUninitialize
+ CreateItemMoniker
  CreateStreamOnHGlobal
+ GetRunningObjectTable
  IIDFromString
  OleFlushClipboard
  OleInitialize

@@ -33,7 +33,7 @@ ASM=@ml -c -nologo -Sg -Fl$* -Fo$* -I$(INC32DIR)
 ASM=@jwasm -c -nologo -Sg -Fl$* -Fo$* -I$(INC32DIR)
 !endif
 
-LINK=wlink.exe
+LINK=jwlink.exe
 
 $(OUTDIR)\$(PGM).EXE: $*.obj makefile
 	@$(LINK) @<<

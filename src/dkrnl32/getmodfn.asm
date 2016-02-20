@@ -24,7 +24,7 @@ GetModuleFileNameA proc public uses esi edi handle:dword,pBuffer:ptr byte,lBuffe
 
 if ?FLAT
 
-	test [g_bIntFl],IKF_DPMILDR
+	test [g_bIntFl],IKF_PELDR
 	jnz useldr
 	push ebx
 	mov ah,51h

@@ -23,7 +23,11 @@ SetThreadLocale proc public lcid:DWORD
 
 	mov ecx, lcid
 	xor eax,eax
+ifdef __JWASM__
 	.if ( ecx == 0 || ecx == LOCALE_SYSTEM_DEFAULT || ecx == LOCALE_USER_DEFAULT )
+else
+	.if ( ecx == 0 || ecx == 400h || ecx == 800h )
+endif
 		inc eax
 	.endif
 	@strace <"SetThreadLocale(",lcid, ")=", eax, " *** part supp ***">

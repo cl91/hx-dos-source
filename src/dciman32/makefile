@@ -22,6 +22,7 @@ OUTDIR=RELEASE
 !ifndef MASM
 MASM=0
 !endif
+MSLINK=0
 
 SRCMODS = \
 !include modules.inc
@@ -58,11 +59,15 @@ $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).DLL: $(OUTDIR)\$(LIBNAME).LIB $(OUTDIR)\$(NAME).OBJ $(NAME).DEF
+!if $(MSLINK)
 	@$(LINKBIN) @<<
 $(OUTDIR)\$(NAME).OBJ $(OUTDIR)\$(LIBNAME).LIB $(LIBS)
 $(LOPTS) $(LOPTD)
 /DEF:$(NAME).DEF /OUT:$*.DLL
 <<
+!else
+	@$(LINKBIN) format win pe dll name $*.DLL f $(OUTDIR)\$(NAME).OBJ libpath $(LIBCOFF) lib {$(OUTDIR)\$(LIBNAME).LIB $(LIBS)} op q, map=$*, implib=$* @$(NAME).rsp
+!endif
 !if $(DEBUG)==0
 	@copy $*.DLL ..\..\bin\*.* >NUL
 !ifdef DLL32DIR    

@@ -28,7 +28,7 @@ g_amblksiz	dd _HEAP_GROWSEG
 setmemblock proc blockaddr:dword
 
 	pushad
-	invoke GetKernelHeap
+	invoke GetKernelHeap	;don't do that for kernel heap
 	cmp eax, ebx
 	jz @F
 	invoke KernelHeapAlloc, sizeof HBLOCK
@@ -63,7 +63,7 @@ local	dwLast:dword
 	mov dwSize, ecx        
 	test edi,HEAP_NO_SERIALIZE
 	jnz @F
-	invoke WaitForSingleObject,[ebx].HEAPDESC.semaphor,INFINITE
+	invoke WaitForSingleObject,[ebx].HEAPDESC.mutex,INFINITE
 	or byte ptr [ebx.HEAPDESC.flags],_HEAP_GROWING
 @@:
 	mov dwLast,0
@@ -205,7 +205,7 @@ exit:
 	jnz @F
 	push eax
 	and byte ptr [ebx.HEAPDESC.flags],not _HEAP_GROWING
-	invoke ReleaseSemaphore,[ebx].HEAPDESC.semaphor,1,0
+	invoke ReleaseMutex,[ebx].HEAPDESC.mutex
 	pop eax
 @@:
 	@strace <"_growseg exit, still uncommitted=", [ebx].HEAPDESC.dwSize, ", rover=", [ebx].HEAPDESC.rover, ", last=", [ebx].HEAPDESC.last>

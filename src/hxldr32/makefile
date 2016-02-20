@@ -23,25 +23,30 @@ AOPTD=
 NAME=HXLDR32
 STUBNAME=HXLDRSTB
 
+MSLINK=0
+
 ALL: $(OUTDIR) $(OUTDIR)\$(NAME).exe $(OUTDIR)\HXDOSLD.EXE
 
 $(OUTDIR):
 	@mkdir $(OUTDIR)
 
 $(OUTDIR)\$(NAME).EXE: $(OUTDIR)\$(STUBNAME).exe $(OUTDIR)\$(NAME).obj makefile
-#	@$(LINKBIN) @<<
-#/NOLOGO $(OUTDIR)\$(NAME).obj $(LIBCOFF)\dkrnl32.lib
-#/OUT:$*.EXE
-#/SUBSYSTEM:CONSOLE /STUB:$(OUTDIR)\$(STUBNAME).exe
-#/HEAP:0x0,0x0 /STACK:0x1000,0x1000 /SECTION:.text,ERW
-#/FIXED /MAP
-#<<
-	@wlink @<<
-format windows nt runtime console
+!if $(MSLINK)
+	@link @<<
+/NOLOGO $(OUTDIR)\$(NAME).obj $(LIBCOFF)\dkrnl32.lib
+/OUT:$*.EXE
+/SUBSYSTEM:CONSOLE /STUB:$(OUTDIR)\$(STUBNAME).exe
+/HEAP:0x0,0x0 /STACK:0x1000,0x1000 /SECTION:.text,ERW
+/FIXED /MAP
+<<
+!else
+	@$(LINKBIN) @<<
+format windows pe runtime console
 file $* lib $(LIBCOFF)\dkrnl32.lib
 name $*.EXE
 op q, norelocs, stub=$(OUTDIR)\$(STUBNAME).exe, map=$*.map
 <<
+!endif
 !if $(DEBUG)==0
 	@copy $*.EXE ..\..\Bin\*.* >NUL
 !ifdef TOOLSDIR

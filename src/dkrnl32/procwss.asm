@@ -24,7 +24,7 @@ endif
 ?MINWORKINGSET	equ 100000h
 ?MAXWORKINGSET	equ 1000000h
 
-		.CODE
+	.CODE
 
 ;--- the current process pseudo handle may be hard-coded in some apps
 ;--- it is 7FFFFFFF in win9x (-1 in winxp?)
@@ -78,7 +78,7 @@ GetProcessAffinityMask proc public hProcess:DWORD, lpProcessAffinityMask:ptr DWO
 	mov ecx, hProcess
 	call checkprochandle
 	.if ([ecx].PROCESS.dwType == SYNCTYPE_PROCESS)
-		inc eax
+		inc eax		;set bit 0 (indicates 1 processor)
 		mov ecx, lpProcessAffinityMask
 		mov edx, lpSystemAffinityMask
 		mov [ecx],eax

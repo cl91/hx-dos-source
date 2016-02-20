@@ -36,7 +36,7 @@ HeapValidate proc public uses ebx esi heap:dword, flags:dword, pMem:dword
 	mov ebx, heap
 	test byte ptr [ebx].HEAPDESC.flags, HEAP_NO_SERIALIZE
 	jnz @F
-	invoke WaitForSingleObject, [ebx].HEAPDESC.semaphor, INFINITE
+	invoke WaitForSingleObject, [ebx].HEAPDESC.mutex, INFINITE
 @@:
 	mov esi, [ebx].HEAPDESC.start
 	mov edx, pMem
@@ -54,7 +54,7 @@ endif
 		test byte ptr [esi].FLITEM.dwSize, FHEAPITEM_INTERNAL
 		jnz nextitem
 		.if (esi == edx)
-;--------------------------------- is heap item freed?			  
+;--------------------------------- is heap item freed?
 			test byte ptr [esi].FLITEM.dwSize,FHEAPITEM_FREE
 			jnz done
 			inc eax
@@ -76,7 +76,7 @@ done:
 	test byte ptr [ebx].HEAPDESC.flags, HEAP_NO_SERIALIZE
 	jnz @F
 	push eax
-	invoke ReleaseSemaphore,[ebx].HEAPDESC.semaphor,1,0
+	invoke ReleaseMutex,[ebx].HEAPDESC.mutex
 	pop eax
 @@:
 	xor edx, edx
@@ -102,7 +102,18 @@ exception:
 	xor eax, eax		;== _XCPT_CONTINUE_EXECUTION
 	retn
 cont_exc:
-	@strace <"*** exception inside HeapValidate() at EIP=", edx> 
+	@strace <"*** exception inside HeapValidate() at EIP=", edx, " curr item=", esi> 
+ifdef _DEBUG
+	mov edx, esi
+	mov esi, [ebx].HEAPDESC.start
+	.while ( dword ptr [esi] != _HEAP_END )
+		.break .if esi == edx
+		@strace <"HeapValidate: heap item ", esi, " flitem=", [esi] >
+		mov ecx, [esi].FLITEM.dwSize
+		and cl, 0FCh
+		lea esi, [esi+ecx+4]
+	.endw
+endif
 	xor eax, eax
 	jmp done
 

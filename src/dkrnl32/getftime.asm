@@ -16,7 +16,7 @@ endif
 
 	.CODE
 
-GetFileTime proc public uses ebx esi handle:dword,pCreation:ptr FILETIME,
+GetFileTime proc public uses ebx esi handle:dword, pCreation:ptr FILETIME,
 		pLastAcc:ptr FILETIME, pLastWrite:ptr FILETIME
 
 local	dwDate:DWORD
@@ -54,11 +54,7 @@ local	dwTime:DWORD
 error:
 		xor eax, eax
 exit:        
-	@trace <"GetFileTime(">
-	@tracedw handle
-	@trace <")=">
-	@tracedw eax
-	@trace <13,10>
+	@strace <"GetFileTime(", handle, ", ", pCreation, ", ", pLastAcc, ", ", pLastWrite, ")=", eax>
 	ret
 GetFileTime endp
 
